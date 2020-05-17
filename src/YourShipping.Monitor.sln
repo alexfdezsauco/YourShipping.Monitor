@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YourShipping.Monitor.Server
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YourShipping.Monitor.Shared", "YourShipping.Monitor\Shared\YourShipping.Monitor.Shared.csproj", "{5B15DA7C-8DF4-4ADD-A35E-760469380261}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{83F79939-C6BB-4BA2-81AE-0FF4DF4543CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AB5FFA40-6965-41D5-88AE-88586811F0AD} = {83F79939-C6BB-4BA2-81AE-0FF4DF4543CF}
+		{F187EB05-FE53-4B1B-A59D-56EAEA0884DA} = {83F79939-C6BB-4BA2-81AE-0FF4DF4543CF}
+		{5B15DA7C-8DF4-4ADD-A35E-760469380261} = {83F79939-C6BB-4BA2-81AE-0FF4DF4543CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {98E47196-372F-4EB0-A332-87ABDE579A5B}
