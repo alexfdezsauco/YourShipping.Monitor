@@ -1,0 +1,38 @@
+﻿@using Blorc.PatternFly.Components.Navigation
+@using Blorc.PatternFly.Components.Icon
+@using Blorc.PatternFly.Components.Badge
+@using Blorc.PatternFly.Layouts.Split
+@using YourShipping.Monitor.Shared
+
+@inherits NavMenuComponent
+
+<Navigation>
+    <Items>
+        <NavigationItem Link="/">
+            <Split IsGutter="true">
+                <SplitItem><HomeIcon /></SplitItem>
+                <SplitItem>Home</SplitItem>
+            </Split>
+        </NavigationItem>
+        <NavigationItem Link="/products">
+            <Split IsGutter="true">
+                <SplitItem><GiftIcon /></SplitItem>
+                <SplitItem>Products</SplitItem>
+                @if (ApplicationState.HasAlertsFrom(AlertSource.Products))
+                {
+                    <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
+                }
+            </Split>
+        </NavigationItem>
+        <NavigationItem Link="/departments">
+            <Split IsGutter="true">
+                <SplitItem><BuildingIcon /></SplitItem>
+                <SplitItem>Departments</SplitItem>
+                @if (ApplicationState.HasAlertsFrom(AlertSource.Departments))
+                {
+                    <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
+                }
+            </Split>
+        </NavigationItem>
+    </Items>
+</Navigation>

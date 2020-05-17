@@ -1,0 +1,83 @@
+﻿@page "/departments"
+
+@using System.ComponentModel
+@using Blorc.Components
+@using Blorc.PatternFly.Components.Button
+@using Blorc.PatternFly.Components.Spinner
+@using Blorc.PatternFly.Components.EmptyState
+@using Blorc.PatternFly.Components.Label
+@using Blorc.PatternFly.Components.Table
+@using Blorc.PatternFly.Components.Text
+@using Blorc.PatternFly.Components.TextInput
+@using Blorc.PatternFly.Components.Title
+@using Blorc.PatternFly.Layouts.Split
+@using Blorc.PatternFly.Layouts.Stack
+@using Blorc.PatternFly.Core
+
+@inherits YourShipping.WishList.Pages.DepartmentsComponent
+
+<TextContent>
+    <Text Component="h1">Departments</Text>
+    <Text Component="blockquote">Monitor departments</Text>
+</TextContent>
+<br />
+
+<div class="pf-c-form__group">
+    
+    <label class="pf-c-form__label" for="vertical-align-labels-vertical-form-name">    
+        <span class="pf-c-form__label-text">Deparment Link</span>    
+        <span class="pf-c-form__label-required" aria-hidden="true">*</span>  
+    </label>
+
+    <Split IsGutter="true">
+        <SplitItem IsFilled="true">
+            <TextInput Label="Department Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous"/>
+        </SplitItem>
+        <SplitItem>
+            <Button Variant=@ButtonVariant.Primary OnClick=@(async (s, a) => await AddAsync())>Add</Button>
+        </SplitItem>
+    </Split>
+</div>
+
+<br />
+
+<Stack IsGutter="true">
+    <StackItem>
+        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Departments>
+            <Header>
+                <Row>
+                    <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
+                    <Column Label="Store" Key="Store" IsSortable="true" Idx="1" />
+                    <Column Label="Products Count" Key="ProductsCount" IsSortable="true" Idx="2" />
+                    <Column Label="Has Changed" Key="HasChanged" IsSortable="true" Idx="3" />
+                    <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
+                </Row>
+            </Header>
+            <NoRowsContent>
+                @if (IsLoading)
+                {
+                    <EmptyState Variant="EmptyStateVariant.Full">
+                        <Spinner IsVisible="true" Size="@SpinnerSize.XLarge" />
+                        <Title HeadingLevel="h5" Size="lg">
+                            Loading
+                        </Title>
+                    </EmptyState>
+                }
+                else
+                {
+                    <EmptyState Variant="EmptyStateVariant.Full">
+                        <EmptyStateIcon Icon="Search" />
+                        <Title HeadingLevel="h2" Size="lg">
+                            No data
+                        </Title>
+                    </EmptyState>
+                }
+            </NoRowsContent>
+        </Table>
+    </StackItem>
+    <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync()) isBlock>Refresh</Button></StackItem>
+</Stack>
+
+
+
+

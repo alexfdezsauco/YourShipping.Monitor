@@ -1,0 +1,23 @@
+﻿@using Blorc.Components
+@using Blorc.PatternFly.Layouts
+@using Blorc.PatternFly.Components.Page
+@using Blorc.PatternFly.Components.Button
+
+@inherits BlorcLayoutComponentBase
+
+<Page>
+    <LogoContent>
+        YourShipping.WishList
+    </LogoContent>
+    <ToolbarContent>
+        <Button Component="a" Variant="ButtonVariant.Primary" Href="http://blazor.net">
+            About
+        </Button>
+    </ToolbarContent>
+    <SidebarContent>
+        <NavMenu />
+    </SidebarContent>
+    <MainContent>
+        @Body
+    </MainContent>
+</Page>

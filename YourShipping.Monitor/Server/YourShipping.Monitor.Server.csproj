@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Migrations\20200516074016_Initial.cs" />
+    <Compile Remove="Migrations\20200516074016_Initial.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.0-rc1.20223.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Orc.EntityFrameworkCore" Version="1.0.0-alpha0248" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Client\YourShipping.Monitor.Client.csproj" />
+    <ProjectReference Include="..\Shared\YourShipping.Monitor.Shared.csproj" />
+  </ItemGroup>
+</Project>
