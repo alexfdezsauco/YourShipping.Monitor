@@ -11,23 +11,24 @@
         <NavigationItem Link="/">
             <Split IsGutter="true">
                 <SplitItem><HomeIcon /></SplitItem>
-                <SplitItem>Home</SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Home</SplitItem>
             </Split>
         </NavigationItem>
         <NavigationItem Link="/products">
             <Split IsGutter="true">
                 <SplitItem><GiftIcon /></SplitItem>
-                <SplitItem>Products</SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Products</SplitItem>
                 @if (ApplicationState.HasAlertsFrom(AlertSource.Products))
                 {
                     <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
                 }
+              
             </Split>
         </NavigationItem>
         <NavigationItem Link="/departments">
             <Split IsGutter="true">
                 <SplitItem><BuildingIcon /></SplitItem>
-                <SplitItem>Departments</SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Departments</SplitItem>
                 @if (ApplicationState.HasAlertsFrom(AlertSource.Departments))
                 {
                     <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
