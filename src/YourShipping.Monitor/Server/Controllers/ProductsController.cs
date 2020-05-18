@@ -6,7 +6,6 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
 
     using Orc.EntityFrameworkCore;
 
@@ -18,13 +17,6 @@
     [Route("[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly ILogger<ProductsController> logger;
-
-        public ProductsController(ILogger<ProductsController> logger)
-        {
-            this.logger = logger;
-        }
-
         [HttpPost]
         public async Task<ActionResult<Product>> Add(
             [FromServices] IRepository<Models.Product, int> productRepository,
@@ -50,7 +42,7 @@
                 }
             }
 
-            return storedProduct.ToDataTransferObject();
+            return storedProduct?.ToDataTransferObject();
         }
 
         [HttpDelete("{id}")]
@@ -88,6 +80,10 @@
                             product.Updated = dateTime;
                             product = productRepository.TryAddOrUpdate(product, nameof(Models.Product.Added));
                         }
+                    }
+                    else
+                    {
+                        product = storedProduct;
                     }
                 }
 

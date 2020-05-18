@@ -8,6 +8,8 @@ namespace YourShipping.Monitor.Server.Services
 
     using Orc.EntityFrameworkCore;
 
+    using Serilog;
+
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -17,14 +19,11 @@ namespace YourShipping.Monitor.Server.Services
 
     public class ProductMonitorHostedService : TimedHostedServiceBase
     {
-        private readonly ILogger<ProductMonitorHostedService> logger;
 
         public ProductMonitorHostedService(
-            ILogger<ProductMonitorHostedService> logger,
             IServiceProvider serviceProvider)
-            : base(logger, serviceProvider)
+            : base(serviceProvider)
         {
-            this.logger = logger;
         }
 
         [Execute]
@@ -33,7 +32,8 @@ namespace YourShipping.Monitor.Server.Services
             IEntityScrapper<Product> productScrapper,
             IHubContext<MessagesHub> messageHubContext)
         {
-            this.Logger.LogInformation("Running Products Monitor.");
+            Log.Information("Running {Source} Monitor.", AlertSource.Products);
+
             var sourceChanged = false;
             foreach (var storedProduct in productRepository.All())
             {
@@ -59,12 +59,12 @@ namespace YourShipping.Monitor.Server.Services
 
             if (sourceChanged)
             {
-                this.Logger.LogInformation("Products change detected");
+                Log.Information("{Source} change detected", AlertSource.Products);
                 await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Products);
             }
             else
             {
-                this.Logger.LogInformation("No Products change detected");
+                Log.Information("No {Source} change detected", AlertSource.Products);
             }
         }
     }

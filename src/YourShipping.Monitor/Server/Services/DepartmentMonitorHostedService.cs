@@ -4,9 +4,10 @@ namespace YourShipping.Monitor.Server.Services
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
-    using Microsoft.Extensions.Logging;
 
     using Orc.EntityFrameworkCore;
+
+    using Serilog;
 
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Services.Attributes;
@@ -18,10 +19,8 @@ namespace YourShipping.Monitor.Server.Services
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
-        public DepartmentMonitorHostedService(
-            ILogger<DepartmentMonitorHostedService> logger,
-            IServiceProvider serviceProvider)
-            : base(logger, serviceProvider)
+        public DepartmentMonitorHostedService(IServiceProvider serviceProvider)
+            : base(serviceProvider)
         {
         }
 
@@ -31,7 +30,7 @@ namespace YourShipping.Monitor.Server.Services
             IEntityScrapper<Department> departmentScrapper,
             IHubContext<MessagesHub> messageHubContext)
         {
-            this.Logger.LogInformation("Running Departments Monitor.");
+            Log.Information("Running Departments Monitor.");
 
             var sourceChanged = false;
             foreach (var storedDepartment in departmentRepository.All())
@@ -57,12 +56,13 @@ namespace YourShipping.Monitor.Server.Services
             await departmentRepository.SaveChangesAsync();
             if (sourceChanged)
             {
-                this.Logger.LogInformation("Departments change detected");
+                Log.Information("{Source} change detected", AlertSource.Departments.ToString());
+
                 await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Departments);
             }
             else
             {
-                this.Logger.LogInformation("No Departments change detected");
+                Log.Information("No {Source} change detected", AlertSource.Departments.ToString());
             }
         }
     }

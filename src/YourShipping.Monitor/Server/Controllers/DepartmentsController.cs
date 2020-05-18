@@ -6,9 +6,10 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
 
     using Orc.EntityFrameworkCore;
+
+    using Serilog;
 
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -20,13 +21,6 @@
     [Route("[controller]")]
     public class DepartmentsController : ControllerBase
     {
-        private readonly ILogger<ProductsController> logger;
-
-        public DepartmentsController(ILogger<ProductsController> logger)
-        {
-            this.logger = logger;
-        }
-
         [HttpPost]
         public async Task<ActionResult<Department>> Add(
             [FromServices] IRepository<Models.Department, int> departmentRepository,
@@ -54,7 +48,12 @@
                 }
             }
 
-            return storedDepartment.ToDataTransferObject();
+            if (storedDepartment == null)
+            {
+                return this.NotFound();
+            }
+
+            return storedDepartment?.ToDataTransferObject();
         }
 
         [HttpDelete("{id}")]
@@ -91,13 +90,16 @@
                             department.Updated = dateTime;
                         }
                     }
+                    else
+                    {
+                        department = storedDepartment;
+                    }
                 }
 
                 if (department != null)
                 {
                     department.Read = dateTime;
                     department = departmentRepository.TryAddOrUpdate(department, nameof(Product.Added));
-
                     departments.Add(department.ToDataTransferObject(hasChanged));
                 }
             }

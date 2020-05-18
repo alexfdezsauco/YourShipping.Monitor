@@ -9,6 +9,10 @@
     using AngleSharp;
     using AngleSharp.Dom;
 
+    using Catel.Logging;
+
+    using Serilog.Core;
+
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -39,36 +43,48 @@
             var httpClient = new HttpClient();
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = uri + $"&{requestIdParam}";
-            var content = await httpClient.GetStringAsync(requestUri);
 
-            var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-            var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
-            var filterElement = mainPanelElement.QuerySelector<IElement>("div.productFilter.clearfix");
-
-            filterElement?.Remove();
-
-            if (mainPanelElement != null)
+            string content = null;
+            try
             {
-                content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
-                var sha256 = content.ComputeSHA256();
+                content = await httpClient.GetStringAsync(requestUri);
+            }
+            catch (Exception e)
+            {
+                Serilog.Log.Error(e, "Error requesting Department '{url}'",uri);
+            }
 
-                // TODO: Replace the usage of regex in favor of element selector
-                var matches = ProductPatterns.Select(regex => regex.Matches(content))
-                    .SelectMany(collection => collection).Where(match => match.Success).ToList();
-                var departmentNameMatch = this.namePatterns.Select(regex => regex.Match(content))
-                    .FirstOrDefault(match => match.Success);
-                if (departmentNameMatch != null)
+            if (!string.IsNullOrEmpty(content))
+            {
+                var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+                var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
+                
+                var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
+                filterElement?.Remove();
+
+                if (mainPanelElement != null)
                 {
-                    var department = new Department
-                                         {
-                                             Url = uri,
-                                             Name = departmentNameMatch?.Groups[1].Value,
-                                             ProductsCount = matches.Count,
-                                             Store = uri.Split('/')[3],
-                                             Sha256 = sha256
-                                         };
+                    content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
+                    var sha256 = content.ComputeSHA256();
 
-                    return department;
+                    // TODO: Replace the usage of regex in favor of element selector
+                    var matches = ProductPatterns.Select(regex => regex.Matches(content))
+                        .SelectMany(collection => collection).Where(match => match.Success).ToList();
+                    var departmentNameMatch = this.namePatterns.Select(regex => regex.Match(content))
+                        .FirstOrDefault(match => match.Success);
+                    if (departmentNameMatch != null)
+                    {
+                        var department = new Department
+                                             {
+                                                 Url = uri,
+                                                 Name = departmentNameMatch?.Groups[1].Value,
+                                                 ProductsCount = matches.Count,
+                                                 Store = uri.Split('/')[3],
+                                                 Sha256 = sha256
+                                             };
+
+                        return department;
+                    }
                 }
             }
 

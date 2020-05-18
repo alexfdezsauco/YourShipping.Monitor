@@ -11,6 +11,8 @@ namespace YourShipping.Monitor.Server.Services
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
 
+    using Serilog;
+
     using YourShipping.Monitor.Server.Services.Attributes;
 
     public class TimedHostedServiceBase : IHostedService, IDisposable
@@ -23,14 +25,11 @@ namespace YourShipping.Monitor.Server.Services
 
         private Timer _timer;
 
-        public TimedHostedServiceBase(ILogger<TimedHostedServiceBase> logger, IServiceProvider serviceProvider)
+        public TimedHostedServiceBase(IServiceProvider serviceProvider)
         {
-            this.Logger = logger;
             this.applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             this.serviceProvider = serviceProvider;
         }
-
-        protected ILogger<TimedHostedServiceBase> Logger { get; }
 
         public void Dispose()
         {
@@ -44,7 +43,7 @@ namespace YourShipping.Monitor.Server.Services
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
-            this.Logger.LogInformation("Timed Hosted Service is stopping.");
+            Log.Information("Timed Hosted Service is stopping.");
 
             this._timer?.Change(Timeout.Infinite, 0);
 
@@ -76,7 +75,7 @@ namespace YourShipping.Monitor.Server.Services
             }
             catch (Exception e)
             {
-                this.Logger.LogError(e.Message);
+                Log.Error(e.Message);
             }
 
             return Task.CompletedTask;
@@ -122,7 +121,7 @@ namespace YourShipping.Monitor.Server.Services
             }
             else
             {
-                this.Logger.LogInformation("Timed Hosted Service running.");
+                Log.Information("Timed Hosted Service running.");
 
                 this._timer = new Timer(
                     o => this.DoWorkAsync(cancellationToken),
