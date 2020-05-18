@@ -1,4 +1,4 @@
-﻿namespace YourShipping.WishList.Pages
+﻿namespace YourShipping.Monitor.Client.Pages
 {
     using System;
     using System.Collections.Generic;
@@ -49,11 +49,11 @@
             {
                 actionDefinitions.Add(
                     new CallActionDefinition
-                    {
-                        Label = "Open",
-                        IsDisabled = !product.IsAvailable,
-                        Action = async o => await this.Open(o as Product)
-                    });
+                        {
+                            Label = "Open",
+                            IsDisabled = !product.IsAvailable,
+                            Action = async o => await this.Open(o as Product)
+                        });
                 actionDefinitions.Add(
                     new CallActionDefinition { Label = "Delete", Action = async o => await this.Delete(o as Product) });
 
@@ -65,9 +65,18 @@
 
         protected async Task AddAsync()
         {
-            await this.HttpClient.PostAsync("Products", JsonContent.Create(new Uri(this.Url)));
-            this.Url = string.Empty;
-            await this.RefreshAsync();
+            var responseMessage = await this.HttpClient.PostAsync("Products", JsonContent.Create(new Uri(this.Url)));
+            var product = await responseMessage.Content.ReadFromJsonAsync<Product>();
+            if (product != null && product.HasChanged)
+            {
+                this.Url = string.Empty;
+                if (product.HasChanged)
+                {
+                    this.Products.Add(product);
+                }
+
+                this.StateHasChanged();
+            }
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -105,7 +114,8 @@
         private async Task Delete(Product product)
         {
             await this.HttpClient.DeleteAsync($"Products/{product.Id}");
-            await this.RefreshAsync();
+            this.Products.Remove(product);
+            this.StateHasChanged();
         }
 
         private async Task Open(Product product)

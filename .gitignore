@@ -340,4 +340,6 @@ ASALocalRun/
 healthchecksdb
 
 # Database
-your-shipping.db
+.db
+.db-wal
+.db-shm

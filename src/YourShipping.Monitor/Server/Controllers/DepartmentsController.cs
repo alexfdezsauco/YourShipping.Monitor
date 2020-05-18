@@ -10,8 +10,11 @@
 
     using Orc.EntityFrameworkCore;
 
-    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
+    using YourShipping.Monitor.Shared;
+
+    using Product = YourShipping.Monitor.Server.Models.Product;
 
     [ApiController]
     [Route("[controller]")]
@@ -25,9 +28,9 @@
         }
 
         [HttpPost]
-        public async Task<Department> Add(
-            [FromServices] IRepository<Department, int> departmentRepository,
-            [FromServices] IEntityScrapper<Department> departmentScrapper,
+        public async Task<ActionResult<Department>> Add(
+            [FromServices] IRepository<Models.Department, int> departmentRepository,
+            [FromServices] IEntityScrapper<Models.Department> departmentScrapper,
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
@@ -47,30 +50,30 @@
                     departmentRepository.Add(department);
                     await departmentRepository.SaveChangesAsync();
 
-                    return department;
+                    return department.ToDataTransferObject(true);
                 }
             }
 
-            return null;
+            return storedDepartment.ToDataTransferObject();
         }
 
         [HttpDelete("{id}")]
-        public async Task Delete([FromServices] IRepository<Department, int> departmentRepository, int id)
+        public async Task Delete([FromServices] IRepository<Models.Department, int> departmentRepository, int id)
         {
             departmentRepository.Delete(department => department.Id == id);
             await departmentRepository.SaveChangesAsync();
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Shared.Department>> Get(
-            [FromServices] IRepository<Department, int> departmentRepository,
-            [FromServices] IEntityScrapper<Department> entityScrapper)
+        public async Task<IEnumerable<Department>> Get(
+            [FromServices] IRepository<Models.Department, int> departmentRepository,
+            [FromServices] IEntityScrapper<Models.Department> entityScrapper)
         {
-            var departments = new List<Shared.Department>();
+            var departments = new List<Department>();
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
-                Department department;
+                Models.Department department;
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
                 if (hasChanged)
                 {
@@ -96,7 +99,7 @@
                     department = departmentRepository.TryAddOrUpdate(department, nameof(Product.Added));
 
                     departments.Add(
-                        new Shared.Department
+                        new Department
                             {
                                 Id = department.Id,
                                 Url = department.Url,

@@ -1,4 +1,4 @@
-﻿namespace YourShipping.WishList.Pages
+﻿namespace YourShipping.Monitor.Client.Pages
 {
     using System;
     using System.Collections.Generic;
@@ -49,26 +49,24 @@
             {
                 actionDefinitions.Add(
                     new CallActionDefinition
-                    {
-                        Label = "Open",
-                        IsDisabled = department.ProductsCount == 0,
-                        Action = async o => await this.Open(o as Department)
-                    });
+                        {
+                            Label = "Open",
+                            IsDisabled = department.ProductsCount == 0,
+                            Action = async o => await this.Open(o as Department)
+                        });
                 actionDefinitions.Add(
                     new CallActionDefinition
-                    {
-                        Label = "Delete",
-                        Action = async o => await this.Delete(o as Department)
-                    });
-                actionDefinitions.Add(
-                    new SeparatorActionDefinition());
+                        {
+                            Label = "Delete", Action = async o => await this.Delete(o as Department)
+                        });
+                actionDefinitions.Add(new SeparatorActionDefinition());
                 actionDefinitions.Add(
                     new CallActionDefinition
-                    {
-                        Label = "Add all products",
-                        IsDisabled = department.ProductsCount == 0,
-                        Action = async o => await this.AddAll(o as Department)
-                    });
+                        {
+                            Label = "Add all products",
+                            IsDisabled = department.ProductsCount == 0,
+                            Action = async o => await this.AddAll(o as Department)
+                        });
 
                 return actionDefinitions;
             }
@@ -76,11 +74,27 @@
             return actionDefinitions;
         }
 
+        private async Task AddAll(Department department)
+        {
+            throw new NotImplementedException();
+        }
+
         protected async Task AddAsync()
         {
-            await this.HttpClient.PostAsync("Departments", JsonContent.Create(new Uri(this.Url)));
-            this.Url = string.Empty;
-            await this.RefreshAsync();
+            var responseMessage = await this.HttpClient.PostAsync(
+                                          "Departments",
+                                          JsonContent.Create(new Uri(this.Url)));
+            var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
+            if (department != null)
+            {
+                this.Url = string.Empty;
+                if (department.HasChanged)
+                {
+                    this.Departments.Add(department);
+                }
+
+                this.StateHasChanged();
+            }
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -115,14 +129,11 @@
             this.IsLoading = true;
         }
 
-        private async Task AddAll(Department department)
-        {
-        }
-
         private async Task Delete(Department department)
         {
             await this.HttpClient.DeleteAsync($"Departments/{department.Id}");
-            await this.RefreshAsync();
+            this.Departments.Remove(department);
+            this.StateHasChanged();
         }
 
         private async Task Open(Department department)

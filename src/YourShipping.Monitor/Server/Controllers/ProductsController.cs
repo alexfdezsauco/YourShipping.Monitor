@@ -10,8 +10,9 @@
 
     using Orc.EntityFrameworkCore;
 
-    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
+    using YourShipping.Monitor.Shared;
 
     [ApiController]
     [Route("[controller]")]
@@ -25,9 +26,9 @@
         }
 
         [HttpPost]
-        public async Task<Shared.Product> Add(
-            [FromServices] IRepository<Product, int> productRepository,
-            [FromServices] IEntityScrapper<Product> entityScrapper,
+        public async Task<ActionResult<Product>> Add(
+            [FromServices] IRepository<Models.Product, int> productRepository,
+            [FromServices] IEntityScrapper<Models.Product> entityScrapper,
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
@@ -45,38 +46,31 @@
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
 
-                    return new Shared.Product
-                    {
-                        Id = product.Id,
-                        Name = product.Name,
-                        Price = product.Price,
-                        Url = product.Url,
-                        Currency = product.Currency,
-                        Store = product.Store,
-                        IsAvailable = product.IsAvailable
-                    };
+                    return product.ToDataTransferObject(true);
                 }
             }
 
-            return null;
+            return storedProduct.ToDataTransferObject();
         }
 
         [HttpDelete("{id}")]
-        public async Task Delete([FromServices] IRepository<Product, int> productRepository, int id)
+        public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Shared.Product>> Get([FromServices] IRepository<Product, int> productRepository, [FromServices] IEntityScrapper<Product> entityScrapper)
+        public async Task<IEnumerable<Product>> Get(
+            [FromServices] IRepository<Models.Product, int> productRepository,
+            [FromServices] IEntityScrapper<Models.Product> entityScrapper)
         {
-            var products = new List<Shared.Product>();
+            var products = new List<Product>();
 
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
-                Product product;
+                Models.Product product;
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
                 if (hasChanged)
                 {
@@ -92,7 +86,7 @@
                         if (hasChanged)
                         {
                             product.Updated = dateTime;
-                            product = productRepository.TryAddOrUpdate(product, nameof(Product.Added));
+                            product = productRepository.TryAddOrUpdate(product, nameof(Models.Product.Added));
                         }
                     }
                 }
@@ -100,18 +94,7 @@
                 if (product != null)
                 {
                     product.Read = dateTime;
-                    products.Add(
-                        new Shared.Product
-                        {
-                            Id = product.Id,
-                            Name = product.Name,
-                            Price = product.Price,
-                            Url = product.Url,
-                            Currency = product.Currency,
-                            Store = product.Store,
-                            HasChanged = hasChanged,
-                            IsAvailable = product.IsAvailable
-                        });
+                    products.Add(product.ToDataTransferObject(hasChanged));
                 }
             }
 
