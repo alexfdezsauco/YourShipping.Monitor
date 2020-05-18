@@ -98,16 +98,7 @@
                     department.Read = dateTime;
                     department = departmentRepository.TryAddOrUpdate(department, nameof(Product.Added));
 
-                    departments.Add(
-                        new Department
-                            {
-                                Id = department.Id,
-                                Url = department.Url,
-                                Store = department.Store,
-                                Name = department.Name,
-                                HasChanged = hasChanged,
-                                ProductsCount = department.ProductsCount
-                            });
+                    departments.Add(department.ToDataTransferObject(hasChanged));
                 }
             }
 

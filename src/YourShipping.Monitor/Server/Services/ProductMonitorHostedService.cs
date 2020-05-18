@@ -41,12 +41,6 @@ namespace YourShipping.Monitor.Server.Services
                 var product = await productScrapper.GetAsync(storedProduct.Url);
                 if (product != null)
                 {
-                    // var hasChanged = product.Name != storedProduct.Name
-                    // || Math.Abs(product.Price - storedProduct.Price) > 0.001
-                    // || product.Store != storedProduct.Store
-                    // || product.Currency != storedProduct.Currency
-                    // || product.IsAvailable != storedProduct.IsAvailable;
-
                     if (product.Sha256 != storedProduct.Sha256)
                     {
                         if (!sourceChanged)

@@ -40,10 +40,6 @@ namespace YourShipping.Monitor.Server.Services
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url);
                 if (department != null)
                 {
-                    /*var hasChanged = department.Name != storedDepartment.Name
-                                     || department.Store != storedDepartment.Store
-                                     || department.ProductsCount != storedDepartment.ProductsCount;*/
-
                     if (department.Sha256 != storedDepartment.Sha256)
                     {
                         if (!sourceChanged)
