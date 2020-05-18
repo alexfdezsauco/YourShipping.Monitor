@@ -11,6 +11,8 @@ namespace YourShipping.Monitor.Client
     using Microsoft.AspNetCore.SignalR.Client;
     using Microsoft.Extensions.DependencyInjection;
 
+    using Toolbelt.Blazor.Extensions.DependencyInjection;
+
     using YourShipping.Monitor.Client.Services;
     using YourShipping.Monitor.Client.Services.Interfaces;
 
@@ -23,8 +25,9 @@ namespace YourShipping.Monitor.Client
             builder.RootComponents.Add<App>("app");
 
             builder.Services.AddTransient(
-                sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+                sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }.EnableIntercept(sp));
 
+            builder.Services.AddLoadingBar();
             builder.Services.AddTransient<HubConnectionBuilder>();
 
             builder.Services.AddBlorcCore();
@@ -33,6 +36,7 @@ namespace YourShipping.Monitor.Client
 
             await builder.Build()
                 .MapComponentServices(options => options.MapBlorcPatternFly())
+                .UseLoadingBar()
                 .RunAsync();
         }
     }

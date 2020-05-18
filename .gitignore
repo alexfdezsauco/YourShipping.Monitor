@@ -343,3 +343,6 @@ healthchecksdb
 .db
 .db-wal
 .db-shm
+*.db
+*.db-shm
+*.db-wal
