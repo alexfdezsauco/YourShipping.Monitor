@@ -13,21 +13,20 @@ namespace YourShipping.Monitor.Client.Services
 
     public class ApplicationState : IApplicationState
     {
+        private readonly SortedSet<AlertSource> alertSources = new SortedSet<AlertSource>();
+
         private readonly HubConnection connection;
-
-
-        private readonly List<AlertSource> alertSources = new List<AlertSource>();
 
         public ApplicationState(HubConnectionBuilder hubConnectionBuilder, NavigationManager navigationManager)
         {
             navigationManager.LocationChanged += (sender, args) =>
                 {
-                    if (args.Location.EndsWith("/departments"))
+                    if (args.Location.EndsWith("/departments-monitor"))
                     {
                         this.alertSources.Remove(AlertSource.Departments);
                         this.OnStateChanged();
                     }
-                    else if (args.Location.EndsWith("/products"))
+                    else if (args.Location.EndsWith("/products-monitor"))
                     {
                         this.alertSources.Remove(AlertSource.Products);
                         this.OnStateChanged();
@@ -45,14 +44,13 @@ namespace YourShipping.Monitor.Client.Services
 
         public bool HasAlertsFrom(AlertSource alertSource)
         {
-            return this.alertSources.Exists(c => c == alertSource);
+            return this.alertSources.Contains(alertSource);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)
         {
-            if (!this.alertSources.Exists(d => d == alertSource))
+            if (this.alertSources.Add(alertSource))
             {
-                this.alertSources.Add(alertSource);
                 this.OnStateChanged();
             }
         }
