@@ -51,7 +51,7 @@
                         <Column Label="Store" Key="Store" IsSortable="true" Idx="3" />
                         <Column Label="Has Changed" Key="HasChanged" IsSortable="true" Idx="4" />
                         <Column Label="Is Available" Key="IsAvailable" IsSortable="true" Idx="5" />
-                        <ActionColumn ActionColumnType=@ActionColumnType.GutterButtons Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
+                        <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                     </Row>
                 </Header>
                 <NoRowsContent>
