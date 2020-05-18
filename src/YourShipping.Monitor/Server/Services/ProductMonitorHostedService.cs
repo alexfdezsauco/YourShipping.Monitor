@@ -3,8 +3,6 @@ namespace YourShipping.Monitor.Server.Services
     using System;
     using System.Threading.Tasks;
 
-    using BlazorApp6.Server;
-
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Logging;
 
@@ -36,24 +34,24 @@ namespace YourShipping.Monitor.Server.Services
             IHubContext<MessagesHub> messageHubContext)
         {
             this.Logger.LogInformation("Running Products Monitor.");
-            bool domainChanged = false;
+            var sourceChanged = false;
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
                 var product = await productScrapper.GetAsync(storedProduct.Url);
                 if (product != null)
                 {
-                    var hasChanged = product.Name != storedProduct.Name
-                                     || Math.Abs(product.Price - storedProduct.Price) > 0.001
-                                     || product.Store != storedProduct.Store
-                                     || product.Currency != storedProduct.Currency
-                                     || product.IsAvailable != storedProduct.IsAvailable;
+                    // var hasChanged = product.Name != storedProduct.Name
+                    // || Math.Abs(product.Price - storedProduct.Price) > 0.001
+                    // || product.Store != storedProduct.Store
+                    // || product.Currency != storedProduct.Currency
+                    // || product.IsAvailable != storedProduct.IsAvailable;
 
-                    if (hasChanged)
+                    if (product.Sha256 != storedProduct.Sha256)
                     {
-                        if (!domainChanged)
+                        if (!sourceChanged)
                         {
-                            domainChanged = product.IsAvailable;
+                            sourceChanged = product.IsAvailable;
                         }
 
                         product.Id = storedProduct.Id;
@@ -65,10 +63,10 @@ namespace YourShipping.Monitor.Server.Services
 
             await productRepository.SaveChangesAsync();
 
-            if (domainChanged)
+            if (sourceChanged)
             {
                 this.Logger.LogInformation("Products change detected");
-                await messageHubContext.Clients.All.SendAsync("DomainChanged", AlertSource.Products);
+                await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Products);
             }
             else
             {

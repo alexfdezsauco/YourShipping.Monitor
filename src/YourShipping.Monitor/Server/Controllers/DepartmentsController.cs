@@ -62,11 +62,11 @@
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Monitor.Shared.Department>> Get(
+        public async Task<IEnumerable<Shared.Department>> Get(
             [FromServices] IRepository<Department, int> departmentRepository,
             [FromServices] IEntityScrapper<Department> entityScrapper)
         {
-            var departments = new List<Monitor.Shared.Department>();
+            var departments = new List<Shared.Department>();
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
@@ -82,10 +82,7 @@
                     if (department != null)
                     {
                         department.Id = storedDepartment.Id;
-                        hasChanged = department.Name != storedDepartment.Name
-                                     || department.Store != storedDepartment.Store
-                                     || department.ProductsCount != storedDepartment.ProductsCount;
-
+                        hasChanged = storedDepartment.Sha256 != department.Sha256;
                         if (hasChanged)
                         {
                             department.Updated = dateTime;
@@ -99,15 +96,15 @@
                     department = departmentRepository.TryAddOrUpdate(department, nameof(Product.Added));
 
                     departments.Add(
-                        new Monitor.Shared.Department
-                        {
-                            Id = department.Id,
-                            Url = department.Url,
-                            Store = department.Store,
-                            Name = department.Name,
-                            HasChanged = hasChanged,
-                            ProductsCount = department.ProductsCount
-                        });
+                        new Shared.Department
+                            {
+                                Id = department.Id,
+                                Url = department.Url,
+                                Store = department.Store,
+                                Name = department.Name,
+                                HasChanged = hasChanged,
+                                ProductsCount = department.ProductsCount
+                            });
                 }
             }
 

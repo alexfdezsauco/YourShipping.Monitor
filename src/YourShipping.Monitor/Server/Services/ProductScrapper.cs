@@ -1,4 +1,4 @@
-﻿namespace YourShipping.WishList.Server.Services
+﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
     using System.Linq;
@@ -6,6 +6,10 @@
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
+    using AngleSharp;
+    using AngleSharp.Dom;
+
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -14,7 +18,7 @@
     /// </summary>
     public class ProductScrapper : IEntityScrapper<Product>
     {
-        private static readonly Regex[] NamePatterns =
+        private readonly Regex[] namePatterns =
             {
                 new Regex(
                     @"<td\s+class=""DescriptionValue""[^>]*>[^<]+<span>([^<]+)</span>",
@@ -24,7 +28,7 @@
                     RegexOptions.IgnoreCase | RegexOptions.Compiled)
             };
 
-        private static readonly Regex[] PricePatterns =
+        private readonly Regex[] pricePatterns =
             {
                 new Regex(
                     @"<td\s+class=""PrecioProdList"">([^<]+)</td>",
@@ -34,31 +38,45 @@
                     RegexOptions.IgnoreCase | RegexOptions.Compiled)
             };
 
+        private readonly Regex effectiveContentPattern = new Regex("<div id=\"ctl00_cphPage_UpdatePanel1\">(.+?)</div>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
         public async Task<Product> GetAsync(string uri)
         {
             var httpClient = new HttpClient();
-            var requestUri = uri + "&requestId=" + Guid.NewGuid().ToString();
+            var requestIdParam = "requestId=" + Guid.NewGuid();
+            var requestUri = uri + $"&{requestIdParam}";
             var content = await httpClient.GetStringAsync(requestUri);
-            var nameMatch = NamePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
-            var priceMatch = PricePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
-            var name = nameMatch?.Groups[1].Value;
-            var priceText = priceMatch?.Groups[1].Value.Trim();
 
-            if (!string.IsNullOrEmpty(priceText) && !string.IsNullOrEmpty(name))
+            var context = BrowsingContext.New(Configuration.Default);
+            var document = await context.OpenAsync(req => req.Content(content));
+            var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
+            if (mainPanelElement != null)
             {
-                var priceParts = priceText?.Split(' ');
-                var price = float.Parse(priceParts[0].Trim(' ', '$'));
-                var currency = priceParts[^1];
+                content = mainPanelElement.OuterHtml.Replace(requestIdParam, "");
+                var sha256 = content.ComputeSHA256();
 
-                return new Product
+                // TODO: Replace the usage of regex in favor of element selector
+                var nameMatch = this.namePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
+                var priceMatch = this.pricePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
+                var name = nameMatch?.Groups[1].Value;
+                var priceText = priceMatch?.Groups[1].Value.Trim();
+                if (!string.IsNullOrEmpty(priceText) && !string.IsNullOrEmpty(name))
                 {
-                    Name = name,
-                    Price = price,
-                    Currency = currency,
-                    Url = uri,
-                    Store = uri.Split('/')[3],
-                    IsAvailable = !content.Contains("no esta disponible")
-                };
+                    var priceParts = priceText?.Split(' ');
+                    var price = float.Parse(priceParts[0].Trim(' ', '$'));
+                    var currency = priceParts[^1];
+
+                    return new Product
+                               {
+                                   Name = name,
+                                   Price = price,
+                                   Currency = currency,
+                                   Url = uri,
+                                   Store = uri.Split('/')[3],
+                                   IsAvailable = !content.Contains("no esta disponible"),
+                                   Sha256 = sha256
+                               };
+                }
             }
 
             return null;

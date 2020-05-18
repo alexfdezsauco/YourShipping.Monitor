@@ -21,5 +21,7 @@
         public DateTime Updated { get; set; }
 
         public string Url { get; set; }
+
+        public string Sha256 { get; set; }
     }
 }

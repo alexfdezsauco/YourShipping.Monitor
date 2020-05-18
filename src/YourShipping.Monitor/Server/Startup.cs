@@ -13,8 +13,6 @@ namespace YourShipping.Monitor.Server
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services;
     using YourShipping.Monitor.Server.Services.Interfaces;
-    using YourShipping.WishList.Server;
-    using YourShipping.WishList.Server.Services;
 
     public class Startup
     {

@@ -3,8 +3,6 @@ namespace YourShipping.Monitor.Server.Services
     using System;
     using System.Threading.Tasks;
 
-    using BlazorApp6.Server;
-
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Logging;
 
@@ -35,22 +33,22 @@ namespace YourShipping.Monitor.Server.Services
         {
             this.Logger.LogInformation("Running Departments Monitor.");
 
-            var domainChanged = false;
+            var sourceChanged = false;
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url);
                 if (department != null)
                 {
-                    var hasChanged = department.Name != storedDepartment.Name
+                    /*var hasChanged = department.Name != storedDepartment.Name
                                      || department.Store != storedDepartment.Store
-                                     || department.ProductsCount != storedDepartment.ProductsCount;
+                                     || department.ProductsCount != storedDepartment.ProductsCount;*/
 
-                    if (hasChanged)
+                    if (department.Sha256 != storedDepartment.Sha256)
                     {
-                        if (!domainChanged)
+                        if (!sourceChanged)
                         {
-                            domainChanged = department.ProductsCount > 0;
+                            sourceChanged = department.ProductsCount > 0;
                         }
 
                         department.Id = storedDepartment.Id;
@@ -61,10 +59,10 @@ namespace YourShipping.Monitor.Server.Services
             }
 
             await departmentRepository.SaveChangesAsync();
-            if (domainChanged)
+            if (sourceChanged)
             {
                 this.Logger.LogInformation("Departments change detected");
-                await messageHubContext.Clients.All.SendAsync("DomainChanged", AlertSource.Departments);
+                await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Departments);
             }
             else
             {

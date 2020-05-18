@@ -15,7 +15,7 @@ namespace YourShipping.Monitor.Client.Shared
 
         protected override async Task OnInitializedAsync()
         {
-            this.ApplicationState.StateChanged += (sender, args) => this.StateHasChanged();
+            this.ApplicationState.SourceChanged += (sender, args) => this.StateHasChanged();
         }
     }
 }

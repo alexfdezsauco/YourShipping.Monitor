@@ -6,7 +6,7 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
     public interface IApplicationState
     {
-        event EventHandler StateChanged;
+        event EventHandler SourceChanged;
 
         bool HasAlertsFrom(AlertSource alertSource);
     }

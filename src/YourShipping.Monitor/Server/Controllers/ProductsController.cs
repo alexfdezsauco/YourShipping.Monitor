@@ -69,9 +69,7 @@
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Shared.Product>> Get(
-            [FromServices] IRepository<Product, int> productRepository,
-            [FromServices] IEntityScrapper<Product> entityScrapper)
+        public async Task<IEnumerable<Shared.Product>> Get([FromServices] IRepository<Product, int> productRepository, [FromServices] IEntityScrapper<Product> entityScrapper)
         {
             var products = new List<Shared.Product>();
 
@@ -90,12 +88,7 @@
                     if (product != null)
                     {
                         product.Id = storedProduct.Id;
-                        hasChanged = product.Name != storedProduct.Name
-                                     || Math.Abs(product.Price - storedProduct.Price) > 0.001
-                                     || product.Store != storedProduct.Store
-                                     || product.Currency != storedProduct.Currency
-                                     || product.IsAvailable != storedProduct.IsAvailable;
-
+                        hasChanged = storedProduct.Sha256 != product.Sha256;
                         if (hasChanged)
                         {
                             product.Updated = dateTime;
