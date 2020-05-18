@@ -18,6 +18,8 @@
     /// </summary>
     public class ProductScrapper : IEntityScrapper<Product>
     {
+        private readonly IBrowsingContext browsingContext;
+
         private readonly Regex[] namePatterns =
             {
                 new Regex(
@@ -38,7 +40,10 @@
                     RegexOptions.IgnoreCase | RegexOptions.Compiled)
             };
 
-        private readonly Regex effectiveContentPattern = new Regex("<div id=\"ctl00_cphPage_UpdatePanel1\">(.+?)</div>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        public ProductScrapper(IBrowsingContext browsingContext)
+        {
+            this.browsingContext = browsingContext;
+        }
 
         public async Task<Product> GetAsync(string uri)
         {
@@ -47,17 +52,17 @@
             var requestUri = uri + $"&{requestIdParam}";
             var content = await httpClient.GetStringAsync(requestUri);
 
-            var context = BrowsingContext.New(Configuration.Default);
-            var document = await context.OpenAsync(req => req.Content(content));
+            var document = await this.browsingContext.OpenAsync(req => req.Content(content));
             var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
             if (mainPanelElement != null)
             {
-                content = mainPanelElement.OuterHtml.Replace(requestIdParam, "");
+                content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
                 var sha256 = content.ComputeSHA256();
 
                 // TODO: Replace the usage of regex in favor of element selector
                 var nameMatch = this.namePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
-                var priceMatch = this.pricePatterns.Select(regex => regex.Match(content)).FirstOrDefault(m => m.Success);
+                var priceMatch = this.pricePatterns.Select(regex => regex.Match(content))
+                    .FirstOrDefault(m => m.Success);
                 var name = nameMatch?.Groups[1].Value;
                 var priceText = priceMatch?.Groups[1].Value.Trim();
                 if (!string.IsNullOrEmpty(priceText) && !string.IsNullOrEmpty(name))

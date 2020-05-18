@@ -1,9 +1,10 @@
 namespace YourShipping.Monitor.Server
 {
+    using AngleSharp;
+
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.EntityFrameworkCore;
-    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
 
@@ -13,6 +14,8 @@ namespace YourShipping.Monitor.Server
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services;
     using YourShipping.Monitor.Server.Services.Interfaces;
+
+    using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
     public class Startup
     {
@@ -70,6 +73,7 @@ namespace YourShipping.Monitor.Server
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
+            services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
             services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
             services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();
 

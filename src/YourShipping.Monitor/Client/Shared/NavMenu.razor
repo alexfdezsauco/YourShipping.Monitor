@@ -20,9 +20,8 @@
                 <SplitItem IsFilled="true" style="width: 140px;">Products</SplitItem>
                 @if (ApplicationState.HasAlertsFrom(AlertSource.Products))
                 {
-                    <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
+                    <SplitItem><BellIcon /></SplitItem>
                 }
-              
             </Split>
         </NavigationItem>
         <NavigationItem Link="/departments">
@@ -31,7 +30,7 @@
                 <SplitItem IsFilled="true" style="width: 140px;">Departments</SplitItem>
                 @if (ApplicationState.HasAlertsFrom(AlertSource.Departments))
                 {
-                    <SplitItem><Badge IsRead="false">NEW</Badge></SplitItem>
+                    <SplitItem><BellIcon /></SplitItem>
                 }
             </Split>
         </NavigationItem>
