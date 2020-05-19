@@ -3,15 +3,12 @@
     using System;
     using System.Linq;
     using System.Net.Http;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using AngleSharp;
     using AngleSharp.Dom;
 
-    using Catel.Logging;
-
-    using Serilog.Core;
+    using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models;
@@ -19,24 +16,14 @@
 
     public class DepartmentScrapper : IEntityScrapper<Department>
     {
+        private const string StorePrefix = "TuEnvio ";
+
         private readonly IBrowsingContext browsingContext;
 
         public DepartmentScrapper(IBrowsingContext browsingContext)
         {
             this.browsingContext = browsingContext;
         }
-
-        private static readonly Regex[] ProductPatterns =
-            {
-                new Regex(@"<a.+?href=""Item[?]ProdPid=[^""]+""[^>]+>", RegexOptions.IgnoreCase | RegexOptions.Compiled)
-            };
-
-        private readonly Regex[] namePatterns =
-            {
-                new Regex(
-                    "<a id=\".+_lnkDepartments\"[^>]+>([^<]+)</a>[^<]+</span>",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled)
-            };
 
         public async Task<Department> GetAsync(string uri)
         {
@@ -51,14 +38,34 @@
             }
             catch (Exception e)
             {
-                Serilog.Log.Error(e, "Error requesting Department '{url}'",uri);
+                Log.Error(e, "Error requesting Department '{url}'", uri);
             }
 
             if (!string.IsNullOrEmpty(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+                var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+
+                string store = null;
+                var uriParts = uri.Split('/');
+                if (uriParts.Length > 3)
+                {
+                    store = uri.Split('/')[3];
+                }
+
+                var footerElementTextParts = footerElement.InnerHtml.Split('•');
+                if (footerElementTextParts.Length > 0)
+                {
+                    store = footerElementTextParts[^1].Trim();
+                    if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                        && store.Length > StorePrefix.Length)
+                    {
+                        store = store.Substring(StorePrefix.Length - 1);
+                    }
+                }
+
                 var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
-                
+
                 var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
                 filterElement?.Remove();
 
@@ -67,19 +74,19 @@
                     content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
                     var sha256 = content.ComputeSHA256();
 
-                    // TODO: Replace the usage of regex in favor of element selector
-                    var matches = ProductPatterns.Select(regex => regex.Matches(content))
-                        .SelectMany(collection => collection).Where(match => match.Success).ToList();
-                    var departmentNameMatch = this.namePatterns.Select(regex => regex.Match(content))
-                        .FirstOrDefault(match => match.Success);
-                    if (departmentNameMatch != null)
+                    var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
+                    var departmentElement = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
+                        .LastOrDefault();
+                    var departmentName = departmentElement?.InnerHtml.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(departmentName))
                     {
                         var department = new Department
                                              {
                                                  Url = uri,
-                                                 Name = departmentNameMatch?.Groups[1].Value,
-                                                 ProductsCount = matches.Count,
-                                                 Store = uri.Split('/')[3],
+                                                 Name = departmentName,
+                                                 ProductsCount = productElements.Count,
+                                                 Store = store,
                                                  Sha256 = sha256
                                              };
 
