@@ -14,9 +14,9 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         void InvalidateProductsCache();
 
-        Task<List<Department>> GetDepartmentsAsync(bool reload = false);
+        Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync();
 
-        Task<List<Product>> GetProductsAsync(bool reload = false);
+        Task<List<Product>> GetProductsFromCacheOrFetchAsync();
 
         bool HasAlertsFrom(AlertSource alertSource);
     }

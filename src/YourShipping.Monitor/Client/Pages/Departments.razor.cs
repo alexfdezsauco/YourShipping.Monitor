@@ -110,10 +110,9 @@
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
-
             if (this.IsLoading)
             {
-                this.Departments = await this.ApplicationState.GetDepartmentsAsync(); 
+                this.Departments = await this.ApplicationState.GetDepartmentsFromCacheOrFetchAsync(); 
             }
         }
 
@@ -128,9 +127,16 @@
             {
                 this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(this.Departments) && this.Departments != null)
+            else if (e.PropertyName == nameof(this.Departments))
             {
-                this.IsLoading = false;
+                if (this.Departments == null)
+                {
+                    this.ApplicationState.InvalidateDepartmentsCache();
+                }
+                else
+                {
+                    this.IsLoading = false;
+                }
             }
         }
 
@@ -139,7 +145,6 @@
             if (reload)
             {
                 this.Departments = null;
-                this.ApplicationState.InvalidateDepartmentsCache();
             }
 
             this.IsLoading = true;

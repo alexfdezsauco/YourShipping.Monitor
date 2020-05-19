@@ -3,13 +3,11 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
     using System.Threading.Tasks;
 
     using Blorc.Components;
-    using Blorc.PatternFly.Components.Icon;
     using Blorc.PatternFly.Components.Table;
 
     using Microsoft.AspNetCore.Components;
@@ -94,7 +92,7 @@
             await base.OnAfterRenderAsync(firstRender);
             if (this.IsLoading)
             {
-                this.Products = await this.ApplicationState.GetProductsAsync();
+                this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
             }
         }
 
@@ -109,9 +107,16 @@
             {
                 this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(this.Products) && this.Products != null)
+            else if (e.PropertyName == nameof(this.Products))
             {
-                this.IsLoading = false;
+                if (this.Products == null)
+                {
+                    this.ApplicationState.InvalidateProductsCache();
+                }
+                else
+                {
+                    this.IsLoading = false;
+                }
             }
         }
 
@@ -120,7 +125,6 @@
             if (reload)
             {
                 this.Products = null;
-                this.ApplicationState.InvalidateProductsCache();
             }
 
             this.IsLoading = true;

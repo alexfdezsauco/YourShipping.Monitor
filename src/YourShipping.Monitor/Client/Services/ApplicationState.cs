@@ -55,31 +55,29 @@ namespace YourShipping.Monitor.Client.Services
 
         public event EventHandler SourceChanged;
 
-        public void InvalidateDepartmentsCache()
+        public async Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync()
         {
-            this.departments = null;
-        }
-
-        public void InvalidateProductsCache()
-        {
-            this.products = null;
-        }
-
-        public async Task<List<Department>> GetDepartmentsAsync(bool reload = false)
-        {
-            if (this.departments == null || reload)
+            if (this.departments == null)
             {
                 this.departments = (await this.httpClient.GetFromJsonAsync<Department[]>("Departments")).ToList();
+            }
+            else if (this.departments.Count == 0)
+            {
+                this.departments.AddRange(await this.httpClient.GetFromJsonAsync<Department[]>("Departments"));
             }
 
             return this.departments;
         }
 
-        public async Task<List<Product>> GetProductsAsync(bool reload = false)
+        public async Task<List<Product>> GetProductsFromCacheOrFetchAsync()
         {
-            if (this.products == null || reload)
+            if (this.products == null)
             {
                 this.products = (await this.httpClient.GetFromJsonAsync<Product[]>("Products")).ToList();
+            }
+            else if (this.products.Count == 0)
+            {
+                this.products.AddRange(await this.httpClient.GetFromJsonAsync<Product[]>("Products"));
             }
 
             return this.products;
@@ -88,6 +86,16 @@ namespace YourShipping.Monitor.Client.Services
         public bool HasAlertsFrom(AlertSource alertSource)
         {
             return this.alertSources.Contains(alertSource);
+        }
+
+        public void InvalidateDepartmentsCache()
+        {
+            this.departments?.Clear();
+        }
+
+        public void InvalidateProductsCache()
+        {
+            this.products?.Clear();
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)
