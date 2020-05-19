@@ -4,7 +4,6 @@ namespace YourShipping.Monitor.Server.Services
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
-    using Microsoft.Extensions.Logging;
 
     using Orc.EntityFrameworkCore;
 
@@ -19,9 +18,7 @@ namespace YourShipping.Monitor.Server.Services
 
     public class ProductMonitorHostedService : TimedHostedServiceBase
     {
-
-        public ProductMonitorHostedService(
-            IServiceProvider serviceProvider)
+        public ProductMonitorHostedService(IServiceProvider serviceProvider)
             : base(serviceProvider)
         {
         }
@@ -38,7 +35,16 @@ namespace YourShipping.Monitor.Server.Services
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
-                var product = await productScrapper.GetAsync(storedProduct.Url);
+                Product product = null;
+                try
+                {
+                    product = await productScrapper.GetAsync(storedProduct.Url);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error scrapping product '{url}'", storedProduct.Url);
+                }
+
                 if (product != null)
                 {
                     if (product.Sha256 != storedProduct.Sha256)

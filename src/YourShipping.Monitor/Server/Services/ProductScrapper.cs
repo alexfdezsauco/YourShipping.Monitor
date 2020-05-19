@@ -1,9 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -20,27 +18,9 @@
     /// </summary>
     public class ProductScrapper : IEntityScrapper<Product>
     {
+        private const string StorePrefix = "TuEnvio ";
+
         private readonly IBrowsingContext browsingContext;
-
-        private readonly Regex[] namePatterns =
-            {
-                new Regex(
-                    @"<td\s+class=""DescriptionValue""[^>]*>[^<]+<span>([^<]+)</span>",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled),
-                new Regex(
-                    @"<div\s+class=""product-title"">\s+<h4>([^<]+)</h4>\s+</div>",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled)
-            };
-
-        private readonly Regex[] pricePatterns =
-            {
-                new Regex(
-                    @"<td\s+class=""PrecioProdList"">([^<]+)</td>",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled),
-                new Regex(
-                    @"<div\s+class=""product-price"">\s+<span>([^<]+)</span>\s+</div>",
-                    RegexOptions.IgnoreCase | RegexOptions.Compiled)
-            };
 
         public ProductScrapper(IBrowsingContext browsingContext)
         {
@@ -65,36 +45,76 @@
             if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+
+                var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+
+                string store = null;
+                var uriParts = uri.Split('/');
+                if (uriParts.Length > 3)
+                {
+                    store = uri.Split('/')[3];
+                }
+
+                var footerElementTextParts = footerElement.InnerHtml.Split('•');
+                if (footerElementTextParts.Length > 0)
+                {
+                    store = footerElementTextParts[^1].Trim();
+                    if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                        && store.Length > StorePrefix.Length)
+                    {
+                        store = store.Substring(StorePrefix.Length - 1);
+                    }
+                }
+
                 var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
                 if (mainPanelElement != null)
                 {
                     content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
                     var sha256 = content.ComputeSHA256();
 
-                    // TODO: Replace the usage of regex in favor of element selector
-                    var nameMatch = this.namePatterns.Select(regex => regex.Match(content))
-                        .FirstOrDefault(m => m.Success);
-                    var priceMatch = this.pricePatterns.Select(regex => regex.Match(content))
-                        .FirstOrDefault(m => m.Success);
-                    var name = nameMatch?.Groups[1].Value;
-                    var priceText = priceMatch?.Groups[1].Value.Trim();
-                    if (!string.IsNullOrEmpty(priceText) && !string.IsNullOrEmpty(name))
-                    {
-                        var priceParts = priceText?.Split(' ');
-                        var price = float.Parse(priceParts[0].Trim(' ', '$'));
-                        var currency = priceParts[^1];
+                    var missingProductElement = mainPanelElement.QuerySelector<IElement>(
+                        "#ctl00_cphPage_formProduct_ctl00_productError_missingProduct");
 
-                        return new Product
-                                   {
-                                       Name = name,
-                                       Price = price,
-                                       Currency = currency,
-                                       Url = uri,
-                                       Store = uri.Split('/')[3],
-                                       IsAvailable = !content.Contains("no esta disponible"),
-                                       Sha256 = sha256
-                                   };
+                    IElement productPriceElement;
+                    IElement productNameElement;
+                    var isAvailable = missingProductElement == null;
+                    if (!isAvailable)
+                    {
+                        productNameElement = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(1) > td.DescriptionValue > span");
+                        productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(2) > td.PrecioProdList");
                     }
+                    else
+                    {
+                        productNameElement = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span5 > div.product-title > h4");
+
+                        productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+                    }
+
+                    var name = productNameElement?.InnerHtml.Trim();
+
+                    float price = 0;
+                    string currency = null;
+                    var priceParts = productPriceElement?.InnerHtml?.Trim().Split(' ');
+                    if (priceParts != null && priceParts.Length > 0)
+                    {
+                        price = float.Parse(priceParts[0].Trim(' ', '$'));
+                        currency = priceParts[^1];
+                    }
+
+                    return new Product
+                               {
+                                   Name = name,
+                                   Price = price,
+                                   Currency = currency,
+                                   Url = uri,
+                                   Store = store,
+                                   IsAvailable = isAvailable,
+                                   Sha256 = sha256
+                               };
                 }
             }
 

@@ -36,7 +36,16 @@ namespace YourShipping.Monitor.Server.Services
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
-                var department = await departmentScrapper.GetAsync(storedDepartment.Url);
+                Department department = null;
+                try
+                {
+                    department = await departmentScrapper.GetAsync(storedDepartment.Url);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error scrapping department '{url}'", storedDepartment.Url);
+                }
+
                 if (department != null)
                 {
                     if (department.Sha256 != storedDepartment.Sha256)

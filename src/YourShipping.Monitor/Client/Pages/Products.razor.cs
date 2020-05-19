@@ -54,7 +54,7 @@
                     new CallActionDefinition
                         {
                             Label = "Open",
-                            IsDisabled = !product.IsAvailable,
+                            // IsDisabled = !product.IsAvailable,
                             Action = async o => await this.Open(o as Product)
                         });
                 actionDefinitions.Add(
