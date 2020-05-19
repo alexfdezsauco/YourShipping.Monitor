@@ -12,6 +12,8 @@
 
         public DbSet<Product> Products { get; set; }
 
+        public DbSet<Store> Stores { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(
@@ -24,6 +26,7 @@
         {
             modelBuilder.Entity<Product>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
             modelBuilder.Entity<Department>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
+            modelBuilder.Entity<Store>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
             base.OnModelCreating(modelBuilder);
         }
     }

@@ -4,6 +4,8 @@
     {
         Departments,
 
-        Products
+        Products,
+
+        Stores,
     }
 }

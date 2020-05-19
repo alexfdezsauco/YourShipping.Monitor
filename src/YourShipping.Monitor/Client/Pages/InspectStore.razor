@@ -1,0 +1,71 @@
+﻿@page "/inspect-store/{Id}"
+
+@using System.ComponentModel
+@using Blorc.Components
+@using Blorc.PatternFly.Components.Button
+@using Blorc.PatternFly.Components.Breadcrumb
+@using Blorc.PatternFly.Components.Spinner
+@using Blorc.PatternFly.Components.EmptyState
+@using Blorc.PatternFly.Components.Label
+@using Blorc.PatternFly.Components.Table
+@using Blorc.PatternFly.Components.Text
+@using Blorc.PatternFly.Components.TextInput
+@using Blorc.PatternFly.Components.Title
+@using Blorc.PatternFly.Layouts.Split
+@using Blorc.PatternFly.Layouts.Stack
+@using Blorc.PatternFly.Core
+@using YourShipping.Monitor.Shared
+
+@inherits IspectStoreComponent
+
+@if (Store != null)
+{
+    <Breadcrumb>
+        <BreadcrumbItem To="/stores-monitor">Stores</BreadcrumbItem>
+        <BreadcrumbItem IsActive="true">
+            @Store.Name
+        </BreadcrumbItem>
+    </Breadcrumb>
+    <br/>
+    <br/>
+    <TextContent>
+        <Text Component="h1">Departments from @Store.Name</Text>
+        <Text Component="blockquote">View the existing departments</Text>
+    </TextContent>
+    <br />
+    <Stack IsGutter="true">
+        <StackItem>
+            <Table Caption="Products" IsStickyHeader="true" DataSource=@Departments HighlightPredicate=@(o=>IsHighlighted(o as Department))>
+                <Header>
+                    <Row>
+                        <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
+                        <Column Label="Category" Key="Category" IsSortable="true" Idx="1" />
+                        <Column Label="Products Count" Key="ProductsCount" IsSortable="true" Idx="2" />
+                        <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
+                    </Row>
+                </Header>
+                <NoRowsContent>
+                    @if (IsLoading)
+                    {
+                        <EmptyState Variant="EmptyStateVariant.Full">
+                            <Spinner IsVisible="true" Size="@SpinnerSize.XLarge" />
+                            <Title HeadingLevel="h5" Size="lg">
+                                Loading
+                            </Title>
+                        </EmptyState>
+                    }
+                    else
+                    {
+                        <EmptyState Variant="EmptyStateVariant.Full">
+                            <EmptyStateIcon Icon="Search" />
+                            <Title HeadingLevel="h2" Size="lg">
+                                No data
+                            </Title>
+                        </EmptyState>
+                    }
+                </NoRowsContent>
+            </Table>
+        </StackItem>
+        <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync(true)) isBlock>Refresh</Button></StackItem>
+    </Stack>
+}

@@ -16,12 +16,12 @@
     using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
-    public class IspectDepartmentComponent : BlorcComponentBase
+    public class IspectStoreComponent : BlorcComponentBase
     {
-        public Department Department
+        public Store Store
         {
-            get => this.GetPropertyValue<Department>(nameof(this.Department));
-            set => this.SetPropertyValue(nameof(this.Department), value);
+            get => this.GetPropertyValue<Store>(nameof(this.Store));
+            set => this.SetPropertyValue(nameof(this.Store), value);
         }
 
         [Parameter]
@@ -52,61 +52,59 @@
         [Inject]
         protected IJSRuntime JsRuntime { get; set; }
 
-        protected List<Product> Products
+        protected List<Department> Departments
         {
-            get => this.GetPropertyValue<List<Product>>(nameof(this.Products));
-            set => this.SetPropertyValue(nameof(this.Products), value);
+            get => this.GetPropertyValue<List<Department>>(nameof(this.Departments));
+            set => this.SetPropertyValue(nameof(this.Departments), value);
         }
 
         public IEnumerable<ActionDefinition> GetActions(object row)
         {
             var actionDefinitions = new List<ActionDefinition>();
-            if (row is Product product)
+            if (row is Department department)
             {
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
                             Label = "Buy",
-                            IsDisabled = !product.IsAvailable,
-                            Action = async o => await this.BuyOrBrowse(o as Product)
+                            IsDisabled = department.ProductsCount == 0,
+                            Action = async o => await this.BuyOrBrowse(o as Department)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Product)
+                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Department)
                         });
 
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
                             Label = "Follow",
-                            IsDisabled = product.IsStored,
-                            Action = async o => await this.Follow(o as Product)
+                            IsDisabled = department.IsStored,
+                            Action = async o => await this.Follow(o as Department)
                         });  
                 
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
                             Label = "UnFollow",
-                            IsDisabled = !product.IsStored,
-                            Action = async o => await this.UnFollow(o as Product)
+                            IsDisabled = !department.IsStored,
+                            Action = async o => await this.UnFollow(o as Department)
                         });
-
-                return actionDefinitions;
             }
 
             return actionDefinitions;
         }
 
-        private async Task UnFollow(Product product)
+        private async Task UnFollow(Department department)
         {
-            await this.ApplicationState.UnFollowProductAsync(product);
+            await this.ApplicationState.UnFollowDepartmentAsync(department);
             this.StateHasChanged();
         }
 
-        protected bool IsHighlighted(Product product)
+        protected bool IsHighlighted(Department department)
         {
-            return product != null && product.HasChanged;
+            return department != null && department.HasChanged;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -114,14 +112,14 @@
             await base.OnAfterRenderAsync(firstRender);
             if (this.IsLoading && !string.IsNullOrWhiteSpace(this.Id))
             {
-                this.Products =
-                    await this.ApplicationState.GetProductsOfDepartmentFromCacheOrFetchAsync(int.Parse(this.Id));
+                this.Departments =
+                    await this.ApplicationState.GetDepartmentsOfStoreFromCacheOrFetchAsync(int.Parse(this.Id));
             }
         }
 
         protected override async Task OnInitializedAsync()
         {
-            this.Department = await this.HttpClient.GetFromJsonAsync<Department>($"Departments/{this.Id}");
+            this.Store = await this.HttpClient.GetFromJsonAsync<Store>($"Stores/{this.Id}");
             await this.RefreshAsync();
         }
 
@@ -131,11 +129,11 @@
             {
                 this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(this.Products))
+            else if (e.PropertyName == nameof(this.Departments))
             {
-                if (this.Products == null && !string.IsNullOrWhiteSpace(this.Id))
+                if (this.Departments == null && !string.IsNullOrWhiteSpace(this.Id))
                 {
-                    this.ApplicationState.InvalidateProductsOfDepartmentCache(int.Parse(this.Id));
+                    this.ApplicationState.InvalidateDepartmentsOfStoreCache(int.Parse(this.Id));
                 }
                 else
                 {
@@ -148,22 +146,20 @@
         {
             if (reload)
             {
-                this.Products = null;
+                this.Departments = null;
             }
 
             this.IsLoading = true;
         }
 
-        private async Task Follow(Product product)
+        private async Task Follow(Department department)
         {
-            // TODO: Improve this later. Tyr to move to application state.
-            Console.WriteLine($"{product is null} - {product.Url}");
-
-            var productUrl = product.Url;
-            var storedProduct = await this.ApplicationState.FollowProductAsync(productUrl);
+            var departmentUrl = department.Url;
+            var storedProduct = await this.ApplicationState.FollowDepartmentAsync(departmentUrl);
+            // TODO: Improve this.
             if (storedProduct != null)
             {
-                var cachedProduct = this.Products.Find(p => p.Url == productUrl);
+                var cachedProduct = this.Departments.Find(p => p.Url == departmentUrl);
                 cachedProduct.Id = storedProduct.Id;
                 cachedProduct.IsStored = storedProduct.IsStored;
                 cachedProduct.HasChanged = storedProduct.HasChanged;
@@ -172,11 +168,11 @@
             await this.RefreshAsync();
         }
 
-        private async Task BuyOrBrowse(Product product)
+        private async Task BuyOrBrowse(Department department)
         {
-            if (product != null)
+            if (department != null)
             {
-                await this.JsRuntime.InvokeAsync<object>("open", product.Url, "_blank");
+                await this.JsRuntime.InvokeAsync<object>("open", department.Url, "_blank");
             }
         }
     }

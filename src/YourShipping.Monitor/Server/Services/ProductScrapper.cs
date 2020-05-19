@@ -31,7 +31,7 @@
         {
             var httpClient = new HttpClient();
             var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = uri + $"&{requestIdParam}";
+            var requestUri = uri.Contains('?') ? uri + $"&{requestIdParam}" : uri + $"?{requestIdParam}";
             string content = null;
             try
             {

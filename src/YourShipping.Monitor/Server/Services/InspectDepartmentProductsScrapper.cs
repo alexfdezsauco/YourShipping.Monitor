@@ -14,15 +14,15 @@ namespace YourShipping.Monitor.Server
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     /// <summary>
-    ///     The inspect department product scrapper.
-    /// </summary>
-    public class InspectDepartmentProductScrapper : IMultipleEntityScrapper<Product>
+        ///     The inspect department product scrapper.
+        /// </summary>
+        public class InspectDepartmentProductsScrapper : IMultiEntityScrapper<Product>
     {
         private readonly IBrowsingContext browsingContext;
 
         private readonly IEntityScrapper<Product> productScrapper;
 
-        public InspectDepartmentProductScrapper(
+        public InspectDepartmentProductsScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Product> productScrapper)
         {
@@ -62,6 +62,7 @@ namespace YourShipping.Monitor.Server
                     {
                         var querySelector = element.QuerySelector<IElement>("a");
                         var querySelectorAttribute = querySelector.Attributes["href"];
+
                         var uri = new Uri(url);
                         var storeSegment = uri.Segments[1];
                         var pathAndQuery = querySelectorAttribute.Value;

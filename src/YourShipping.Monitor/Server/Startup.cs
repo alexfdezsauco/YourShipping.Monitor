@@ -79,10 +79,14 @@ namespace YourShipping.Monitor.Server
 
             services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
             services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();
-            services.AddScoped<IMultipleEntityScrapper<Product>, InspectDepartmentProductScrapper>();
+            services.AddScoped<IEntityScrapper<Store>, StoreScrapper>();
+
+            services.AddScoped<IMultiEntityScrapper<Product>, InspectDepartmentProductsScrapper>();
+            services.AddScoped<IMultiEntityScrapper<Department>, InspectStoreDepartmentsScrapper>();
 
             services.AddHostedService<DepartmentMonitorHostedService>();
             services.AddHostedService<ProductMonitorHostedService>();
+            services.AddHostedService<StoreMonitorHostedService>();
         }
     }
 }

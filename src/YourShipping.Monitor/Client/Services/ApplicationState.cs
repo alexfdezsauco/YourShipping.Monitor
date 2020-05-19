@@ -20,13 +20,17 @@ namespace YourShipping.Monitor.Client.Services
 
         private readonly HubConnection connection;
 
+        private readonly List<Department> departments = new List<Department>();
+
+        private readonly Dictionary<int, List<Department>> departmentsOfStores = new Dictionary<int, List<Department>>();
+
         private readonly HttpClient httpClient;
+
+        private readonly List<Product> products = new List<Product>();
 
         private readonly Dictionary<int, List<Product>> productsOfDepartments = new Dictionary<int, List<Product>>();
 
-        private List<Department> departments;
-
-        private List<Product> products;
+        private readonly List<Store> stores = new List<Store>();
 
         public ApplicationState(
             HubConnectionBuilder hubConnectionBuilder,
@@ -69,6 +73,30 @@ namespace YourShipping.Monitor.Client.Services
             return department;
         }
 
+        public async Task<Store> AddStoreAsync(string url)
+        {
+            var responseMessage = await this.httpClient.PostAsync("Stores", JsonContent.Create(new Uri(url)));
+            var store = await responseMessage.Content.ReadFromJsonAsync<Store>();
+            if (store.HasChanged)
+            {
+                this.stores?.Add(store);
+            }
+
+            return store;
+        }
+
+        public async Task<Department> FollowDepartmentAsync(string productUrl)
+        {
+            var responseMessage = await this.httpClient.PostAsync("Departments", JsonContent.Create(new Uri(productUrl)));
+            var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
+            if (department.HasChanged)
+            {
+                this.departments?.Add(department);
+            }
+
+            return department;
+        }
+
         public async Task<Product> FollowProductAsync(string url)
         {
             var responseMessage = await this.httpClient.PostAsync("Products", JsonContent.Create(new Uri(url)));
@@ -83,11 +111,7 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync()
         {
-            if (this.departments == null)
-            {
-                this.departments = (await this.httpClient.GetFromJsonAsync<Department[]>("Departments")).ToList();
-            }
-            else if (this.departments.Count == 0)
+            if (this.departments.Count == 0)
             {
                 this.departments.AddRange(await this.httpClient.GetFromJsonAsync<Department[]>("Departments"));
             }
@@ -95,13 +119,25 @@ namespace YourShipping.Monitor.Client.Services
             return this.departments;
         }
 
+        public async Task<List<Department>> GetDepartmentsOfStoreFromCacheOrFetchAsync(int id)
+        {
+            if (!this.departmentsOfStores.ContainsKey(id))
+            {
+                this.departmentsOfStores[id] =
+                    (await this.httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}")).ToList();
+            }
+            else if (this.departmentsOfStores[id].Count == 0)
+            {
+                this.departmentsOfStores[id].AddRange(
+                    await this.httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}"));
+            }
+
+            return this.departmentsOfStores[id];
+        }
+
         public async Task<List<Product>> GetProductsFromCacheOrFetchAsync()
         {
-            if (this.products == null)
-            {
-                this.products = (await this.httpClient.GetFromJsonAsync<Product[]>("Products")).ToList();
-            }
-            else if (this.products.Count == 0)
+            if (this.products.Count == 0)
             {
                 this.products.AddRange(await this.httpClient.GetFromJsonAsync<Product[]>("Products"));
             }
@@ -125,6 +161,16 @@ namespace YourShipping.Monitor.Client.Services
             return this.productsOfDepartments[id];
         }
 
+        public async Task<List<Store>> GetStoresFromCacheOrFetchAsync()
+        {
+            if (this.stores.Count == 0)
+            {
+                this.stores.AddRange(await this.httpClient.GetFromJsonAsync<Store[]>("Stores"));
+            }
+
+            return this.stores;
+        }
+
         public bool HasAlertsFrom(AlertSource alertSource)
         {
             return this.alertSources.Contains(alertSource);
@@ -135,41 +181,56 @@ namespace YourShipping.Monitor.Client.Services
             this.departments?.Clear();
         }
 
+        public void InvalidateDepartmentsOfStoreCache(int storeId)
+        {
+            throw new NotImplementedException();
+        }
+
         public void InvalidateProductsCache()
         {
             this.products?.Clear();
         }
 
-        public void InvalidatetProductsOfDepartmentCache(int departmentId)
+        public void InvalidateProductsOfDepartmentCache(int departmentId)
         {
             this.productsOfDepartments.TryGetValue(departmentId, out var productsOfDepartment);
             productsOfDepartment?.Clear();
         }
 
+        public void InvalidateStoresCache()
+        {
+            this.stores?.Clear();
+        }
+
         public async Task UnFollowProductAsync(Product product)
         {
             await this.httpClient.DeleteAsync($"Products/{product.Id}");
-            if (this.products.Remove(product))
-            {
-                if (this.productsOfDepartments != null)
-                {
-                    foreach (var productsOfDepartment in this.productsOfDepartments)
-                    {
-                        var cachedProduct = productsOfDepartment.Value?.FirstOrDefault(p => p.Url == product.Url);
-                        if (cachedProduct != null)
-                        {
-                            cachedProduct.IsStored = false;
-                            cachedProduct.HasChanged = false;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                this.products.RemoveAll(p => p.Url == product.Url);
-                product.IsStored = false;
-                product.HasChanged = false;
-            }
+            //if (this.products.Remove(product))
+            //{
+            //    if (this.productsOfDepartments != null)
+            //    {
+            //        foreach (var productsOfDepartment in this.productsOfDepartments)
+            //        {
+            //            var cachedProduct = productsOfDepartment.Value?.FirstOrDefault(p => p.Url == product.Url);
+            //            if (cachedProduct != null)
+            //            {
+            //                cachedProduct.IsStored = false;
+            //                cachedProduct.HasChanged = false;
+            //            }
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    this.products.RemoveAll(p => p.Url == product.Url);
+            //    product.IsStored = false;
+            //    product.HasChanged = false;
+            //}
+        }
+
+        public async Task UnFollowDepartmentAsync(Department department)
+        {
+            await this.httpClient.DeleteAsync($"Departments/{department.Id}");
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

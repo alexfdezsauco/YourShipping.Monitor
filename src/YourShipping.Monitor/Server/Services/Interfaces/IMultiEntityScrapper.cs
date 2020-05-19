@@ -2,8 +2,8 @@
 {
     using System.Collections.Generic;
 
-    public interface IMultipleEntityScrapper<TEntity>
+    public interface IMultiEntityScrapper<TEntity>
     {
-        IAsyncEnumerable<TEntity> GetAsync(string uri);
+        IAsyncEnumerable<TEntity> GetAsync(string url);
     }
 }

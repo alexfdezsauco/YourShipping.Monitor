@@ -108,12 +108,9 @@
                     }
                 }
 
-                if (department != null)
-                {
-                    department.Read = dateTime;
-                    department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Product.Added));
-                    departments.Add(department.ToDataTransferObject(hasChanged));
-                }
+                department.Read = dateTime;
+                department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Product.Added));
+                departments.Add(department.ToDataTransferObject(hasChanged));
             }
 
             await departmentRepository.SaveChangesAsync();
@@ -125,7 +122,7 @@
         public async Task<IEnumerable<Product>> GetProducts(
             [FromServices] IRepository<Models.Department, int> departmentRepository,
             [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IMultipleEntityScrapper<Models.Product> productsScrapper,
+            [FromServices] IMultiEntityScrapper<Models.Product> productsScrapper,
             int id)
         {
             var products = new List<Product>();

@@ -14,22 +14,23 @@
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
-    public class DepartmentScrapper : IEntityScrapper<Department>
+    public class StoreScrapper : IEntityScrapper<Store>
     {
         private const string StorePrefix = "TuEnvio ";
 
         private readonly IBrowsingContext browsingContext;
 
-        public DepartmentScrapper(IBrowsingContext browsingContext)
+        public StoreScrapper(IBrowsingContext browsingContext)
         {
             this.browsingContext = browsingContext;
         }
 
-        public async Task<Department> GetAsync(string uri)
+        public async Task<Store> GetAsync(string uri)
         {
             var httpClient = new HttpClient();
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = uri.Contains('?') ? uri + $"&{requestIdParam}" : uri + $"?{requestIdParam}";
+
             string content = null;
             try
             {
@@ -37,12 +38,15 @@
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error requesting Department '{url}'", uri);
+                Log.Error(e, "Error requesting Store from '{url}'", uri);
             }
 
-            if (!string.IsNullOrEmpty(content))
+            var categoriesCount = 0;
+            var departmentsCount = 0;
+            if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+
                 var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
 
                 string store = null;
@@ -63,41 +67,33 @@
                     }
                 }
 
-                var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
+                var mainNavElement = document.QuerySelector<IElement>("#mainContainer > header > div.mainNav");
+                var sha256 = mainNavElement.OuterHtml.Replace(requestIdParam, string.Empty).ComputeSHA256();
 
-                var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
-                filterElement?.Remove();
-
-                if (mainPanelElement != null)
+                var elements = mainNavElement.QuerySelectorAll<IElement>(
+                    "div > div > ul > li").ToList();
+                foreach (var element in elements)
                 {
-                    content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
-                    var sha256 = content.ComputeSHA256();
-
-                    var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                    var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
-                        .ToList();
-
-                    if (departmentElements.Count > 2)
+                    if (!element.InnerHtml.Contains("<i class=\"icon-home\"></i>"))
                     {
-                        var departmentCategory = departmentElements[^2].TextContent.Trim();
-                        var departmentName = departmentElements[^1].TextContent.Trim();
-
-                        if (!string.IsNullOrWhiteSpace(departmentName))
-                        {
-                            var department = new Department
-                                                 {
-                                                     Url = uri,
-                                                     Name = departmentName,
-                                                     Category = departmentCategory,
-                                                     ProductsCount = productElements.Count,
-                                                     Store = store,
-                                                     Sha256 = sha256
-                                                 };
-
-                            return department;
-                        }
+                        categoriesCount++;
+                        var querySelector = element.QuerySelector<IElement>("a");
+                        querySelector.QuerySelector("i")?.Remove();
+                        var name = querySelector.InnerHtml;
+                        var departmentsElementSelector = element.QuerySelectorAll<IElement>("div > ul > li").ToList();
+                        departmentsCount += departmentsElementSelector.Count;
                     }
                 }
+
+                return new Store
+                           {
+                               Name = store,
+                               DepartmentsCount = departmentsCount,
+                               CategoriesCount = categoriesCount,
+                               Url = uri,
+                               IsAvailable = true,
+                               Sha256 = sha256
+                           };
             }
 
             return null;

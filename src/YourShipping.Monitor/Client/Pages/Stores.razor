@@ -1,4 +1,4 @@
-﻿@page "/departments-monitor"
+﻿@page "/stores-monitor"
 
 @using System.ComponentModel
 @using Blorc.Components
@@ -15,18 +15,19 @@
 @using Blorc.PatternFly.Core
 @using YourShipping.Monitor.Shared
 
-@inherits DepartmentsComponent
+@inherits StoreComponent
 
 <TextContent>
-    <Text Component="h1">Departments Monitor</Text>
-    <Text Component="blockquote">Watch the products availability in specifics departments</Text>
+    <Text Component="h1">Stores Monitor</Text>
+    <Text Component="blockquote">Watch the departments and categories of stores</Text>
 </TextContent>
+
 <br />
 
 <div class="pf-c-form__group">
     
     <label class="pf-c-form__label" for="vertical-align-labels-vertical-form-name">    
-        <span class="pf-c-form__label-text">Department Link</span>    
+        <span class="pf-c-form__label-text">Store Link</span>    
         <span class="pf-c-form__label-required" aria-hidden="true">*</span>  
     </label>
 
@@ -44,14 +45,13 @@
 
 <Stack IsGutter="true">
     <StackItem>
-        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Departments  HighlightPredicate=@(o=>IsHighlighted(o as Department))>
+        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Stores  HighlightPredicate=@(o=>IsHighlighted(o as Store))>
             <Header>
                 <Row>
                     <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
-                    <Column Label="Store" Key="Store" IsSortable="true" Idx="1" />
-                    <Column Label="Category" Key="Category" IsSortable="true" Idx="2" />
-                    <Column Label="Products Count" Key="ProductsCount" IsSortable="true" Idx="3" />
-                    <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="4" ActionSource=@(record => GetActions(record)) />
+                    <Column Label="Departments Count" Key="DepartmentsCount" IsSortable="true" Idx="1" />
+                    <Column Label="Categories Count" Key="CategoriesCount" IsSortable="true" Idx="2" />
+                    <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                 </Row>
             </Header>
             <NoRowsContent>

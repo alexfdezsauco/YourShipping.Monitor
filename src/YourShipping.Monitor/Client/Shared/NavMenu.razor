@@ -26,9 +26,19 @@
         </NavigationItem>
         <NavigationItem Link="/departments-monitor">
             <Split IsGutter="true">
-                <SplitItem><BuildingIcon /></SplitItem>
+                <SplitItem><WarehouseIcon /></SplitItem>
                 <SplitItem IsFilled="true" style="width: 140px;">Departments</SplitItem>
                 @if (ApplicationState.HasAlertsFrom(AlertSource.Departments))
+                {
+                    <SplitItem><BellIcon /></SplitItem>
+                }
+            </Split>
+        </NavigationItem> 
+        <NavigationItem Link="/stores-monitor">
+            <Split IsGutter="true">
+                <SplitItem><BuildingIcon /></SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Stores</SplitItem>
+                @if (ApplicationState.HasAlertsFrom(AlertSource.Stores))
                 {
                     <SplitItem><BellIcon /></SplitItem>
                 }

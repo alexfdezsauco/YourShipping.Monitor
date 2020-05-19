@@ -12,22 +12,36 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         Task<Department> AddDepartmentAsync(string url);
 
+        Task<Store> AddStoreAsync(string url);
+
+        Task<Department> FollowDepartmentAsync(string productUrl);
+
         Task<Product> FollowProductAsync(string url);
 
         Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync();
+
+        Task<List<Department>> GetDepartmentsOfStoreFromCacheOrFetchAsync(int parse);
 
         Task<List<Product>> GetProductsFromCacheOrFetchAsync();
 
         Task<List<Product>> GetProductsOfDepartmentFromCacheOrFetchAsync(int id);
 
+        Task<List<Store>> GetStoresFromCacheOrFetchAsync();
+
         bool HasAlertsFrom(AlertSource alertSource);
 
         void InvalidateDepartmentsCache();
 
+        void InvalidateDepartmentsOfStoreCache(int storeId);
+
         void InvalidateProductsCache();
 
-        void InvalidatetProductsOfDepartmentCache(int departmentId);
+        void InvalidateProductsOfDepartmentCache(int departmentId);
+
+        void InvalidateStoresCache();
 
         Task UnFollowProductAsync(Product product);
+
+        Task UnFollowDepartmentAsync(Department department);
     }
 }

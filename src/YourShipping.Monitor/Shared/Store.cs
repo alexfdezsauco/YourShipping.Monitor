@@ -1,8 +1,10 @@
 ﻿namespace YourShipping.Monitor.Shared
 {
-    public class Product
+    public class Store
     {
-        public string Currency { get; set; }
+        public float CategoriesCount { get; set; }
+
+        public float DepartmentsCount { get; set; }
 
         public bool HasChanged { get; set; }
 
@@ -10,14 +12,10 @@
 
         public bool IsAvailable { get; set; }
 
-        public bool IsStored { get; set; }
-
         public string Name { get; set; }
 
-        public float Price { get; set; }
-
-        public string Store { get; set; }
-
         public string Url { get; set; }
+
+        public bool IsStored { get; set; }
     }
 }
