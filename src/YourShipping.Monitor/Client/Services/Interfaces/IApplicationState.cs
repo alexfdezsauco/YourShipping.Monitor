@@ -10,14 +10,24 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
     {
         event EventHandler SourceChanged;
 
-        void InvalidateDepartmentsCache();
+        Task<Department> AddDepartmentAsync(string url);
 
-        void InvalidateProductsCache();
+        Task<Product> FollowProductAsync(string url);
 
         Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync();
 
         Task<List<Product>> GetProductsFromCacheOrFetchAsync();
 
+        Task<List<Product>> GetProductsOfDepartmentFromCacheOrFetchAsync(int id);
+
         bool HasAlertsFrom(AlertSource alertSource);
+
+        void InvalidateDepartmentsCache();
+
+        void InvalidateProductsCache();
+
+        void InvalidatetProductsOfDepartmentCache(int departmentId);
+
+        Task UnFollowProductAsync(Product product);
     }
 }

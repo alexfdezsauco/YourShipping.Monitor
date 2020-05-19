@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
     using System.Threading.Tasks;
@@ -17,8 +16,21 @@
     using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
-    public class ProductsComponent : BlorcComponentBase
+    public class IspectDepartmentComponent : BlorcComponentBase
     {
+        public Department Department
+        {
+            get => this.GetPropertyValue<Department>(nameof(this.Department));
+            set => this.SetPropertyValue(nameof(this.Department), value);
+        }
+
+        [Parameter]
+        public string Id
+        {
+            get => this.GetPropertyValue<string>(nameof(this.Id));
+            set => this.SetPropertyValue(nameof(this.Id), value);
+        }
+
         public bool IsLoading
         {
             get => this.GetPropertyValue<bool>(nameof(this.IsLoading));
@@ -63,11 +75,21 @@
                         {
                             Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Product)
                         });
+
+                actionDefinitions.Add(
+                    new CallActionDefinition
+                        {
+                            Label = "Follow",
+                            IsDisabled = product.IsStored,
+                            Action = async o => await this.Follow(o as Product)
+                        });  
                 
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "UnFollow", Action = async o => await this.UnFollow(o as Product)
+                            Label = "UnFollow",
+                            IsDisabled = !product.IsStored,
+                            Action = async o => await this.UnFollow(o as Product)
                         });
 
                 return actionDefinitions;
@@ -76,14 +98,10 @@
             return actionDefinitions;
         }
 
-        protected async Task AddAsync()
+        private async Task UnFollow(Product product)
         {
-            var product = await this.ApplicationState.FollowProductAsync(this.Url);
-            if (product != null)
-            {
-                this.Url = string.Empty;
-                this.StateHasChanged();
-            }
+            await this.ApplicationState.UnFollowProductAsync(product);
+            this.StateHasChanged();
         }
 
         protected bool IsHighlighted(Product product)
@@ -94,14 +112,16 @@
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
-            if (this.IsLoading)
+            if (this.IsLoading && !string.IsNullOrWhiteSpace(this.Id))
             {
-                this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
+                this.Products =
+                    await this.ApplicationState.GetProductsOfDepartmentFromCacheOrFetchAsync(int.Parse(this.Id));
             }
         }
 
         protected override async Task OnInitializedAsync()
         {
+            this.Department = await this.HttpClient.GetFromJsonAsync<Department>($"Departments/{this.Id}");
             await this.RefreshAsync();
         }
 
@@ -113,9 +133,9 @@
             }
             else if (e.PropertyName == nameof(this.Products))
             {
-                if (this.Products == null)
+                if (this.Products == null && !string.IsNullOrWhiteSpace(this.Id))
                 {
-                    this.ApplicationState.InvalidateProductsCache();
+                    this.ApplicationState.InvalidatetProductsOfDepartmentCache(int.Parse(this.Id));
                 }
                 else
                 {
@@ -134,10 +154,22 @@
             this.IsLoading = true;
         }
 
-        private async Task UnFollow(Product product)
+        private async Task Follow(Product product)
         {
-            await this.ApplicationState.UnFollowProductAsync(product);
-            this.StateHasChanged();
+            // TODO: Improve this later. Tyr to move to application state.
+            Console.WriteLine($"{product is null} - {product.Url}");
+
+            var productUrl = product.Url;
+            var storedProduct = await this.ApplicationState.FollowProductAsync(productUrl);
+            if (storedProduct != null)
+            {
+                var cachedProduct = this.Products.Find(p => p.Url == productUrl);
+                cachedProduct.Id = storedProduct.Id;
+                cachedProduct.IsStored = storedProduct.IsStored;
+                cachedProduct.HasChanged = storedProduct.HasChanged;
+            }
+
+            await this.RefreshAsync();
         }
 
         private async Task BuyOrBrowse(Product product)

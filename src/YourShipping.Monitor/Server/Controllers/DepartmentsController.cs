@@ -5,17 +5,15 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using AngleSharp;
+
     using Microsoft.AspNetCore.Mvc;
 
     using Orc.EntityFrameworkCore;
 
-    using Serilog;
-
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
-
-    using Product = YourShipping.Monitor.Server.Models.Product;
 
     [ApiController]
     [Route("[controller]")]
@@ -63,6 +61,20 @@
             await departmentRepository.SaveChangesAsync();
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Department>> Get(
+            [FromServices] IRepository<Models.Department, int> departmentRepository,
+            int id)
+        {
+            var department = departmentRepository.Find(d => d.Id == id).FirstOrDefault();
+            if (department == null)
+            {
+                return this.NotFound();
+            }
+
+            return department?.ToDataTransferObject();
+        }
+
         [HttpGet]
         public async Task<IEnumerable<Department>> Get(
             [FromServices] IRepository<Models.Department, int> departmentRepository,
@@ -99,7 +111,7 @@
                 if (department != null)
                 {
                     department.Read = dateTime;
-                    department = departmentRepository.TryAddOrUpdate(department, nameof(Product.Added));
+                    department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Product.Added));
                     departments.Add(department.ToDataTransferObject(hasChanged));
                 }
             }
@@ -107,6 +119,30 @@
             await departmentRepository.SaveChangesAsync();
 
             return departments;
+        }
+
+        [HttpGet("[action]/{id}")]
+        public async Task<IEnumerable<Product>> GetProducts(
+            [FromServices] IRepository<Models.Department, int> departmentRepository,
+            [FromServices] IRepository<Models.Product, int> productRepository,
+            [FromServices] IMultipleEntityScrapper<Models.Product> productsScrapper,
+            int id)
+        {
+            var products = new List<Product>();
+
+            var storedDepartment = departmentRepository.Find(department => department.Id == id).FirstOrDefault();
+            if (storedDepartment != null)
+            {
+                var scrappedProducts = productsScrapper.GetAsync(storedDepartment.Url);
+                await foreach (var product in scrappedProducts)
+                {
+                    var productUrl = product.Url;
+                    var stored = productRepository.Contains(p => p.Url == productUrl);
+                    products.Add(product.ToDataTransferObject(stored: stored));
+                }
+            }
+
+            return products;
         }
     }
 }

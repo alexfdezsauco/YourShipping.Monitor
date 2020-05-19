@@ -1,8 +1,9 @@
-﻿@page "/products-monitor"
+﻿@page "/inspect-department/{Id}"
 
 @using System.ComponentModel
 @using Blorc.Components
 @using Blorc.PatternFly.Components.Button
+@using Blorc.PatternFly.Components.Breadcrumb
 @using Blorc.PatternFly.Components.Spinner
 @using Blorc.PatternFly.Components.EmptyState
 @using Blorc.PatternFly.Components.Label
@@ -15,32 +16,23 @@
 @using Blorc.PatternFly.Core
 @using YourShipping.Monitor.Shared
 
-@inherits ProductsComponent
+@inherits IspectDepartmentComponent
 
-
-<TextContent>
-    <Text Component="h1">Products Monitor</Text>
-    <Text Component="blockquote">Watch the availability of specifics products</Text>
-</TextContent>
-<br />
-
-<div class="pf-c-form__group">
-    <label class="pf-c-form__label" for="vertical-align-labels-vertical-form-name">    
-        <span class="pf-c-form__label-text">Product Link</span>    
-        <span class="pf-c-form__label-required" aria-hidden="true">*</span>  
-    </label>
-    <Split IsGutter="true">
-        <SplitItem IsFilled="true">
-            <TextInput Label="Product Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous"/>
-        </SplitItem>
-        <SplitItem>
-            <Button Variant=@ButtonVariant.Primary OnClick=@(async (s, a) => await AddAsync())>Add</Button>
-        </SplitItem>
-    </Split>
-</div>
-
+@if (Department != null)
+{
+    <Breadcrumb>
+        <BreadcrumbItem To="/departments-monitor">Departments</BreadcrumbItem>
+        <BreadcrumbItem IsActive="true">
+            @Department.Name from @Department.Store
+        </BreadcrumbItem>
+    </Breadcrumb>
+    <br/>
+    <br/>
+    <TextContent>
+        <Text Component="h1">Products of Department @Department.Name from @Department.Store</Text>
+        <Text Component="blockquote">View the existing products of an specific department</Text>
+    </TextContent>
     <br />
-
     <Stack IsGutter="true">
         <StackItem>
             <Table Caption="Products" IsStickyHeader="true" DataSource=@Products HighlightPredicate=@(o=>IsHighlighted(o as Product))>
@@ -49,7 +41,6 @@
                         <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
                         <Column Label="Price" Key="Price" IsSortable="true" Idx="1" />
                         <Column Label="Currency" Key="Currency" IsSortable="true" Idx="2" />
-                        <Column Label="Store" Key="Store" IsSortable="true" Idx="3" />
                         <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                     </Row>
                 </Header>
@@ -77,6 +68,8 @@
         </StackItem>
         <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync(true)) isBlock>Refresh</Button></StackItem>
     </Stack>
+}
+
 
 
 

@@ -17,5 +17,7 @@
         public string Store { get; set; }
 
         public bool HasChanged { get; set; }
+
+        public bool IsStored { get; set; }
     }
 }

@@ -6,7 +6,7 @@
 
     public static class ProductExtensions
     {
-        public static Shared.Product ToDataTransferObject(this Product product, bool hasChanged = false)
+        public static Shared.Product ToDataTransferObject(this Product product, bool hasChanged = false, bool stored = true)
         {
             return new Shared.Product
                        {
@@ -16,6 +16,7 @@
                            Url = product.Url,
                            Currency = product.Currency,
                            Store = product.Store,
+                           IsStored = stored,
                            IsAvailable = product.IsAvailable,
                            HasChanged = hasChanged
                        };

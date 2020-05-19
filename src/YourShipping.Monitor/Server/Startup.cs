@@ -1,5 +1,7 @@
 namespace YourShipping.Monitor.Server
 {
+    using System.Collections.Generic;
+
     using AngleSharp;
 
     using Microsoft.AspNetCore.Builder;
@@ -74,8 +76,10 @@ namespace YourShipping.Monitor.Server
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
+
             services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
             services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();
+            services.AddScoped<IMultipleEntityScrapper<Product>, InspectDepartmentProductScrapper>();
 
             services.AddHostedService<DepartmentMonitorHostedService>();
             services.AddHostedService<ProductMonitorHostedService>();

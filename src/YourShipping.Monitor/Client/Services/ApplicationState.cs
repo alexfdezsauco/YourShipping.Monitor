@@ -22,6 +22,8 @@ namespace YourShipping.Monitor.Client.Services
 
         private readonly HttpClient httpClient;
 
+        private readonly Dictionary<int, List<Product>> productsOfDepartments = new Dictionary<int, List<Product>>();
+
         private List<Department> departments;
 
         private List<Product> products;
@@ -55,6 +57,30 @@ namespace YourShipping.Monitor.Client.Services
 
         public event EventHandler SourceChanged;
 
+        public async Task<Department> AddDepartmentAsync(string url)
+        {
+            var responseMessage = await this.httpClient.PostAsync("Departments", JsonContent.Create(new Uri(url)));
+            var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
+            if (department.HasChanged)
+            {
+                this.departments?.Add(department);
+            }
+
+            return department;
+        }
+
+        public async Task<Product> FollowProductAsync(string url)
+        {
+            var responseMessage = await this.httpClient.PostAsync("Products", JsonContent.Create(new Uri(url)));
+            var product = await responseMessage.Content.ReadFromJsonAsync<Product>();
+            if (product.HasChanged)
+            {
+                this.products?.Add(product);
+            }
+
+            return product;
+        }
+
         public async Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync()
         {
             if (this.departments == null)
@@ -83,6 +109,22 @@ namespace YourShipping.Monitor.Client.Services
             return this.products;
         }
 
+        public async Task<List<Product>> GetProductsOfDepartmentFromCacheOrFetchAsync(int id)
+        {
+            if (!this.productsOfDepartments.ContainsKey(id))
+            {
+                this.productsOfDepartments[id] =
+                    (await this.httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}")).ToList();
+            }
+            else if (this.productsOfDepartments[id].Count == 0)
+            {
+                this.productsOfDepartments[id].AddRange(
+                    await this.httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}"));
+            }
+
+            return this.productsOfDepartments[id];
+        }
+
         public bool HasAlertsFrom(AlertSource alertSource)
         {
             return this.alertSources.Contains(alertSource);
@@ -96,6 +138,38 @@ namespace YourShipping.Monitor.Client.Services
         public void InvalidateProductsCache()
         {
             this.products?.Clear();
+        }
+
+        public void InvalidatetProductsOfDepartmentCache(int departmentId)
+        {
+            this.productsOfDepartments.TryGetValue(departmentId, out var productsOfDepartment);
+            productsOfDepartment?.Clear();
+        }
+
+        public async Task UnFollowProductAsync(Product product)
+        {
+            await this.httpClient.DeleteAsync($"Products/{product.Id}");
+            if (this.products.Remove(product))
+            {
+                if (this.productsOfDepartments != null)
+                {
+                    foreach (var productsOfDepartment in this.productsOfDepartments)
+                    {
+                        var cachedProduct = productsOfDepartment.Value?.FirstOrDefault(p => p.Url == product.Url);
+                        if (cachedProduct != null)
+                        {
+                            cachedProduct.IsStored = false;
+                            cachedProduct.HasChanged = false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.products.RemoveAll(p => p.Url == product.Url);
+                product.IsStored = false;
+                product.HasChanged = false;
+            }
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

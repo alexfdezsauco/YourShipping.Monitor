@@ -3,9 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Linq;
     using System.Net.Http;
-    using System.Net.Http.Json;
     using System.Threading.Tasks;
 
     using Blorc.Components;
@@ -31,6 +29,9 @@
             set => this.SetPropertyValue(nameof(this.Url), value);
         }
 
+        [Inject]
+        protected IApplicationState ApplicationState { get; set; }
+
         protected List<Department> Departments
         {
             get => this.GetPropertyValue<List<Department>>(nameof(this.Departments));
@@ -38,13 +39,13 @@
         }
 
         [Inject]
-        protected IApplicationState ApplicationState { get; set; }
-
-        [Inject]
         protected HttpClient HttpClient { get; set; }
 
         [Inject]
         protected IJSRuntime JsRuntime { get; set; }
+
+        [Inject]
+        protected NavigationManager NavigationManager { get; set; }
 
         public IEnumerable<ActionDefinition> GetActions(object row)
         {
@@ -54,9 +55,21 @@
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "Open",
+                            Label = "Buy",
                             IsDisabled = department.ProductsCount == 0,
-                            Action = async o => await this.Open(o as Department)
+                            Action = async o => await this.BuyOrBrowse(o as Department)
+                        });
+                actionDefinitions.Add(
+                    new CallActionDefinition
+                        {
+                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Department)
+                        });
+                actionDefinitions.Add(
+                    new CallActionDefinition
+                        {
+                            Label = "Inspect",
+                            IsDisabled = department.ProductsCount == 0,
+                            Action = async o => await this.Inspect(o as Department)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
@@ -78,25 +91,12 @@
             return actionDefinitions;
         }
 
-        private async Task AddAll(Department department)
-        {
-            throw new NotImplementedException();
-        }
-
         protected async Task AddAsync()
         {
-            var responseMessage = await this.HttpClient.PostAsync(
-                                          "Departments",
-                                          JsonContent.Create(new Uri(this.Url)));
-            var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
+            var department = await this.ApplicationState.AddDepartmentAsync(this.Url);
             if (department != null)
             {
                 this.Url = string.Empty;
-                if (department.HasChanged)
-                {
-                    this.Departments.Add(department);
-                }
-
                 this.StateHasChanged();
             }
         }
@@ -106,13 +106,12 @@
             return department != null && department.HasChanged;
         }
 
-
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
             if (this.IsLoading)
             {
-                this.Departments = await this.ApplicationState.GetDepartmentsFromCacheOrFetchAsync(); 
+                this.Departments = await this.ApplicationState.GetDepartmentsFromCacheOrFetchAsync();
             }
         }
 
@@ -150,6 +149,18 @@
             this.IsLoading = true;
         }
 
+        private async Task AddAll(Department department)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Task BuyOrBrowse(Department department)
+        {
+            if (department != null)
+            {
+                await this.JsRuntime.InvokeAsync<object>("open", department.Url, "_blank");
+            }
+        }
 
         private async Task Delete(Department department)
         {
@@ -158,12 +169,9 @@
             this.StateHasChanged();
         }
 
-        private async Task Open(Department department)
+        private async Task Inspect(Department department)
         {
-            if (department != null)
-            {
-                await this.JsRuntime.InvokeAsync<object>("open", department.Url, "_blank");
-            }
+            this.NavigationManager.NavigateTo($"/inspect-department/{department.Id}");
         }
     }
 }
