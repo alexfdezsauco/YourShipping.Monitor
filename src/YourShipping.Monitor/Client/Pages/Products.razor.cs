@@ -9,11 +9,13 @@
     using System.Threading.Tasks;
 
     using Blorc.Components;
+    using Blorc.PatternFly.Components.Icon;
     using Blorc.PatternFly.Components.Table;
 
     using Microsoft.AspNetCore.Components;
     using Microsoft.JSInterop;
 
+    using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
     public class ProductsComponent : BlorcComponentBase
@@ -29,6 +31,9 @@
             get => this.GetPropertyValue<string>(nameof(this.Url));
             set => this.SetPropertyValue(nameof(this.Url), value);
         }
+
+        [Inject]
+        protected IApplicationState ApplicationState { get; set; }
 
         [Inject]
         protected HttpClient HttpClient { get; set; }
@@ -79,12 +84,17 @@
             }
         }
 
+        protected bool IsHighlighted(Product product)
+        {
+            return product != null && product.HasChanged;
+        }
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
             if (this.IsLoading)
             {
-                this.Products = (await this.HttpClient.GetFromJsonAsync<Product[]>("Products")).ToList();
+                this.Products = await this.ApplicationState.GetProductsAsync();
             }
         }
 
@@ -105,9 +115,14 @@
             }
         }
 
-        protected async Task RefreshAsync()
+        protected async Task RefreshAsync(bool reload = false)
         {
-            this.Products = null;
+            if (reload)
+            {
+                this.Products = null;
+                this.ApplicationState.InvalidateProductsCache();
+            }
+
             this.IsLoading = true;
         }
 

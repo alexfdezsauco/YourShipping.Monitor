@@ -14,6 +14,7 @@
     using Microsoft.AspNetCore.Components;
     using Microsoft.JSInterop;
 
+    using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
     public class DepartmentsComponent : BlorcComponentBase
@@ -35,6 +36,9 @@
             get => this.GetPropertyValue<List<Department>>(nameof(this.Departments));
             set => this.SetPropertyValue(nameof(this.Departments), value);
         }
+
+        [Inject]
+        protected IApplicationState ApplicationState { get; set; }
 
         [Inject]
         protected HttpClient HttpClient { get; set; }
@@ -97,12 +101,19 @@
             }
         }
 
+        protected bool IsHighlighted(Department department)
+        {
+            return department != null && department.HasChanged;
+        }
+
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
+
             if (this.IsLoading)
             {
-                this.Departments = (await this.HttpClient.GetFromJsonAsync<Department[]>("Departments")).ToList();
+                this.Departments = await this.ApplicationState.GetDepartmentsAsync(); 
             }
         }
 
@@ -123,11 +134,17 @@
             }
         }
 
-        protected async Task RefreshAsync()
+        protected async Task RefreshAsync(bool reload = false)
         {
-            this.Departments = null;
+            if (reload)
+            {
+                this.Departments = null;
+                this.ApplicationState.InvalidateDepartmentsCache();
+            }
+
             this.IsLoading = true;
         }
+
 
         private async Task Delete(Department department)
         {

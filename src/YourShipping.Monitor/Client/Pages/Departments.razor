@@ -13,6 +13,7 @@
 @using Blorc.PatternFly.Layouts.Split
 @using Blorc.PatternFly.Layouts.Stack
 @using Blorc.PatternFly.Core
+@using YourShipping.Monitor.Shared
 
 @inherits DepartmentsComponent
 
@@ -43,13 +44,12 @@
 
 <Stack IsGutter="true">
     <StackItem>
-        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Departments>
+        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Departments  HighlightPredicate=@(o=>IsHighlighted(o as Department))>
             <Header>
                 <Row>
                     <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
                     <Column Label="Store" Key="Store" IsSortable="true" Idx="1" />
                     <Column Label="Products Count" Key="ProductsCount" IsSortable="true" Idx="2" />
-                    <Column Label="Has Changed" Key="HasChanged" IsSortable="true" Idx="3" />
                     <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                 </Row>
             </Header>
@@ -75,7 +75,7 @@
             </NoRowsContent>
         </Table>
     </StackItem>
-    <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync()) isBlock>Refresh</Button></StackItem>
+    <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync(true)) isBlock>Refresh</Button></StackItem>
 </Stack>
 
 
