@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Net.Http;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -52,14 +53,17 @@
                     store = uri.Split('/')[3];
                 }
 
-                var footerElementTextParts = footerElement.InnerHtml.Split('•');
-                if (footerElementTextParts.Length > 0)
+                if (footerElement != null)
                 {
-                    store = footerElementTextParts[^1].Trim();
-                    if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                        && store.Length > StorePrefix.Length)
+                    var footerElementTextParts = footerElement.TextContent.Split('•');
+                    if (footerElementTextParts.Length > 0)
                     {
-                        store = store.Substring(StorePrefix.Length - 1);
+                        store = footerElementTextParts[^1].Trim();
+                        if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                            && store.Length > StorePrefix.Length)
+                        {
+                            store = store.Substring(StorePrefix.Length - 1);
+                        }
                     }
                 }
 
@@ -71,7 +75,7 @@
                 if (mainPanelElement != null)
                 {
                     content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
-                    var sha256 = content.ComputeSHA256();
+                    // var sha256 = content.ComputeSHA256();
 
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
@@ -90,15 +94,16 @@
                                                      Name = departmentName,
                                                      Category = departmentCategory,
                                                      ProductsCount = productElements.Count,
-                                                     Store = store,
-                                                     Sha256 = sha256
+                                                     Store = store
                                                  };
 
+                            department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
                             return department;
                         }
                     }
                 }
             }
+
 
             return null;
         }

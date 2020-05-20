@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Net.Http;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -49,21 +50,21 @@
 
                 var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
 
-                string store = null;
+                string storeName = null;
                 var uriParts = uri.Split('/');
                 if (uriParts.Length > 3)
                 {
-                    store = uri.Split('/')[3];
+                    storeName = uri.Split('/')[3];
                 }
 
                 var footerElementTextParts = footerElement.InnerHtml.Split('•');
                 if (footerElementTextParts.Length > 0)
                 {
-                    store = footerElementTextParts[^1].Trim();
-                    if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                        && store.Length > StorePrefix.Length)
+                    storeName = footerElementTextParts[^1].Trim();
+                    if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                        && storeName.Length > StorePrefix.Length)
                     {
-                        store = store.Substring(StorePrefix.Length - 1);
+                        storeName = storeName.Substring(StorePrefix.Length - 1);
                     }
                 }
 
@@ -78,22 +79,28 @@
                     {
                         categoriesCount++;
                         var querySelector = element.QuerySelector<IElement>("a");
-                        querySelector.QuerySelector("i")?.Remove();
-                        var name = querySelector.InnerHtml;
+                        if (querySelector != null)
+                        {
+                            querySelector.QuerySelector("i")?.Remove();
+                            var name = querySelector.TextContent;
+                        }
+
                         var departmentsElementSelector = element.QuerySelectorAll<IElement>("div > ul > li").ToList();
                         departmentsCount += departmentsElementSelector.Count;
                     }
                 }
 
-                return new Store
-                           {
-                               Name = store,
-                               DepartmentsCount = departmentsCount,
-                               CategoriesCount = categoriesCount,
-                               Url = uri,
-                               IsAvailable = true,
-                               Sha256 = sha256
-                           };
+                var store = new Store
+                                 {
+                                     Name = storeName,
+                                     DepartmentsCount = departmentsCount,
+                                     CategoriesCount = categoriesCount,
+                                     Url = uri,
+                                     IsAvailable = true,
+                                 };
+                
+                store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+                return store;
             }
 
             return null;

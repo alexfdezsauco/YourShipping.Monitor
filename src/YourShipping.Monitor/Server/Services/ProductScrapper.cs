@@ -2,6 +2,7 @@
 {
     using System;
     using System.Net.Http;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -55,14 +56,17 @@
                     store = uri.Split('/')[3];
                 }
 
-                var footerElementTextParts = footerElement.InnerHtml.Split('•');
-                if (footerElementTextParts.Length > 0)
+                if (footerElement != null)
                 {
-                    store = footerElementTextParts[^1].Trim();
-                    if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                        && store.Length > StorePrefix.Length)
+                    var footerElementTextParts = footerElement.TextContent.Split('•');
+                    if (footerElementTextParts.Length > 0)
                     {
-                        store = store.Substring(StorePrefix.Length - 1);
+                        store = footerElementTextParts[^1].Trim();
+                        if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                            && store.Length > StorePrefix.Length)
+                        {
+                            store = store.Substring(StorePrefix.Length - 1);
+                        }
                     }
                 }
 
@@ -94,27 +98,30 @@
                             "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
                     }
 
-                    var name = productNameElement?.InnerHtml.Trim();
+                    var name = productNameElement?.TextContent.Trim();
 
                     float price = 0;
                     string currency = null;
-                    var priceParts = productPriceElement?.InnerHtml?.Trim().Split(' ');
+                    var priceParts = productPriceElement?.TextContent.Trim().Split(' ');
                     if (priceParts != null && priceParts.Length > 0)
                     {
                         price = float.Parse(priceParts[0].Trim(' ', '$'));
                         currency = priceParts[^1];
                     }
 
-                    return new Product
-                               {
-                                   Name = name,
-                                   Price = price,
-                                   Currency = currency,
-                                   Url = uri,
-                                   Store = store,
-                                   IsAvailable = isAvailable,
-                                   Sha256 = sha256
-                               };
+                    var product = new Product
+                                      {
+                                          Name = name,
+                                          Price = price,
+                                          Currency = currency,
+                                          Url = uri,
+                                          Store = store,
+                                          IsAvailable = isAvailable,
+                                      };
+
+                    product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
+
+                    return product;
                 }
             }
 

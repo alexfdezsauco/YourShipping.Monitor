@@ -46,19 +46,13 @@ namespace YourShipping.Monitor.Server.Services
                     Log.Error(e, "Error scrapping department '{url}'", storedDepartment.Url);
                 }
 
-                if (department != null)
+                if (department != null && department.Sha256 != storedDepartment.Sha256)
                 {
-                    if (department.Sha256 != storedDepartment.Sha256)
-                    {
-                        if (!sourceChanged)
-                        {
-                            sourceChanged = department.ProductsCount > 0;
-                        }
+                    department.Id = storedDepartment.Id;
+                    department.Updated = dateTime;
+                    departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
 
-                        department.Id = storedDepartment.Id;
-                        department.Updated = dateTime;
-                        departmentRepository.TryAddOrUpdate(department, nameof(Product.Added), nameof(Product.Read));
-                    }
+                    sourceChanged = true;
                 }
             }
 

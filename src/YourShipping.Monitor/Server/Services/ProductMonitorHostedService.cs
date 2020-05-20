@@ -45,19 +45,13 @@ namespace YourShipping.Monitor.Server.Services
                     Log.Error(e, "Error scrapping product '{url}'", storedProduct.Url);
                 }
 
-                if (product != null)
+                if (product != null && product.Sha256 != storedProduct.Sha256)
                 {
-                    if (product.Sha256 != storedProduct.Sha256)
-                    {
-                        if (!sourceChanged)
-                        {
-                            sourceChanged = product.IsAvailable;
-                        }
+                    product.Id = storedProduct.Id;
+                    product.Updated = dateTime;
+                    productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));
 
-                        product.Id = storedProduct.Id;
-                        product.Updated = dateTime;
-                        productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));
-                    }
+                    sourceChanged = true;
                 }
             }
 
@@ -66,6 +60,7 @@ namespace YourShipping.Monitor.Server.Services
             if (sourceChanged)
             {
                 Log.Information("{Source} change detected", AlertSource.Products);
+
                 await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Products);
             }
             else

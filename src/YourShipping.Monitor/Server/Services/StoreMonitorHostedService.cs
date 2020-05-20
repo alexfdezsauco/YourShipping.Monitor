@@ -43,28 +43,23 @@ namespace YourShipping.Monitor.Server.Services
                     Log.Error(e, "Error scrapping department '{url}'", storedStore.Url);
                 }
 
-                if (store != null)
+                if (store != null && store.Sha256 != storedStore.Sha256)
                 {
-                    if (store.Sha256 != storedStore.Sha256)
-                    {
-                        if (!sourceChanged)
-                        {
-                            sourceChanged = store.IsAvailable;
-                        }
+                    store.Id = storedStore.Id;
+                    store.Updated = dateTime;
+                    storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
 
-                        store.Id = storedStore.Id;
-                        store.Updated = dateTime;
-                        storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
-                    }
+                    sourceChanged = true;
                 }
             }
 
             await storeRepository.SaveChangesAsync();
+
             if (sourceChanged)
             {
                 Log.Information("{Source} change detected", AlertSource.Stores.ToString());
 
-                await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Departments);
+                await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Stores);
             }
             else
             {

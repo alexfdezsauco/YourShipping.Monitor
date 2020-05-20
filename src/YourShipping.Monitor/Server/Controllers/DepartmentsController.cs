@@ -109,7 +109,7 @@
                 }
 
                 department.Read = dateTime;
-                department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Product.Added));
+                department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Department.Added));
                 departments.Add(department.ToDataTransferObject(hasChanged));
             }
 
