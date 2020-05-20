@@ -18,31 +18,10 @@
     public class StoresController : ControllerBase
     {
         [HttpPost]
-        public async Task<ActionResult<Store>> Add(
-            [FromServices] IRepository<Models.Store, int> storesRepository,
-            [FromServices] IEntityScrapper<Models.Store> entityScrapper,
-            [FromBody] Uri uri)
+        public async Task<ActionResult<Store>> Add([FromServices] IStoreService storeService, 
+                                                   [FromBody] Uri uri)
         {
-            var absoluteUrl = uri.AbsoluteUri;
-            var storedStore = storesRepository.Find(store => store.Url == absoluteUrl).FirstOrDefault();
-            if (storedStore == null)
-            {
-                var dateTime = DateTime.Now;
-                var store = await entityScrapper.GetAsync(absoluteUrl);
-                if (store != null)
-                {
-                    store.Added = dateTime;
-                    store.Updated = dateTime;
-                    store.Read = dateTime;
-
-                    storesRepository.Add(store);
-                    await storesRepository.SaveChangesAsync();
-
-                    return store.ToDataTransferObject(true);
-                }
-            }
-
-            return storedStore?.ToDataTransferObject();
+            return await storeService.AddAsync(uri);
         }
 
         [HttpGet("{id}")]
@@ -118,7 +97,6 @@
                 var scrappedDepartments = departmentScrapper.GetAsync(storedDepartment.Url);
                 await foreach (var department in scrappedDepartments)
                 {
-
                     var productUrl = department.Url;
                     var stored = productRepository.Contains(p => p.Url == productUrl);
                     departments.Add(department.ToDataTransferObject(stored: stored));

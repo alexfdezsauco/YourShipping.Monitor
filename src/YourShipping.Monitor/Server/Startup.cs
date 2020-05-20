@@ -77,12 +77,16 @@ namespace YourShipping.Monitor.Server
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
 
+            services.AddScoped<IStoreService, StoreService>();
+
             services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
             services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();
             services.AddScoped<IEntityScrapper<Store>, StoreScrapper>();
 
             services.AddScoped<IMultiEntityScrapper<Product>, InspectDepartmentProductsScrapper>();
             services.AddScoped<IMultiEntityScrapper<Department>, InspectStoreDepartmentsScrapper>();
+
+            services.AddSingleton<ImportStoresHostedService>();
 
             services.AddHostedService<DepartmentMonitorHostedService>();
             services.AddHostedService<ProductMonitorHostedService>();

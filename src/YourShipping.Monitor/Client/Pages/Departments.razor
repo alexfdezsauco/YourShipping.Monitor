@@ -35,7 +35,7 @@
             <TextInput Label="Department Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous"/>
         </SplitItem>
         <SplitItem>
-            <Button Variant=@ButtonVariant.Primary OnClick=@(async (s, a) => await AddAsync())>Add</Button>
+            <Button Variant=@ButtonVariant.Primary IsDisabled=@HasError OnClick=@(async (s, a) => await AddAsync())>Add</Button>
         </SplitItem>
     </Split>
 </div>

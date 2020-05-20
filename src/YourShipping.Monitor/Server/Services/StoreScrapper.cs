@@ -57,50 +57,56 @@
                     storeName = uri.Split('/')[3];
                 }
 
-                var footerElementTextParts = footerElement.InnerHtml.Split('•');
-                if (footerElementTextParts.Length > 0)
+                if (footerElement != null)
                 {
-                    storeName = footerElementTextParts[^1].Trim();
-                    if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                        && storeName.Length > StorePrefix.Length)
+                    var footerElementTextParts = footerElement.TextContent.Split('•');
+                    if (footerElementTextParts.Length > 0)
                     {
-                        storeName = storeName.Substring(StorePrefix.Length - 1);
+                        storeName = footerElementTextParts[^1].Trim();
+                        if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                            && storeName.Length > StorePrefix.Length)
+                        {
+                            storeName = storeName.Substring(StorePrefix.Length - 1);
+                        }
                     }
                 }
 
                 var mainNavElement = document.QuerySelector<IElement>("#mainContainer > header > div.mainNav");
-                var sha256 = mainNavElement.OuterHtml.Replace(requestIdParam, string.Empty).ComputeSHA256();
 
-                var elements = mainNavElement.QuerySelectorAll<IElement>(
-                    "div > div > ul > li").ToList();
-                foreach (var element in elements)
+                if (mainNavElement != null)
                 {
-                    if (!element.InnerHtml.Contains("<i class=\"icon-home\"></i>"))
+                    var sha256 = mainNavElement.OuterHtml.Replace(requestIdParam, string.Empty).ComputeSHA256();
+                    var elements = mainNavElement.QuerySelectorAll<IElement>("div > div > ul > li").ToList();
+                    foreach (var element in elements)
                     {
-                        categoriesCount++;
-                        var querySelector = element.QuerySelector<IElement>("a");
-                        if (querySelector != null)
+                        if (!element.InnerHtml.Contains("<i class=\"icon-home\"></i>"))
                         {
-                            querySelector.QuerySelector("i")?.Remove();
-                            var name = querySelector.TextContent;
+                            categoriesCount++;
+                            var querySelector = element.QuerySelector<IElement>("a");
+                            if (querySelector != null)
+                            {
+                                querySelector.QuerySelector("i")?.Remove();
+                                var name = querySelector.TextContent;
+                            }
+
+                            var departmentsElementSelector =
+                                element.QuerySelectorAll<IElement>("div > ul > li").ToList();
+                            departmentsCount += departmentsElementSelector.Count;
                         }
-
-                        var departmentsElementSelector = element.QuerySelectorAll<IElement>("div > ul > li").ToList();
-                        departmentsCount += departmentsElementSelector.Count;
                     }
-                }
 
-                var store = new Store
-                                 {
-                                     Name = storeName,
-                                     DepartmentsCount = departmentsCount,
-                                     CategoriesCount = categoriesCount,
-                                     Url = uri,
-                                     IsAvailable = true,
-                                 };
-                
-                store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
-                return store;
+                    var store = new Store
+                                    {
+                                        Name = storeName,
+                                        DepartmentsCount = departmentsCount,
+                                        CategoriesCount = categoriesCount,
+                                        Url = uri,
+                                        IsAvailable = true
+                                    };
+
+                    store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+                    return store;
+                }
             }
 
             return null;

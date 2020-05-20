@@ -17,6 +17,8 @@
 
     public class DepartmentsComponent : BlorcComponentBase
     {
+        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
+
         public bool IsLoading
         {
             get => this.GetPropertyValue<bool>(nameof(this.IsLoading));

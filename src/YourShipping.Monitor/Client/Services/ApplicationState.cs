@@ -183,7 +183,8 @@ namespace YourShipping.Monitor.Client.Services
 
         public void InvalidateDepartmentsOfStoreCache(int storeId)
         {
-            throw new NotImplementedException();
+            this.departmentsOfStores.TryGetValue(storeId, out var departmentsOfStore);
+            departmentsOfStore?.Clear();
         }
 
         public void InvalidateProductsCache()
@@ -231,6 +232,11 @@ namespace YourShipping.Monitor.Client.Services
         public async Task UnFollowDepartmentAsync(Department department)
         {
             await this.httpClient.DeleteAsync($"Departments/{department.Id}");
+        }
+
+        public async Task ImportStoresAsync()
+        {
+            await this.httpClient.PostAsync($"HostedService/StartImportStores", null);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

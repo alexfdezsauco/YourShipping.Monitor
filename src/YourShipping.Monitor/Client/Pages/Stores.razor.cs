@@ -1,5 +1,6 @@
 ﻿namespace YourShipping.Monitor.Client.Pages
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Net.Http;
@@ -85,6 +86,11 @@
             }
         }
 
+        protected async Task ImportStoresAsync()
+        {
+            await this.ApplicationState.ImportStoresAsync();
+        }
+
         protected bool IsHighlighted(Store store)
         {
             return store != null && store.HasChanged;
@@ -104,9 +110,11 @@
             await this.RefreshAsync();
         }
 
+        public bool HasError => !Uri.TryCreate(Url, UriKind.Absolute, out _);
+
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(this.IsLoading))
+            if (e.PropertyName == nameof(this.IsLoading) || e.PropertyName == nameof(Url))
             {
                 this.StateHasChanged();
             }

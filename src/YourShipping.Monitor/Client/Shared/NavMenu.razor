@@ -14,16 +14,17 @@
                 <SplitItem IsFilled="true" style="width: 140px;">Home</SplitItem>
             </Split>
         </NavigationItem>
-        <NavigationItem Link="/products-monitor">
+        <NavigationItem Link="/stores-monitor">
             <Split IsGutter="true">
-                <SplitItem><GiftIcon /></SplitItem>
-                <SplitItem IsFilled="true" style="width: 140px;">Products</SplitItem>
-                @if (ApplicationState.HasAlertsFrom(AlertSource.Products))
+                <SplitItem><BuildingIcon /></SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Stores</SplitItem>
+                @if (ApplicationState.HasAlertsFrom(AlertSource.Stores))
                 {
                     <SplitItem><BellIcon /></SplitItem>
                 }
             </Split>
         </NavigationItem>
+
         <NavigationItem Link="/departments-monitor">
             <Split IsGutter="true">
                 <SplitItem><WarehouseIcon /></SplitItem>
@@ -33,12 +34,12 @@
                     <SplitItem><BellIcon /></SplitItem>
                 }
             </Split>
-        </NavigationItem> 
-        <NavigationItem Link="/stores-monitor">
+        </NavigationItem>
+        <NavigationItem Link="/products-monitor">
             <Split IsGutter="true">
-                <SplitItem><BuildingIcon /></SplitItem>
-                <SplitItem IsFilled="true" style="width: 140px;">Stores</SplitItem>
-                @if (ApplicationState.HasAlertsFrom(AlertSource.Stores))
+                <SplitItem><GiftIcon /></SplitItem>
+                <SplitItem IsFilled="true" style="width: 140px;">Products</SplitItem>
+                @if (ApplicationState.HasAlertsFrom(AlertSource.Products))
                 {
                     <SplitItem><BellIcon /></SplitItem>
                 }

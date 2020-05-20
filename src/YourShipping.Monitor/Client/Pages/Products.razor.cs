@@ -3,9 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Linq;
     using System.Net.Http;
-    using System.Net.Http.Json;
     using System.Threading.Tasks;
 
     using Blorc.Components;
@@ -19,6 +17,8 @@
 
     public class ProductsComponent : BlorcComponentBase
     {
+        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
+
         public bool IsLoading
         {
             get => this.GetPropertyValue<bool>(nameof(this.IsLoading));
@@ -63,7 +63,7 @@
                         {
                             Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Product)
                         });
-                
+
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
@@ -134,18 +134,18 @@
             this.IsLoading = true;
         }
 
-        private async Task UnFollow(Product product)
-        {
-            await this.ApplicationState.UnFollowProductAsync(product);
-            this.StateHasChanged();
-        }
-
         private async Task BuyOrBrowse(Product product)
         {
             if (product != null)
             {
                 await this.JsRuntime.InvokeAsync<object>("open", product.Url, "_blank");
             }
+        }
+
+        private async Task UnFollow(Product product)
+        {
+            await this.ApplicationState.UnFollowProductAsync(product);
+            this.StateHasChanged();
         }
     }
 }

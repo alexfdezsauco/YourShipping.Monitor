@@ -31,10 +31,10 @@
     </label>
     <Split IsGutter="true">
         <SplitItem IsFilled="true">
-            <TextInput Label="Product Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous"/>
+            <TextInput Label="Product Link" @bind-Value="Url"  UpdateMode="@UpdateMode.Continuous"/>
         </SplitItem>
         <SplitItem>
-            <Button Variant=@ButtonVariant.Primary OnClick=@(async (s, a) => await AddAsync())>Add</Button>
+            <Button Variant=@ButtonVariant.Primary IsDisabled=@HasError OnClick=@(async (s, a) => await AddAsync())>Add</Button>
         </SplitItem>
     </Split>
 </div>

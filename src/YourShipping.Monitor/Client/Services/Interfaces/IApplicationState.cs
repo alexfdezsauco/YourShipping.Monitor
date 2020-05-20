@@ -43,5 +43,7 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
         Task UnFollowProductAsync(Product product);
 
         Task UnFollowDepartmentAsync(Department department);
+
+        Task ImportStoresAsync();
     }
 }
