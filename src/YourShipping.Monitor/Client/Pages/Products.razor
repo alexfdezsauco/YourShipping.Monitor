@@ -49,8 +49,9 @@
                         <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
                         <Column Label="Store" Key="Store" IsSortable="true" Idx="1" />
                         <Column Label="Department" Key="Department" IsSortable="true" Idx="2" />
-                        <Column Label="Price" Key="Price" IsSortable="true" Idx="3" />
-                        <Column Label="Currency" Key="Currency" IsSortable="true" Idx="4" />
+                        <Column Label="Category" Key="DepartmentCategory" IsSortable="true" Idx="3" />
+                        <Column Label="Price" Key="Price" IsSortable="true" Idx="4" />
+                        <Column Label="Currency" Key="Currency" IsSortable="true" Idx="5" />
                         <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                     </Row>
                 </Header>

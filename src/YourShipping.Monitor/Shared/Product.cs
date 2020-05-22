@@ -21,5 +21,7 @@
         public string Url { get; set; }
 
         public string Department { get; set; }
+
+        public string DepartmentCategory { get; set; }
     }
 }

@@ -41,7 +41,7 @@
 
         public async Task<Department> GetAsync(string url, bool force = false)
         {
-            url = Regex.Replace(url.Trim(), @"ProdPid=\d+(&?)", string.Empty, RegexOptions.IgnoreCase);
+            url = Regex.Replace(url.Trim(), @"ProdPid=\d+(&?)", string.Empty, RegexOptions.IgnoreCase).Trim('&');
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        () => this.GetDirectAsync(url),

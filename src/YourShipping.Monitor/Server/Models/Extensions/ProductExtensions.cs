@@ -18,6 +18,7 @@
                            Store = product.Store,
                            IsStored = stored,
                            Department = product.Department,
+                           DepartmentCategory = product.DepartmentCategory,
                            IsAvailable = product.IsAvailable,
                            HasChanged = hasChanged
                        };

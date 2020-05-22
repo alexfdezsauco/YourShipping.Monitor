@@ -3,6 +3,7 @@
     using System;
     using System.Net.Http;
     using System.Text.Json;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -46,7 +47,8 @@
 
         public async Task<Product> GetAsync(string url, bool force = false)
         {
-            url = url.Trim();
+            url = Regex.Replace(url.Trim(), @"page=\d+(&?)", "", RegexOptions.IgnoreCase);
+            url = Regex.Replace(url, @"img=\d+(&?)", "", RegexOptions.IgnoreCase).Trim('&');
             return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
@@ -59,6 +61,7 @@
 
             var storeName = store?.Name;
             var departmentName = department?.Name;
+            var departmentCategory = department?.Category;
 
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
@@ -147,6 +150,7 @@
                                           Url = url,
                                           Store = storeName,
                                           Department = departmentName,
+                                          DepartmentCategory = departmentCategory,
                                           IsAvailable = isAvailable
                                       };
 
