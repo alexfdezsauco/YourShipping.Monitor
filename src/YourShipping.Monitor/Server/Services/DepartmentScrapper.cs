@@ -4,6 +4,7 @@
     using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -40,12 +41,18 @@
 
         public async Task<Department> GetAsync(string url, bool force = false)
         {
-            url = url.Trim();
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
+            url = Regex.Replace(url.Trim(), @"ProdPid=\d+(&?)", string.Empty, RegexOptions.IgnoreCase);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       () => this.GetDirectAsync(url),
+                       ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
+                       force);
         }
 
         private async Task<Department> GetDirectAsync(string url)
         {
+            Log.Information("Scrapping Department from {Url}", url);
+
             var store = await this.storeScrapper.GetAsync(url);
             var storeName = store?.Name;
 

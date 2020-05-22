@@ -45,6 +45,8 @@
 
         private async Task<Store> GetDirectAsync(string url)
         {
+            Log.Information("Scrapping Store from {Url}", url);
+
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var storesToImport =

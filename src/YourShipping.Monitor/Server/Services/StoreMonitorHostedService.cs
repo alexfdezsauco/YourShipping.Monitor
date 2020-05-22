@@ -38,7 +38,7 @@ namespace YourShipping.Monitor.Server.Services
                 Models.Store store = null;
                 try
                 {
-                    store = await storeScrapper.GetAsync(storedStore.Url);
+                    store = await storeScrapper.GetAsync(storedStore.Url, true);
                 }
                 catch (Exception e)
                 {

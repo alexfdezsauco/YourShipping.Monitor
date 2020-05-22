@@ -17,6 +17,7 @@
                            Currency = product.Currency,
                            Store = product.Store,
                            IsStored = stored,
+                           Department = product.Department,
                            IsAvailable = product.IsAvailable,
                            HasChanged = hasChanged
                        };

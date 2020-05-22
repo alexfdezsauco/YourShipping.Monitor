@@ -37,7 +37,7 @@ namespace YourShipping.Monitor.Server.Services
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
-                Product product = await productScrapper.GetAsync(storedProduct.Url);
+                Product product = await productScrapper.GetAsync(storedProduct.Url, true);
                 if (product == null)
                 {
                     if (storedProduct.IsAvailable)

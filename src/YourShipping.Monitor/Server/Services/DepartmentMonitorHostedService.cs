@@ -40,7 +40,7 @@ namespace YourShipping.Monitor.Server.Services
                 Department department = null;
                 try
                 {
-                    department = await departmentScrapper.GetAsync(storedDepartment.Url);
+                    department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
                 }
                 catch (Exception e)
                 {

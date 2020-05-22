@@ -30,13 +30,17 @@
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
+        private readonly IEntityScrapper<Department> departmentScrapper;
+
         public ProductScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
+            IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
+            this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
         }
 
@@ -48,8 +52,13 @@
 
         private async Task<Product> GetDirectAsync(string url)
         {
+            Log.Information("Scrapping Product from {Url}", url);
+
             var store = await this.storeScrapper.GetAsync(url);
+            var department = await this.departmentScrapper.GetAsync(url);
+
             var storeName = store?.Name;
+            var departmentName = department?.Name;
 
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
@@ -137,6 +146,7 @@
                                           Currency = currency,
                                           Url = url,
                                           Store = storeName,
+                                          Department = departmentName,
                                           IsAvailable = isAvailable
                                       };
 

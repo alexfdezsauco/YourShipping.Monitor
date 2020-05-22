@@ -30,6 +30,8 @@ namespace YourShipping.Monitor.Server
 
         public async IAsyncEnumerable<Department> GetAsync(string url)
         {
+            Log.Information("Scrapping Departments from {Url}", url);
+
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";

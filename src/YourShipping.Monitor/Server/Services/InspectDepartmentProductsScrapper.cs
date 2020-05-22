@@ -33,6 +33,8 @@ namespace YourShipping.Monitor.Server
 
         public async IAsyncEnumerable<Product> GetAsync(string url)
         {
+            Log.Information("Scrapping Products from {Url}", url);
+
             var products = new HashSet<string>();
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             bool found;
@@ -79,7 +81,11 @@ namespace YourShipping.Monitor.Server
 
                         found = true;
 
-                        yield return await this.productScrapper.GetAsync(productUrl);
+                        var product = await this.productScrapper.GetAsync(productUrl);
+                        if (product != null)
+                        {
+                            yield return product;
+                        }
                     }
                 }
             }
