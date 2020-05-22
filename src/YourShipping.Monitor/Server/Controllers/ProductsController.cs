@@ -65,7 +65,7 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Product product;
-                bool hasChanged = false;
+                var hasChanged = false;
                 if (storedProduct.Read < storedProduct.Updated)
                 {
                     product = storedProduct;
@@ -84,12 +84,18 @@
                             product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
                         }
                     }
-                    else if (product.Sha256 != storedProduct.Sha256)
+                    else
                     {
-                        hasChanged = true;
                         product.Id = storedProduct.Id;
-                        product.Updated = dateTime;
-                        productRepository.TryAddOrUpdate(product, nameof(Models.Product.Added), nameof(Models.Product.Read));
+                        if (product.Sha256 != storedProduct.Sha256)
+                        {
+                            hasChanged = true;
+                            product.Updated = dateTime;
+                            productRepository.TryAddOrUpdate(
+                                product,
+                                nameof(Models.Product.Added),
+                                nameof(Models.Product.Read));
+                        }
                     }
                 }
 

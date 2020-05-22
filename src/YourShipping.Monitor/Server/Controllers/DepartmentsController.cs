@@ -6,8 +6,6 @@
     using System.Text.Json;
     using System.Threading.Tasks;
 
-    using AngleSharp;
-
     using Microsoft.AspNetCore.Mvc;
 
     using Orc.EntityFrameworkCore;
@@ -87,7 +85,7 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Department department;
-                bool hasChanged = false;
+                var hasChanged = false;
                 if (storedDepartment.Read < storedDepartment.Updated)
                 {
                     department = storedDepartment;
@@ -106,14 +104,19 @@
                             department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
                         }
                     }
-                    else if (department.Sha256 != storedDepartment.Sha256)
+                    else
                     {
-                        hasChanged = true;
-                        department.Id = department.Id;
-                        department.Updated = dateTime;
-                        departmentRepository.TryAddOrUpdate(department, nameof(Models.Department.Added), nameof(Models.Department.Read));
+                        department.Id = storedDepartment.Id;
+                        if (department.Sha256 != storedDepartment.Sha256)
+                        {
+                            hasChanged = true;
+                            department.Updated = dateTime;
+                            departmentRepository.TryAddOrUpdate(
+                                department,
+                                nameof(Models.Department.Added),
+                                nameof(Models.Department.Read));
+                        }
                     }
-
                 }
 
                 department.Read = dateTime;

@@ -94,12 +94,15 @@
                             store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
                         }
                     }
-                    else if (store.Sha256 != storedStore.Sha256)
+                    else
                     {
-                        hasChanged = true;
                         store.Id = storedStore.Id;
-                        store.Updated = dateTime;
-                        storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
+                        if (store.Sha256 != storedStore.Sha256)
+                        {
+                            hasChanged = true;
+                            store.Updated = dateTime;
+                            storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
+                        }
                     }
                 }
 
