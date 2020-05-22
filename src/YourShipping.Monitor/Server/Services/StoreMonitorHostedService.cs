@@ -49,22 +49,22 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     if (storedStore.IsAvailable)
                     {
-                        Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", storedStore.Name, storedStore.Province, storedStore.IsAvailable);
-
                         storedStore.IsAvailable = false;
                         storedStore.Updated = dateTime;
                         storedStore.Sha256 = JsonSerializer.Serialize(storedStore.IsAvailable).ComputeSHA256();
                         sourceChanged = true;
+
+                        Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", storedStore.Name, storedStore.Province, storedStore.IsAvailable);
                     }
                 }
                 else if (store.Sha256 != storedStore.Sha256)
                 {
-                    Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", store.Name, store.Province, store.IsAvailable);
-
                     store.Id = storedStore.Id;
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
                     sourceChanged = true;
+
+                    Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", store.Name, store.Province, store.IsAvailable);
                 }
             }
 

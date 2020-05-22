@@ -51,22 +51,22 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     if (storedDepartment.IsAvailable)
                     {
-                        Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", storedDepartment.Name, storedDepartment.Store, storedDepartment.IsAvailable);
-
                         storedDepartment.IsAvailable = false;
                         storedDepartment.Updated = dateTime;
                         storedDepartment.Sha256 = JsonSerializer.Serialize(storedDepartment.IsAvailable).ComputeSHA256();
                         sourceChanged = true;
+
+                        Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", storedDepartment.Name, storedDepartment.Store, storedDepartment.IsAvailable);
                     }
                 }
                 else if (department.Sha256 != storedDepartment.Sha256)
                 {
-                    Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", department.Name, department.Store, department.IsAvailable);
-
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
                     departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
                     sourceChanged = true;
+
+                    Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", department.Name, department.Store, department.IsAvailable);
                 }
             }
 
