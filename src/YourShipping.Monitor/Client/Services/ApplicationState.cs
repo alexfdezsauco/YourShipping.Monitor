@@ -52,7 +52,7 @@ namespace YourShipping.Monitor.Client.Services
                         this.OnStateChanged();
                     }
                     else if (args.Location.EndsWith("/stores-monitor")
-                             && this.alertSources.Remove(AlertSource.Products))
+                             && this.alertSources.Remove(AlertSource.Stores))
                     {
                         this.OnStateChanged();
                     }
