@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -9,6 +10,7 @@ namespace YourShipping.Monitor.Server.Services
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -35,22 +37,22 @@ namespace YourShipping.Monitor.Server.Services
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
-                Product product = null;
-                try
+                Product product = await productScrapper.GetAsync(storedProduct.Url);
+                if (product == null)
                 {
-                    product = await productScrapper.GetAsync(storedProduct.Url);
+                    if (storedProduct.IsAvailable)
+                    {
+                        storedProduct.IsAvailable = false;
+                        storedProduct.Updated = dateTime;
+                        storedProduct.Sha256 = JsonSerializer.Serialize(storedProduct.IsAvailable).ComputeSHA256();
+                        sourceChanged = true;
+                    }
                 }
-                catch (Exception e)
-                {
-                    Log.Error(e, "Error scrapping product '{url}'", storedProduct.Url);
-                }
-
-                if (product != null && product.Sha256 != storedProduct.Sha256)
+                else if (product.Sha256 != storedProduct.Sha256)
                 {
                     product.Id = storedProduct.Id;
                     product.Updated = dateTime;
                     productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));
-
                     sourceChanged = true;
                 }
             }

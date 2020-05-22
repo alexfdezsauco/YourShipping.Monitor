@@ -52,8 +52,9 @@
             <Header>
                 <Row>
                     <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
-                    <Column Label="Departments Count" Key="DepartmentsCount" IsSortable="true" Idx="1" />
-                    <Column Label="Categories Count" Key="CategoriesCount" IsSortable="true" Idx="2" />
+                    <Column Label="Province" Key="Province" IsSortable="true" Idx="1" />
+                    <Column Label="Departments Count" Key="DepartmentsCount" IsSortable="true" Idx="2" />
+                    <Column Label="Categories Count" Key="CategoriesCount" IsSortable="true" Idx="3" />
                     <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                 </Row>
             </Header>

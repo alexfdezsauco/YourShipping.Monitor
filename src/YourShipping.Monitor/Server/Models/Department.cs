@@ -27,6 +27,8 @@
 
         public string Url { get; set; }
 
+        public bool IsAvailable { get; set; }
+
         [JsonIgnore]
         public string Sha256 { get; set; }
 

@@ -30,6 +30,8 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         bool HasAlertsFrom(AlertSource alertSource);
 
+        Task ImportStoresAsync();
+
         void InvalidateDepartmentsCache();
 
         void InvalidateDepartmentsOfStoreCache(int storeId);
@@ -40,10 +42,14 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         void InvalidateStoresCache();
 
-        Task UnFollowProductAsync(Product product);
-
         Task UnFollowDepartmentAsync(Department department);
 
-        Task ImportStoresAsync();
+        Task UnFollowProductAsync(Product product);
+
+        Task UnFollowStoreAsync(Store store);
+
+        Task TurnOnScanAsync(Store store);
+
+        Task TurnOffScanAsync(Store store);
     }
 }

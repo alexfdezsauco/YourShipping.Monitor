@@ -1,11 +1,8 @@
 namespace YourShipping.Monitor.Server.Services
 {
     using System;
-    using System.Net.Http;
-    using System.Net.Http.Json;
     using System.Threading;
     using System.Threading.Tasks;
-
 
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
@@ -54,7 +51,6 @@ namespace YourShipping.Monitor.Server.Services
 
         private async Task ImportStores()
         {
-            var httpClient = new HttpClient();
             try
             {
                 IStoreService storeService;
@@ -68,15 +64,11 @@ namespace YourShipping.Monitor.Server.Services
                     storeService = serviceScope.ServiceProvider.GetService<IStoreService>();
                 }
 
-                var importStores = await httpClient.GetFromJsonAsync<ImportStore[]>("https://www.tuenvio.cu/stores.json");
-                foreach (var importStore in importStores)
-                {
-                    await storeService.AddAsync(new Uri(importStore.Url));
-                }
+                await storeService.ImportAsync();
             }
             catch (Exception e)
             {
-                Log.Error(e,  "Error importing stores");
+                Log.Error(e, "Error importing stores");
             }
         }
     }

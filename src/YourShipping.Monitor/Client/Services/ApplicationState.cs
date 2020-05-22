@@ -40,12 +40,18 @@ namespace YourShipping.Monitor.Client.Services
             this.httpClient = httpClient;
             navigationManager.LocationChanged += (sender, args) =>
                 {
+                    // TODO: Improve this.
                     if (args.Location.EndsWith("/departments-monitor")
                         && this.alertSources.Remove(AlertSource.Departments))
                     {
                         this.OnStateChanged();
                     }
                     else if (args.Location.EndsWith("/products-monitor")
+                             && this.alertSources.Remove(AlertSource.Products))
+                    {
+                        this.OnStateChanged();
+                    }
+                    else if (args.Location.EndsWith("/stores-monitor")
                              && this.alertSources.Remove(AlertSource.Products))
                     {
                         this.OnStateChanged();
@@ -87,7 +93,9 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Department> FollowDepartmentAsync(string productUrl)
         {
-            var responseMessage = await this.httpClient.PostAsync("Departments", JsonContent.Create(new Uri(productUrl)));
+            var responseMessage = await this.httpClient.PostAsync(
+                                      "Departments",
+                                      JsonContent.Create(new Uri(productUrl)));
             var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
             if (department.HasChanged)
             {
@@ -176,6 +184,11 @@ namespace YourShipping.Monitor.Client.Services
             return this.alertSources.Contains(alertSource);
         }
 
+        public async Task ImportStoresAsync()
+        {
+            await this.httpClient.PostAsync("HostedService/StartImportStores", null);
+        }
+
         public void InvalidateDepartmentsCache()
         {
             this.departments?.Clear();
@@ -203,40 +216,51 @@ namespace YourShipping.Monitor.Client.Services
             this.stores?.Clear();
         }
 
-        public async Task UnFollowProductAsync(Product product)
-        {
-            await this.httpClient.DeleteAsync($"Products/{product.Id}");
-            //if (this.products.Remove(product))
-            //{
-            //    if (this.productsOfDepartments != null)
-            //    {
-            //        foreach (var productsOfDepartment in this.productsOfDepartments)
-            //        {
-            //            var cachedProduct = productsOfDepartment.Value?.FirstOrDefault(p => p.Url == product.Url);
-            //            if (cachedProduct != null)
-            //            {
-            //                cachedProduct.IsStored = false;
-            //                cachedProduct.HasChanged = false;
-            //            }
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    this.products.RemoveAll(p => p.Url == product.Url);
-            //    product.IsStored = false;
-            //    product.HasChanged = false;
-            //}
-        }
-
         public async Task UnFollowDepartmentAsync(Department department)
         {
             await this.httpClient.DeleteAsync($"Departments/{department.Id}");
         }
 
-        public async Task ImportStoresAsync()
+        public async Task UnFollowProductAsync(Product product)
         {
-            await this.httpClient.PostAsync($"HostedService/StartImportStores", null);
+            await this.httpClient.DeleteAsync($"Products/{product.Id}");
+
+            // if (this.products.Remove(product))
+            // {
+            // if (this.productsOfDepartments != null)
+            // {
+            // foreach (var productsOfDepartment in this.productsOfDepartments)
+            // {
+            // var cachedProduct = productsOfDepartment.Value?.FirstOrDefault(p => p.Url == product.Url);
+            // if (cachedProduct != null)
+            // {
+            // cachedProduct.IsStored = false;
+            // cachedProduct.HasChanged = false;
+            // }
+            // }
+            // }
+            // }
+            // else
+            // {
+            // this.products.RemoveAll(p => p.Url == product.Url);
+            // product.IsStored = false;
+            // product.HasChanged = false;
+            // }
+        }
+
+        public async Task UnFollowStoreAsync(Store store)
+        {
+            await this.httpClient.DeleteAsync($"Stores/{store.Id}");
+        }
+
+        public async Task TurnOnScanAsync(Store store)
+        {
+            await this.httpClient.PostAsync($"Stores/TurnOnScan/{store.Id}", null);
+        }
+
+        public async Task TurnOffScanAsync(Store store)
+        {
+            await this.httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

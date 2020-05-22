@@ -3,12 +3,14 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
 
     using Orc.EntityFrameworkCore;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -55,7 +57,7 @@
         [HttpGet]
         public async Task<IEnumerable<Product>> Get(
             [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IEntityScrapper<Models.Product> entityScrapper)
+            [FromServices] IEntityScrapper<Models.Product> productScrapper)
         {
             var products = new List<Product>();
 
@@ -63,35 +65,36 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Product product;
-                var hasChanged = storedProduct.Read < storedProduct.Updated;
-                if (hasChanged)
+                bool hasChanged = false;
+                if (storedProduct.Read < storedProduct.Updated)
                 {
                     product = storedProduct;
                 }
                 else
                 {
-                    product = await entityScrapper.GetAsync(storedProduct.Url);
-                    if (product != null)
-                    {
-                        product.Id = storedProduct.Id;
-                        hasChanged = storedProduct.Sha256 != product.Sha256;
-                        if (hasChanged)
-                        {
-                            product.Updated = dateTime;
-                            product = productRepository.TryAddOrUpdate(product, nameof(Models.Product.Added));
-                        }
-                    }
-                    else
+                    product = await productScrapper.GetAsync(storedProduct.Url);
+                    if (product == null)
                     {
                         product = storedProduct;
+                        if (product.IsAvailable)
+                        {
+                            hasChanged = true;
+                            product.IsAvailable = false;
+                            product.Updated = dateTime;
+                            product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
+                        }
+                    }
+                    else if (product.Sha256 != storedProduct.Sha256)
+                    {
+                        hasChanged = true;
+                        product.Id = storedProduct.Id;
+                        product.Updated = dateTime;
+                        productRepository.TryAddOrUpdate(product, nameof(Models.Product.Added), nameof(Models.Product.Read));
                     }
                 }
 
-                if (product != null)
-                {
-                    product.Read = dateTime;
-                    products.Add(product.ToDataTransferObject(hasChanged));
-                }
+                product.Read = dateTime;
+                products.Add(product.ToDataTransferObject(hasChanged));
             }
 
             await productRepository.SaveChangesAsync();

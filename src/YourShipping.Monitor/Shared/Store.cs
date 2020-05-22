@@ -14,6 +14,8 @@
 
         public string Name { get; set; }
 
+        public string Province { get; set; }
+
         public string Url { get; set; }
 
         public bool IsStored { get; set; }

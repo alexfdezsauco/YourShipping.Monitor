@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -11,6 +12,7 @@
 
     using Orc.EntityFrameworkCore;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -85,31 +87,36 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Department department;
-                var hasChanged = storedDepartment.Read < storedDepartment.Updated;
-                if (hasChanged)
+                bool hasChanged = false;
+                if (storedDepartment.Read < storedDepartment.Updated)
                 {
                     department = storedDepartment;
                 }
                 else
                 {
                     department = await entityScrapper.GetAsync(storedDepartment.Url);
-                    if (department != null)
-                    {
-                        department.Id = storedDepartment.Id;
-                        hasChanged = storedDepartment.Sha256 != department.Sha256;
-                        if (hasChanged)
-                        {
-                            department.Updated = dateTime;
-                        }
-                    }
-                    else
+                    if (department == null)
                     {
                         department = storedDepartment;
+                        if (department.IsAvailable)
+                        {
+                            hasChanged = true;
+                            department.IsAvailable = false;
+                            department.Updated = dateTime;
+                            department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
+                        }
                     }
+                    else if (department.Sha256 != storedDepartment.Sha256)
+                    {
+                        hasChanged = true;
+                        department.Id = department.Id;
+                        department.Updated = dateTime;
+                        departmentRepository.TryAddOrUpdate(department, nameof(Models.Department.Added), nameof(Models.Department.Read));
+                    }
+
                 }
 
                 department.Read = dateTime;
-                department = departmentRepository.TryAddOrUpdate(department, nameof(Models.Department.Added));
                 departments.Add(department.ToDataTransferObject(hasChanged));
             }
 

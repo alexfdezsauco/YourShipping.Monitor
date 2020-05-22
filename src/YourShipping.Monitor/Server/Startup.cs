@@ -1,8 +1,8 @@
 namespace YourShipping.Monitor.Server
 {
-    using System.Collections.Generic;
-
     using AngleSharp;
+
+    using Catel.Caching;
 
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -78,6 +78,10 @@ namespace YourShipping.Monitor.Server
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
 
             services.AddScoped<IStoreService, StoreService>();
+
+            services.AddSingleton<ICacheStorage<string, Product>>(provider => new CacheStorage<string, Product>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Department>>(provider => new CacheStorage<string, Department>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Store>>(provider => new CacheStorage<string, Store>(storeNullValues: true));
 
             services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
             services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();

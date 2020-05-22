@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -9,6 +10,7 @@ namespace YourShipping.Monitor.Server.Services
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -43,12 +45,21 @@ namespace YourShipping.Monitor.Server.Services
                     Log.Error(e, "Error scrapping department '{url}'", storedStore.Url);
                 }
 
-                if (store != null && store.Sha256 != storedStore.Sha256)
+                if (store == null)
+                {
+                    if (storedStore.IsAvailable)
+                    {
+                        storedStore.IsAvailable = false;
+                        storedStore.Updated = dateTime;
+                        storedStore.Sha256 = JsonSerializer.Serialize(storedStore.IsAvailable).ComputeSHA256();
+                        sourceChanged = true;
+                    }
+                }
+                else if (store.Sha256 != storedStore.Sha256)
                 {
                     store.Id = storedStore.Id;
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
-
                     sourceChanged = true;
                 }
             }

@@ -9,5 +9,7 @@ namespace YourShipping.Monitor.Server.Services.Interfaces
     public interface IStoreService
     {
         Task<Store> AddAsync(Uri uri);
+
+        Task ImportAsync();
     }
 }

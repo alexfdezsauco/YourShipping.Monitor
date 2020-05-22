@@ -17,6 +17,11 @@
 
     public class StoreComponent : BlorcComponentBase
     {
+        private readonly Dictionary<object, List<ActionDefinition>> ActionDefinitions =
+            new Dictionary<object, List<ActionDefinition>>();
+
+        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
+
         public bool IsLoading
         {
             get => this.GetPropertyValue<bool>(nameof(this.IsLoading));
@@ -49,31 +54,72 @@
 
         public IEnumerable<ActionDefinition> GetActions(object row)
         {
-            var actionDefinitions = new List<ActionDefinition>();
-            if (row is Store store)
+            if (!this.ActionDefinitions.ContainsKey(row))
             {
-                actionDefinitions.Add(
-                    new CallActionDefinition
-                        {
-                            Label = "Buy",
-                            IsDisabled = !store.IsAvailable,
-                            Action = async o => await this.BuyOrBrowse(o as Store)
-                        });
-                actionDefinitions.Add(
-                    new CallActionDefinition
-                        {
-                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Store)
-                        });
-                actionDefinitions.Add(
-                    new CallActionDefinition
-                        {
-                            Label = "Inspect",
-                            IsDisabled = !store.IsAvailable,
-                            Action = async o => await this.Inspect(o as Store)
-                        });
+                this.ActionDefinitions[row] = new List<ActionDefinition>();
             }
 
-            return actionDefinitions;
+            var actionDefinitions = this.ActionDefinitions[row];
+            if (actionDefinitions.Count == 0)
+            {
+                if (row is Store store)
+                {
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Buy",
+                                IsDisabled = !store.IsAvailable,
+                                Action = async o => await this.BuyOrBrowseAsync(o as Store)
+                            });
+
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Inspect",
+                                IsDisabled = !store.IsAvailable,
+                                Action = async o => await this.InspectAsync(o as Store)
+                            });
+
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "UnFollow",
+                                IsDisabled = !store.IsStored,
+                                Action = async o => await this.UnFollowAsync(o as Store)
+                            });
+
+                    var switchActionDefinition = new SwitchActionDefinition
+                                                     {
+                                                         Label = "Turn-On Scan",
+                                                         IsDisabled = !store.IsStored,
+                                                         DataContext = store
+                                                     };
+
+                    switchActionDefinition.Action = async (dataContext, isChecked) =>
+                        {
+                            switchActionDefinition.Label = switchActionDefinition.IsChecked ? "Turn-Off Scan" : "Turn-On Scan";
+                            if (switchActionDefinition.IsChecked)
+                            {
+                                await this.ApplicationState.TurnOnScanAsync(dataContext as Store);
+                            }
+                            else
+                            {
+                                await this.ApplicationState.TurnOffScanAsync(dataContext as Store);
+                            }
+                        };
+
+                    // switchActionDefinition.Action = (o, b) =>
+                    // {
+                    // switchActionDefinition.Label = b ? "Turn-Off Scan" : "Turn-On Scan";
+                    // };
+                    actionDefinitions.Add(switchActionDefinition);
+                }
+            }
+
+            foreach (var actionDefinition in actionDefinitions)
+            {
+                yield return actionDefinition;
+            }
         }
 
         protected async Task AddAsync()
@@ -110,11 +156,9 @@
             await this.RefreshAsync();
         }
 
-        public bool HasError => !Uri.TryCreate(Url, UriKind.Absolute, out _);
-
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(this.IsLoading) || e.PropertyName == nameof(Url))
+            if (e.PropertyName == nameof(this.IsLoading) || e.PropertyName == nameof(this.Url))
             {
                 this.StateHasChanged();
             }
@@ -141,7 +185,7 @@
             this.IsLoading = true;
         }
 
-        private async Task BuyOrBrowse(Store store)
+        private async Task BuyOrBrowseAsync(Store store)
         {
             if (store != null)
             {
@@ -149,9 +193,15 @@
             }
         }
 
-        private async Task Inspect(Store store)
+        private async Task InspectAsync(Store store)
         {
             this.NavigationManager.NavigateTo($"/inspect-store/{store.Id}");
+        }
+
+        private async Task UnFollowAsync(Store store)
+        {
+            await this.ApplicationState.UnFollowStoreAsync(store);
+            this.StateHasChanged();
         }
     }
 }

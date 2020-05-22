@@ -1,6 +1,5 @@
 ﻿namespace YourShipping.Monitor.Client.Pages
 {
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Net.Http;
@@ -18,12 +17,6 @@
 
     public class IspectStoreComponent : BlorcComponentBase
     {
-        public Store Store
-        {
-            get => this.GetPropertyValue<Store>(nameof(this.Store));
-            set => this.SetPropertyValue(nameof(this.Store), value);
-        }
-
         [Parameter]
         public string Id
         {
@@ -37,6 +30,12 @@
             set => this.SetPropertyValue(nameof(this.IsLoading), value);
         }
 
+        public Store Store
+        {
+            get => this.GetPropertyValue<Store>(nameof(this.Store));
+            set => this.SetPropertyValue(nameof(this.Store), value);
+        }
+
         public string Url
         {
             get => this.GetPropertyValue<string>(nameof(this.Url));
@@ -46,17 +45,20 @@
         [Inject]
         protected IApplicationState ApplicationState { get; set; }
 
+        protected List<Department> Departments
+        {
+            get => this.GetPropertyValue<List<Department>>(nameof(this.Departments));
+            set => this.SetPropertyValue(nameof(this.Departments), value);
+        }
+
         [Inject]
         protected HttpClient HttpClient { get; set; }
 
         [Inject]
         protected IJSRuntime JsRuntime { get; set; }
 
-        protected List<Department> Departments
-        {
-            get => this.GetPropertyValue<List<Department>>(nameof(this.Departments));
-            set => this.SetPropertyValue(nameof(this.Departments), value);
-        }
+        [Inject]
+        private NavigationManager NavigationManager { get; set; }
 
         public IEnumerable<ActionDefinition> GetActions(object row)
         {
@@ -82,8 +84,8 @@
                             Label = "Follow",
                             IsDisabled = department.IsStored,
                             Action = async o => await this.Follow(o as Department)
-                        });  
-                
+                        });
+
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
@@ -94,12 +96,6 @@
             }
 
             return actionDefinitions;
-        }
-
-        private async Task UnFollow(Department department)
-        {
-            await this.ApplicationState.UnFollowDepartmentAsync(department);
-            this.StateHasChanged();
         }
 
         protected bool IsHighlighted(Department department)
@@ -152,10 +148,19 @@
             this.IsLoading = true;
         }
 
+        private async Task BuyOrBrowse(Department department)
+        {
+            if (department != null)
+            {
+                await this.JsRuntime.InvokeAsync<object>("open", department.Url, "_blank");
+            }
+        }
+
         private async Task Follow(Department department)
         {
             var departmentUrl = department.Url;
             var storedProduct = await this.ApplicationState.FollowDepartmentAsync(departmentUrl);
+
             // TODO: Improve this.
             if (storedProduct != null)
             {
@@ -168,12 +173,10 @@
             await this.RefreshAsync();
         }
 
-        private async Task BuyOrBrowse(Department department)
+        private async Task UnFollow(Department department)
         {
-            if (department != null)
-            {
-                await this.JsRuntime.InvokeAsync<object>("open", department.Url, "_blank");
-            }
+            await this.ApplicationState.UnFollowDepartmentAsync(department);
+            this.StateHasChanged();
         }
     }
 }

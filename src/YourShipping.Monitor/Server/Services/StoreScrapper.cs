@@ -3,11 +3,15 @@
     using System;
     using System.Linq;
     using System.Net.Http;
+    using System.Net.Http.Json;
     using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
     using AngleSharp.Dom;
+
+    using Catel.Caching;
+    using Catel.Caching.Policies;
 
     using Serilog;
 
@@ -21,17 +25,33 @@
 
         private readonly IBrowsingContext browsingContext;
 
-        public StoreScrapper(IBrowsingContext browsingContext)
+        private readonly ICacheStorage<string, Store> cacheStorage;
+
+        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage)
         {
             this.browsingContext = browsingContext;
+            this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Store> GetAsync(string uri)
+        public async Task<Store> GetAsync(string url)
         {
-            var httpClient = new HttpClient();
-            var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = uri.Contains('?') ? uri + $"&{requestIdParam}" : uri + $"?{requestIdParam}";
+            var uri = new Uri(url);
+            url = $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}";
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       () => this.GetDirectAsync(url),
+                       ExpirationPolicy.Duration(TimeSpan.FromMinutes(5)));
+        }
 
+        private async Task<Store> GetDirectAsync(string url)
+        {
+            var requestIdParam = "requestId=" + Guid.NewGuid();
+            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+            var storesToImport =
+                await httpClient.GetFromJsonAsync<OficialStoreInfo[]>(
+                    $"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+
+            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
             try
             {
@@ -39,43 +59,46 @@
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error requesting Store from '{url}'", uri);
+                Log.Error(e, "Error requesting Store from '{url}'", url);
             }
 
+            var storeToImport = storesToImport?.FirstOrDefault(s => s.Url.Trim() == url.Trim());
+            var storeName = storeToImport?.Name;
+            var isAvailable = false;
             var categoriesCount = 0;
             var departmentsCount = 0;
+
             if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-
-                var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
-
-                string storeName = null;
-                var uriParts = uri.Split('/');
-                if (uriParts.Length > 3)
+                if (string.IsNullOrWhiteSpace(storeName))
                 {
-                    storeName = uri.Split('/')[3];
-                }
-
-                if (footerElement != null)
-                {
-                    var footerElementTextParts = footerElement.TextContent.Split('•');
-                    if (footerElementTextParts.Length > 0)
+                    var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                    var uriParts = url.Split('/');
+                    if (uriParts.Length > 3)
                     {
-                        storeName = footerElementTextParts[^1].Trim();
-                        if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                            && storeName.Length > StorePrefix.Length)
+                        storeName = url.Split('/')[3];
+                    }
+
+                    if (footerElement != null)
+                    {
+                        var footerElementTextParts = footerElement.TextContent.Split('•');
+                        if (footerElementTextParts.Length > 0)
                         {
-                            storeName = storeName.Substring(StorePrefix.Length - 1);
+                            storeName = footerElementTextParts[^1].Trim();
+                            if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                                && storeName.Length > StorePrefix.Length)
+                            {
+                                storeName = storeName.Substring(StorePrefix.Length - 1);
+                            }
                         }
                     }
                 }
 
                 var mainNavElement = document.QuerySelector<IElement>("#mainContainer > header > div.mainNav");
-
                 if (mainNavElement != null)
                 {
-                    var sha256 = mainNavElement.OuterHtml.Replace(requestIdParam, string.Empty).ComputeSHA256();
+                    isAvailable = true;
                     var elements = mainNavElement.QuerySelectorAll<IElement>("div > div > ul > li").ToList();
                     foreach (var element in elements)
                     {
@@ -94,22 +117,21 @@
                             departmentsCount += departmentsElementSelector.Count;
                         }
                     }
-
-                    var store = new Store
-                                    {
-                                        Name = storeName,
-                                        DepartmentsCount = departmentsCount,
-                                        CategoriesCount = categoriesCount,
-                                        Url = uri,
-                                        IsAvailable = true
-                                    };
-
-                    store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
-                    return store;
                 }
             }
 
-            return null;
+            var store = new Store
+                            {
+                                Name = storeName,
+                                DepartmentsCount = departmentsCount,
+                                CategoriesCount = categoriesCount,
+                                Province = storeToImport?.Province,
+                                Url = url,
+                                IsAvailable = isAvailable
+                            };
+
+            store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+            return store;
         }
     }
 }

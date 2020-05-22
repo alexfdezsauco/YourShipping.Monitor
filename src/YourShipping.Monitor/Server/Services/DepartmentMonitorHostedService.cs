@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -9,13 +10,13 @@ namespace YourShipping.Monitor.Server.Services
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
     using Department = YourShipping.Monitor.Server.Models.Department;
-    using Product = YourShipping.Monitor.Server.Models.Product;
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
@@ -36,6 +37,7 @@ namespace YourShipping.Monitor.Server.Services
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
+                storedDepartment.Updated = dateTime;
                 Department department = null;
                 try
                 {
@@ -46,12 +48,20 @@ namespace YourShipping.Monitor.Server.Services
                     Log.Error(e, "Error scrapping department '{url}'", storedDepartment.Url);
                 }
 
-                if (department != null && department.Sha256 != storedDepartment.Sha256)
+                if (department == null)
+                {
+                    if (storedDepartment.IsAvailable)
+                    {
+                        storedDepartment.IsAvailable = false;
+                        storedDepartment.Sha256 = JsonSerializer.Serialize(storedDepartment.IsAvailable).ComputeSHA256();
+                        sourceChanged = true;
+                    }
+                }
+                else if (department.Sha256 != storedDepartment.Sha256)
                 {
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
                     departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
-
                     sourceChanged = true;
                 }
             }

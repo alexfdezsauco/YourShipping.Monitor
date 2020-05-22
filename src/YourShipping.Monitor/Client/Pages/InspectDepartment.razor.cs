@@ -1,6 +1,5 @@
 ﻿namespace YourShipping.Monitor.Client.Pages
 {
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Net.Http;
@@ -16,7 +15,7 @@
     using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
-    public class IspectDepartmentComponent : BlorcComponentBase
+    public class InspectDepartmentComponent : BlorcComponentBase
     {
         public Department Department
         {
@@ -82,8 +81,8 @@
                             Label = "Follow",
                             IsDisabled = product.IsStored,
                             Action = async o => await this.Follow(o as Product)
-                        });  
-                
+                        });
+
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
@@ -96,12 +95,6 @@
             }
 
             return actionDefinitions;
-        }
-
-        private async Task UnFollow(Product product)
-        {
-            await this.ApplicationState.UnFollowProductAsync(product);
-            this.StateHasChanged();
         }
 
         protected bool IsHighlighted(Product product)
@@ -154,11 +147,16 @@
             this.IsLoading = true;
         }
 
+        private async Task BuyOrBrowse(Product product)
+        {
+            if (product != null)
+            {
+                await this.JsRuntime.InvokeAsync<object>("open", product.Url, "_blank");
+            }
+        }
+
         private async Task Follow(Product product)
         {
-            // TODO: Improve this later. Tyr to move to application state.
-            Console.WriteLine($"{product is null} - {product.Url}");
-
             var productUrl = product.Url;
             var storedProduct = await this.ApplicationState.FollowProductAsync(productUrl);
             if (storedProduct != null)
@@ -172,12 +170,10 @@
             await this.RefreshAsync();
         }
 
-        private async Task BuyOrBrowse(Product product)
+        private async Task UnFollow(Product product)
         {
-            if (product != null)
-            {
-                await this.JsRuntime.InvokeAsync<object>("open", product.Url, "_blank");
-            }
+            await this.ApplicationState.UnFollowProductAsync(product);
+            this.StateHasChanged();
         }
     }
 }

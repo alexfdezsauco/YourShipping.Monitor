@@ -11,6 +11,7 @@ namespace YourShipping.Monitor.Server
     using Serilog;
 
     using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Services;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     /// <summary>
@@ -33,7 +34,7 @@ namespace YourShipping.Monitor.Server
         public async IAsyncEnumerable<Product> GetAsync(string url)
         {
             var products = new HashSet<string>();
-            var httpClient = new HttpClient();
+            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             bool found;
             var page = -1;
             do

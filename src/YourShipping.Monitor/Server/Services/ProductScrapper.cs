@@ -8,6 +8,9 @@
     using AngleSharp;
     using AngleSharp.Dom;
 
+    using Catel.Caching;
+    using Catel.Caching.Policies;
+
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
@@ -23,16 +26,34 @@
 
         private readonly IBrowsingContext browsingContext;
 
-        public ProductScrapper(IBrowsingContext browsingContext)
+        private readonly ICacheStorage<string, Product> cacheStorage;
+
+        private readonly IEntityScrapper<Store> storeScrapper;
+
+        public ProductScrapper(
+            IBrowsingContext browsingContext,
+            IEntityScrapper<Store> storeScrapper,
+            ICacheStorage<string, Product> cacheStorage)
         {
             this.browsingContext = browsingContext;
+            this.storeScrapper = storeScrapper;
+            this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Product> GetAsync(string uri)
+        public async Task<Product> GetAsync(string url)
         {
-            var httpClient = new HttpClient();
+            url = url.Trim();
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration));
+        }
+
+        private async Task<Product> GetDirectAsync(string url)
+        {
+            var store = await this.storeScrapper.GetAsync(url);
+            var storeName = store?.Name;
+
+            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = uri.Contains('?') ? uri + $"&{requestIdParam}" : uri + $"?{requestIdParam}";
+            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
             try
             {
@@ -40,32 +61,32 @@
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error requesting Department '{url}'", uri);
+                Log.Error(e, "Error requesting Department '{url}'", url);
             }
 
             if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-
-                var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
-
-                string store = null;
-                var uriParts = uri.Split('/');
-                if (uriParts.Length > 3)
+                if (string.IsNullOrWhiteSpace(storeName))
                 {
-                    store = uri.Split('/')[3];
-                }
-
-                if (footerElement != null)
-                {
-                    var footerElementTextParts = footerElement.TextContent.Split('•');
-                    if (footerElementTextParts.Length > 0)
+                    var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                    var uriParts = url.Split('/');
+                    if (uriParts.Length > 3)
                     {
-                        store = footerElementTextParts[^1].Trim();
-                        if (store.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                            && store.Length > StorePrefix.Length)
+                        storeName = url.Split('/')[3];
+                    }
+
+                    if (footerElement != null)
+                    {
+                        var footerElementTextParts = footerElement.TextContent.Split('•');
+                        if (footerElementTextParts.Length > 0)
                         {
-                            store = store.Substring(StorePrefix.Length - 1);
+                            storeName = footerElementTextParts[^1].Trim();
+                            if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                                && storeName.Length > StorePrefix.Length)
+                            {
+                                storeName = storeName.Substring(StorePrefix.Length - 1);
+                            }
                         }
                     }
                 }
@@ -114,9 +135,9 @@
                                           Name = name,
                                           Price = price,
                                           Currency = currency,
-                                          Url = uri,
-                                          Store = store,
-                                          IsAvailable = isAvailable,
+                                          Url = url,
+                                          Store = storeName,
+                                          IsAvailable = isAvailable
                                       };
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();

@@ -3,12 +3,16 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
 
     using Orc.EntityFrameworkCore;
 
+    using Serilog;
+
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -18,10 +22,33 @@
     public class StoresController : ControllerBase
     {
         [HttpPost]
-        public async Task<ActionResult<Store>> Add([FromServices] IStoreService storeService, 
-                                                   [FromBody] Uri uri)
+        public async Task<ActionResult<Store>> Add([FromServices] IStoreService storeService, [FromBody] Uri uri)
         {
             return await storeService.AddAsync(uri);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            storeRepository.Delete(store => store.Id == id);
+            await storeRepository.SaveChangesAsync();
+        }       
+        
+        [HttpPost("[action]/{id}")]
+        public async Task TurnOffScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            Log.Information("Turning Off");
+            // storeRepository.Delete(store => store.Id == id);
+            // await storeRepository.SaveChangesAsync();
+        }
+
+        [HttpPost("[action]/{id}")]
+        public async Task TurnOnScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            Log.Information("Turning On");
+
+            // storeRepository.Delete(store => store.Id == id);
+            // await storeRepository.SaveChangesAsync();
         }
 
         [HttpGet("{id}")]
@@ -48,32 +75,35 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Store store;
-                var hasChanged = storedStore.Read < storedStore.Updated;
-                if (hasChanged)
+                bool hasChanged = false;
+                if (storedStore.Read < storedStore.Updated)
                 {
                     store = storedStore;
                 }
                 else
                 {
                     store = await entityScrapper.GetAsync(storedStore.Url);
-                    if (store != null)
-                    {
-                        store.Id = storedStore.Id;
-                        hasChanged = storedStore.Sha256 != store.Sha256;
-                        if (hasChanged)
-                        {
-                            store.Updated = dateTime;
-                        }
-                    }
-                    else
+                    if (store == null)
                     {
                         store = storedStore;
+                        if (store.IsAvailable)
+                        {
+                            hasChanged = true;
+                            store.IsAvailable = false;
+                            store.Updated = dateTime;
+                            store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+                        }
+                    }
+                    else if (store.Sha256 != storedStore.Sha256)
+                    {
+                        hasChanged = true;
+                        store.Id = storedStore.Id;
                         store.Updated = dateTime;
+                        storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
                     }
                 }
 
                 store.Read = dateTime;
-                store = storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added));
                 stores.Add(store.ToDataTransferObject(hasChanged));
             }
 

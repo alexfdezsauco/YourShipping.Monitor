@@ -15,6 +15,7 @@
                            Name = store.Name,
                            HasChanged = hasChanged,
                            CategoriesCount = store.CategoriesCount,
+                           Province = store.Province,
                            DepartmentsCount = store.DepartmentsCount,
                            IsAvailable = store.IsAvailable,
                            IsStored = stored

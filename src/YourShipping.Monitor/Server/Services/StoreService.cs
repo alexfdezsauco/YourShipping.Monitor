@@ -2,9 +2,13 @@
 {
     using System;
     using System.Linq;
+    using System.Net.Http;
+    using System.Net.Http.Json;
     using System.Threading.Tasks;
 
     using Orc.EntityFrameworkCore;
+
+    using Serilog;
 
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
@@ -44,6 +48,31 @@
             }
 
             return storedStore?.ToDataTransferObject();
+        }
+
+        public async Task ImportAsync()
+        {
+            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+            OficialStoreInfo[] storesToImport = null;
+            try
+            {
+                storesToImport =
+                    await httpClient.GetFromJsonAsync<OficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error requesting stores.json");
+            }
+
+            // TODO: Report the status as error.
+            if (storesToImport != null)
+            {
+                var storesUrl = storesToImport.Select(store => new Uri(store.Url));
+                foreach (var url in storesUrl)
+                {
+                    await this.AddAsync(url);
+                }
+            }
         }
     }
 }
