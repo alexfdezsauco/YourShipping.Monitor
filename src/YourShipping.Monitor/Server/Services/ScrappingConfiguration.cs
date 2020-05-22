@@ -8,6 +8,6 @@
 
         private static readonly Random Random = new Random();
 
-        public static TimeSpan Expiration => TimeSpan.FromMinutes(Random.Next(5, 10));
+        public static TimeSpan Expiration => TimeSpan.FromMinutes(Random.Next(1, 3) * Random.NextDouble());
     }
 }

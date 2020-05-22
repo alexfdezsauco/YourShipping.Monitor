@@ -65,8 +65,8 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Product product;
-                var hasChanged = false;
-                if (storedProduct.Read < storedProduct.Updated)
+                var hasChanged = storedProduct.Read < storedProduct.Updated;
+                if (hasChanged)
                 {
                     product = storedProduct;
                 }

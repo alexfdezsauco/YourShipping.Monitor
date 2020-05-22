@@ -38,25 +38,6 @@ namespace YourShipping.Monitor.Client.Services
             HttpClient httpClient)
         {
             this.httpClient = httpClient;
-            navigationManager.LocationChanged += (sender, args) =>
-                {
-                    // TODO: Improve this.
-                    if (args.Location.EndsWith("/departments-monitor")
-                        && this.alertSources.Remove(AlertSource.Departments))
-                    {
-                        this.OnStateChanged();
-                    }
-                    else if (args.Location.EndsWith("/products-monitor")
-                             && this.alertSources.Remove(AlertSource.Products))
-                    {
-                        this.OnStateChanged();
-                    }
-                    else if (args.Location.EndsWith("/stores-monitor")
-                             && this.alertSources.Remove(AlertSource.Stores))
-                    {
-                        this.OnStateChanged();
-                    }
-                };
             this.connection = hubConnectionBuilder.WithUrl(
                 $"{navigationManager.BaseUri.TrimEnd('/')}/hubs/messages",
                 opt => { opt.Transports = HttpTransportType.WebSockets; }).WithAutomaticReconnect().Build();
@@ -216,6 +197,27 @@ namespace YourShipping.Monitor.Client.Services
             this.stores?.Clear();
         }
 
+        public bool RemoveAlertsFrom(AlertSource alertSource)
+        {
+            if (this.alertSources.Remove(alertSource))
+            {
+                this.OnStateChanged();
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task TurnOffScanAsync(Store store)
+        {
+            await this.httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
+        }
+
+        public async Task TurnOnScanAsync(Store store)
+        {
+            await this.httpClient.PostAsync($"Stores/TurnOnScan/{store.Id}", null);
+        }
+
         public async Task UnFollowDepartmentAsync(Department department)
         {
             await this.httpClient.DeleteAsync($"Departments/{department.Id}");
@@ -251,16 +253,6 @@ namespace YourShipping.Monitor.Client.Services
         public async Task UnFollowStoreAsync(Store store)
         {
             await this.httpClient.DeleteAsync($"Stores/{store.Id}");
-        }
-
-        public async Task TurnOnScanAsync(Store store)
-        {
-            await this.httpClient.PostAsync($"Stores/TurnOnScan/{store.Id}", null);
-        }
-
-        public async Task TurnOffScanAsync(Store store)
-        {
-            await this.httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

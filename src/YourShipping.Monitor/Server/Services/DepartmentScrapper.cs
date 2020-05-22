@@ -38,10 +38,10 @@
             this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Department> GetAsync(string url)
+        public async Task<Department> GetAsync(string url, bool force = false)
         {
             url = url.Trim();
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration));
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
         private async Task<Department> GetDirectAsync(string url)

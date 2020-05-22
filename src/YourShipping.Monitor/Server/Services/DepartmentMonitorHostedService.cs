@@ -31,13 +31,12 @@ namespace YourShipping.Monitor.Server.Services
             IEntityScrapper<Department> departmentScrapper,
             IHubContext<MessagesHub> messageHubContext)
         {
-            Log.Information("Running Departments Monitor.");
+            Log.Information("Running {Source} Monitor.", AlertSource.Departments);
 
             var sourceChanged = false;
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var dateTime = DateTime.Now;
-                storedDepartment.Updated = dateTime;
                 Department department = null;
                 try
                 {
@@ -52,13 +51,18 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     if (storedDepartment.IsAvailable)
                     {
+                        Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", storedDepartment.Name, storedDepartment.Store, storedDepartment.IsAvailable);
+
                         storedDepartment.IsAvailable = false;
+                        storedDepartment.Updated = dateTime;
                         storedDepartment.Sha256 = JsonSerializer.Serialize(storedDepartment.IsAvailable).ComputeSHA256();
                         sourceChanged = true;
                     }
                 }
                 else if (department.Sha256 != storedDepartment.Sha256)
                 {
+                    Log.Information("Department {Department} from {Store} has changed. Is Available: {IsAvailable}", department.Name, department.Store, department.IsAvailable);
+
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
                     departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
@@ -69,13 +73,13 @@ namespace YourShipping.Monitor.Server.Services
             await departmentRepository.SaveChangesAsync();
             if (sourceChanged)
             {
-                Log.Information("{Source} change detected", AlertSource.Departments.ToString());
+                Log.Information("{Source} change detected", AlertSource.Departments);
 
                 await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Departments);
             }
             else
             {
-                Log.Information("No {Source} change detected", AlertSource.Departments.ToString());
+                Log.Information("No {Source} change detected", AlertSource.Departments);
             }
         }
     }

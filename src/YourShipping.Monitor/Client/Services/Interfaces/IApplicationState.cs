@@ -51,5 +51,7 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
         Task TurnOnScanAsync(Store store);
 
         Task TurnOffScanAsync(Store store);
+
+        bool RemoveAlertsFrom(AlertSource alertSource);
     }
 }

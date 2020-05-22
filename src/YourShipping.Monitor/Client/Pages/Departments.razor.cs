@@ -119,7 +119,7 @@
 
         protected override async Task OnInitializedAsync()
         {
-            await this.RefreshAsync();
+            await this.RefreshAsync(this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments));
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)

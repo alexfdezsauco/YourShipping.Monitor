@@ -85,8 +85,8 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Department department;
-                var hasChanged = false;
-                if (storedDepartment.Read < storedDepartment.Updated)
+                var hasChanged = storedDepartment.Read < storedDepartment.Updated;
+                if (hasChanged)
                 {
                     department = storedDepartment;
                 }

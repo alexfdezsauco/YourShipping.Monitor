@@ -29,7 +29,7 @@ namespace YourShipping.Monitor.Server.Services
             IEntityScrapper<Models.Store> storeScrapper,
             IHubContext<MessagesHub> messageHubContext)
         {
-            Log.Information("Running Store Monitor.");
+            Log.Information("Running {Source} Monitor.", AlertSource.Stores);
 
             var sourceChanged = false;
             foreach (var storedStore in storeRepository.All())
@@ -49,6 +49,8 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     if (storedStore.IsAvailable)
                     {
+                        Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", storedStore.Name, storedStore.Province, storedStore.IsAvailable);
+
                         storedStore.IsAvailable = false;
                         storedStore.Updated = dateTime;
                         storedStore.Sha256 = JsonSerializer.Serialize(storedStore.IsAvailable).ComputeSHA256();
@@ -57,6 +59,8 @@ namespace YourShipping.Monitor.Server.Services
                 }
                 else if (store.Sha256 != storedStore.Sha256)
                 {
+                    Log.Information("Store {Store} from {Province} has changed. Is Available: {IsAvailable}", store.Name, store.Province, store.IsAvailable);
+
                     store.Id = storedStore.Id;
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
@@ -68,13 +72,13 @@ namespace YourShipping.Monitor.Server.Services
 
             if (sourceChanged)
             {
-                Log.Information("{Source} change detected", AlertSource.Stores.ToString());
+                Log.Information("{Source} change detected", AlertSource.Stores);
 
                 await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Stores);
             }
             else
             {
-                Log.Information("No {Source} change detected", AlertSource.Stores.ToString());
+                Log.Information("No {Source} change detected", AlertSource.Stores);
             }
         }
     }

@@ -75,8 +75,8 @@
             {
                 var dateTime = DateTime.Now;
                 Models.Store store;
-                bool hasChanged = false;
-                if (storedStore.Read < storedStore.Updated)
+                bool hasChanged = storedStore.Read < storedStore.Updated;
+                if (hasChanged)
                 {
                     store = storedStore;
                 }

@@ -97,7 +97,8 @@
 
                     switchActionDefinition.Action = async (dataContext, isChecked) =>
                         {
-                            switchActionDefinition.Label = switchActionDefinition.IsChecked ? "Turn-Off Scan" : "Turn-On Scan";
+                            switchActionDefinition.Label =
+                                switchActionDefinition.IsChecked ? "Turn-Off Scan" : "Turn-On Scan";
                             if (switchActionDefinition.IsChecked)
                             {
                                 await this.ApplicationState.TurnOnScanAsync(dataContext as Store);
@@ -153,7 +154,7 @@
 
         protected override async Task OnInitializedAsync()
         {
-            await this.RefreshAsync();
+            await this.RefreshAsync(this.ApplicationState.RemoveAlertsFrom(AlertSource.Stores));
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)

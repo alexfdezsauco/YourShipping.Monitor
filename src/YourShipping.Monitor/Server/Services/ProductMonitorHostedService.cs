@@ -42,6 +42,8 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     if (storedProduct.IsAvailable)
                     {
+                        Log.Information("Product {Product} from {Store} has changed. Is Available: {IsAvailable}", storedProduct.Name, storedProduct.Store, storedProduct.IsAvailable);
+
                         storedProduct.IsAvailable = false;
                         storedProduct.Updated = dateTime;
                         storedProduct.Sha256 = JsonSerializer.Serialize(storedProduct.IsAvailable).ComputeSHA256();
@@ -50,6 +52,8 @@ namespace YourShipping.Monitor.Server.Services
                 }
                 else if (product.Sha256 != storedProduct.Sha256)
                 {
+                    Log.Information("Product {Product} from {Store} has changed. Is Available: {IsAvailable}", product.Name, product.Store, product.IsAvailable);
+
                     product.Id = storedProduct.Id;
                     product.Updated = dateTime;
                     productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));
