@@ -78,7 +78,6 @@
                         {
                             Label = "UnFollow", Action = async o => await this.UnFollowAsync(o as Department)
                         });
-                actionDefinitions.Add(new SeparatorActionDefinition());
                 return actionDefinitions;
             }
 

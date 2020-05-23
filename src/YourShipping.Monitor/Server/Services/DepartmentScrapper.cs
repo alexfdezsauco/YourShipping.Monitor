@@ -125,14 +125,13 @@
                     var count = 0;
                     foreach (var productElement in productElements)
                     {
-                        count++;
-                        //var element = productElement.QuerySelector<IElement>("a");
-                        //var elementAttribute = element.Attributes["href"];
-                        //var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
-                        //if (product != null && product.IsAvailable)
-                        //{
-                        //    count++;
-                        //}
+                        var element = productElement.QuerySelector<IElement>("a");
+                        var elementAttribute = element.Attributes["href"];
+                        var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
+                        if (product != null && product.IsAvailable)
+                        {
+                            count++;
+                        }
                     }
 
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")

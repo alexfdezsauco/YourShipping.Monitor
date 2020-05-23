@@ -89,16 +89,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
             }
 
-            if (sourceChanged)
-            {
-                Log.Information("{Source} changes detected", AlertSource.Departments);
-
-                // await messageHubContext.Clients.All.SendAsync(ClientMethods.SourceChanged, AlertSource.Departments);
-            }
-            else
-            {
-                Log.Information("No {Source} changes detected", AlertSource.Departments);
-            }
+            Log.Information(
+                sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
+                AlertSource.Departments);
         }
     }
 }
