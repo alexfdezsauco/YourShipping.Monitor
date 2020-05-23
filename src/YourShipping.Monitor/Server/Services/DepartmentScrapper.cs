@@ -29,6 +29,7 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
+
         private readonly IServiceProvider serviceProvider;
 
         private readonly IEntityScrapper<Store> storeScrapper;
@@ -37,7 +38,7 @@
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             ICacheStorage<string, Department> cacheStorage,
-            IServiceProvider serviceProvider)
+           IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
@@ -126,7 +127,7 @@
                     {
                         var element = productElement.QuerySelector<IElement>("a");
                         var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync(url + "/" + elementAttribute);
+                        var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
                         if (product != null && product.IsAvailable)
                         {
                             count++;
