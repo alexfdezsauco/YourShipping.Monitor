@@ -103,9 +103,19 @@
             }
         }
 
-        protected bool IsHighlighted(Department department)
+        protected string GetHighlightStyle(Department department)
         {
-            return department != null && department.HasChanged;
+            if (department != null && department.HasChanged)
+            {
+                if (department.IsAvailable)
+                {
+                    return "border-left: 3px solid var(--pf-global--primary-color--100);";
+                }
+
+                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+            }
+
+            return string.Empty;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

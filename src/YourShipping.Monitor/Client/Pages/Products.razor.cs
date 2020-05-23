@@ -86,9 +86,19 @@
             }
         }
 
-        protected bool IsHighlighted(Product product)
+        protected string GetHighlightStyle(Product product)
         {
-            return product != null && product.HasChanged;
+            if (product != null && product.HasChanged)
+            {
+                if (product.IsAvailable)
+                {
+                    return "border-left: 3px solid var(--pf-global--primary-color--100);";
+                }
+
+                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+            }
+
+            return string.Empty;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

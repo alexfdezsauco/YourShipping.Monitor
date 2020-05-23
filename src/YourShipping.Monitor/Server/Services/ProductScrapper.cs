@@ -47,8 +47,7 @@
 
         public async Task<Product> GetAsync(string url, bool force = false)
         {
-            url = Regex.Replace(url.Trim(), @"page=\d+(&?)", "", RegexOptions.IgnoreCase);
-            url = Regex.Replace(url, @"img=\d+(&?)", "", RegexOptions.IgnoreCase).Trim('&');
+            url = Regex.Replace(url, @"(&?)(page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
             return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 

@@ -138,9 +138,19 @@
             await this.ApplicationState.ImportStoresAsync();
         }
 
-        protected bool IsHighlighted(Store store)
+        protected string GetHighlightStyle(Store store)
         {
-            return store != null && store.HasChanged;
+            if (store != null && store.HasChanged)
+            {
+                if (store.IsAvailable)
+                {
+                    return "border-left: 3px solid var(--pf-global--primary-color--100);";
+                }
+
+                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+            }
+
+            return string.Empty;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

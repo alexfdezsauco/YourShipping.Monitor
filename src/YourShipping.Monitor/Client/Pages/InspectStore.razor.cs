@@ -100,7 +100,7 @@
 
         protected bool IsHighlighted(Department department)
         {
-            return department != null && department.HasChanged;
+            return department != null && department.HasChanged && department.IsAvailable;
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

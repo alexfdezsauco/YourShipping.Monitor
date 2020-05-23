@@ -43,7 +43,7 @@
 
     <Stack IsGutter="true">
         <StackItem>
-            <Table Caption="Products" IsStickyHeader="true" DataSource=@Products HighlightPredicate=@(o=>IsHighlighted(o as Product))>
+            <Table Caption="Products" IsStickyHeader="true" DataSource=@Products HighlightStyleFunc=@(o=>GetHighlightStyle(o as Product)) >
                 <Header>
                     <Row>
                         <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />

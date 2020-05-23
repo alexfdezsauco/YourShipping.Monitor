@@ -14,6 +14,7 @@
                            Name = department.Name,
                            Category = department.Category,
                            HasChanged = hasChanged,
+                           IsAvailable = department.IsAvailable,
                            IsStored = stored,
                            ProductsCount = department.ProductsCount
                        };

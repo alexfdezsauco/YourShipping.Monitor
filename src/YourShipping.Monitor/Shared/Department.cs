@@ -17,5 +17,7 @@
         public bool IsStored { get; set; }
 
         public string Category { get; set; }
+
+        public bool IsAvailable { get; set; }
     }
 }
