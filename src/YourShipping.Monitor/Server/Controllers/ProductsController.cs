@@ -56,51 +56,15 @@
 
         [HttpGet]
         public async Task<IEnumerable<Product>> Get(
-            [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IEntityScrapper<Models.Product> productScrapper)
+            [FromServices] IRepository<Models.Product, int> productRepository)
         {
             var products = new List<Product>();
 
             foreach (var storedProduct in productRepository.All())
             {
-                var dateTime = DateTime.Now;
-                Models.Product product;
+                storedProduct.Read = DateTime.Now;
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
-                if (hasChanged)
-                {
-                    product = storedProduct;
-                }
-                else
-                {
-                    product = await productScrapper.GetAsync(storedProduct.Url);
-                    if (product == null)
-                    {
-                        product = storedProduct;
-                        if (product.IsAvailable)
-                        {
-                            hasChanged = true;
-                            product.IsAvailable = false;
-                            product.Updated = dateTime;
-                            product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
-                        }
-                    }
-                    else
-                    {
-                        product.Id = storedProduct.Id;
-                        if (product.Sha256 != storedProduct.Sha256)
-                        {
-                            hasChanged = true;
-                            product.Updated = dateTime;
-                            productRepository.TryAddOrUpdate(
-                                product,
-                                nameof(Models.Product.Added),
-                                nameof(Models.Product.Read));
-                        }
-                    }
-                }
-
-                product.Read = dateTime;
-                products.Add(product.ToDataTransferObject(hasChanged));
+                products.Add(storedProduct.ToDataTransferObject(hasChanged));
             }
 
             await productRepository.SaveChangesAsync();

@@ -73,41 +73,9 @@
             var stores = new List<Store>();
             foreach (var storedStore in storeRepository.All())
             {
-                var dateTime = DateTime.Now;
-                Models.Store store;
                 bool hasChanged = storedStore.Read < storedStore.Updated;
-                if (hasChanged)
-                {
-                    store = storedStore;
-                }
-                else
-                {
-                    store = await entityScrapper.GetAsync(storedStore.Url);
-                    if (store == null)
-                    {
-                        store = storedStore;
-                        if (store.IsAvailable)
-                        {
-                            hasChanged = true;
-                            store.IsAvailable = false;
-                            store.Updated = dateTime;
-                            store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
-                        }
-                    }
-                    else
-                    {
-                        store.Id = storedStore.Id;
-                        if (store.Sha256 != storedStore.Sha256)
-                        {
-                            hasChanged = true;
-                            store.Updated = dateTime;
-                            storeRepository.TryAddOrUpdate(store, nameof(Models.Store.Added), nameof(Models.Store.Read));
-                        }
-                    }
-                }
-
-                store.Read = dateTime;
-                stores.Add(store.ToDataTransferObject(hasChanged));
+                storedStore.Read = DateTime.Now;
+                stores.Add(storedStore.ToDataTransferObject(hasChanged));
             }
 
             await storeRepository.SaveChangesAsync();

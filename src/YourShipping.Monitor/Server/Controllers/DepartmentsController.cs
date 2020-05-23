@@ -83,44 +83,9 @@
             var departments = new List<Department>();
             foreach (var storedDepartment in departmentRepository.All())
             {
-                var dateTime = DateTime.Now;
-                Models.Department department;
+                storedDepartment.Read = DateTime.Now;
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
-                if (hasChanged)
-                {
-                    department = storedDepartment;
-                }
-                else
-                {
-                    department = await entityScrapper.GetAsync(storedDepartment.Url);
-                    if (department == null)
-                    {
-                        department = storedDepartment;
-                        if (department.IsAvailable)
-                        {
-                            hasChanged = true;
-                            department.IsAvailable = false;
-                            department.Updated = dateTime;
-                            department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
-                        }
-                    }
-                    else
-                    {
-                        department.Id = storedDepartment.Id;
-                        if (department.Sha256 != storedDepartment.Sha256)
-                        {
-                            hasChanged = true;
-                            department.Updated = dateTime;
-                            departmentRepository.TryAddOrUpdate(
-                                department,
-                                nameof(Models.Department.Added),
-                                nameof(Models.Department.Read));
-                        }
-                    }
-                }
-
-                department.Read = dateTime;
-                departments.Add(department.ToDataTransferObject(hasChanged));
+                departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
             }
 
             await departmentRepository.SaveChangesAsync();

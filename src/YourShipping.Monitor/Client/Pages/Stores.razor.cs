@@ -140,14 +140,19 @@
 
         protected string GetHighlightStyle(Store store)
         {
-            if (store != null && store.HasChanged)
+            if (store.HasChanged)
             {
                 if (store.IsAvailable)
                 {
                     return "border-left: 3px solid var(--pf-global--primary-color--100);";
                 }
 
-                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+                return "border-left: 3px solid var(--pf-global--danger-color--100);  text-decoration: line-through;";
+            }
+
+            if (!store.IsAvailable)
+            {
+                return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
             }
 
             return string.Empty;

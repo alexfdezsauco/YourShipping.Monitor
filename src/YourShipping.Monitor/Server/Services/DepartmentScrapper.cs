@@ -122,17 +122,18 @@
                 if (mainPanelElement != null)
                 {
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                    var count = 0;
-                    foreach (var productElement in productElements)
-                    {
-                        var element = productElement.QuerySelector<IElement>("a");
-                        var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
-                        if (product != null && product.IsAvailable)
-                        {
-                            count++;
-                        }
-                    }
+                    var count = productElements.Count;
+                    //foreach (var productElement in productElements)
+                    //{
+                    //    count++;
+                    //    //var element = productElement.QuerySelector<IElement>("a");
+                    //    //var elementAttribute = element.Attributes["href"];
+                    //    //var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
+                    //    //if (product != null && product.IsAvailable)
+                    //    //{
+                    //    //    count++;
+                    //    //}
+                    //}
 
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
                         .ToList();

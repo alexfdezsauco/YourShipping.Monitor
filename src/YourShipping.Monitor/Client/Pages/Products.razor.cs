@@ -88,7 +88,7 @@
 
         protected string GetHighlightStyle(Product product)
         {
-            if (product != null && product.HasChanged)
+            if (product.HasChanged)
             {
                 if (product.IsAvailable)
                 {
@@ -96,6 +96,11 @@
                 }
 
                 return "border-left: 3px solid var(--pf-global--danger-color--100);";
+            }
+
+            if (!product.IsAvailable)
+            {
+                return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
             }
 
             return string.Empty;

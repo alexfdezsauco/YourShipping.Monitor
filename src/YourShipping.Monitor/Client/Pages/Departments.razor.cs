@@ -105,14 +105,22 @@
 
         protected string GetHighlightStyle(Department department)
         {
-            if (department != null && department.HasChanged)
+            if (department != null)
             {
-                if (department.IsAvailable && department.ProductsCount > 0)
+                if (department.HasChanged)
                 {
-                    return "border-left: 3px solid var(--pf-global--primary-color--100);";
+                    if (department.IsAvailable && department.ProductsCount > 0)
+                    {
+                        return "border-left: 3px solid var(--pf-global--primary-color--100);";
+                    }
+
+                    return "border-left: 3px solid var(--pf-global--danger-color--100);";
                 }
 
-                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+                if (!department.IsAvailable)
+                {
+                    return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
+                }
             }
 
             return string.Empty;
