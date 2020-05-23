@@ -114,9 +114,6 @@
                 var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
                 if (mainPanelElement != null)
                 {
-                    content = mainPanelElement.OuterHtml.Replace(requestIdParam, string.Empty);
-                    var sha256 = content.ComputeSHA256();
-
                     var missingProductElement = mainPanelElement.QuerySelector<IElement>(
                         "#ctl00_cphPage_formProduct_ctl00_productError_missingProduct");
 
