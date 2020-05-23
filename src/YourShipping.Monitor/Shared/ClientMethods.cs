@@ -3,5 +3,7 @@
     public static class ClientMethods
     {
         public const string SourceChanged = "SourceChanged";
+
+        public static string EntityChanged = "EntityChanged";
     }
 }

@@ -122,18 +122,18 @@
                 if (mainPanelElement != null)
                 {
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                    var count = productElements.Count;
-                    //foreach (var productElement in productElements)
-                    //{
-                    //    count++;
-                    //    //var element = productElement.QuerySelector<IElement>("a");
-                    //    //var elementAttribute = element.Attributes["href"];
-                    //    //var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
-                    //    //if (product != null && product.IsAvailable)
-                    //    //{
-                    //    //    count++;
-                    //    //}
-                    //}
+                    var count = 0;
+                    foreach (var productElement in productElements)
+                    {
+                        count++;
+                        //var element = productElement.QuerySelector<IElement>("a");
+                        //var elementAttribute = element.Attributes["href"];
+                        //var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
+                        //if (product != null && product.IsAvailable)
+                        //{
+                        //    count++;
+                        //}
+                    }
 
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
                         .ToList();
@@ -143,8 +143,7 @@
                         var departmentCategory = departmentElements[^2].TextContent.Trim();
                         var departmentName = departmentElements[^1].TextContent.Trim();
 
-                        if (!string.IsNullOrWhiteSpace(departmentName)
-                            && !string.IsNullOrWhiteSpace(departmentCategory))
+                        if (!string.IsNullOrWhiteSpace(departmentName) && !string.IsNullOrWhiteSpace(departmentCategory))
                         {
                             var department = new Department
                                                  {

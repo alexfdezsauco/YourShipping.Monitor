@@ -5,6 +5,7 @@ namespace YourShipping.Monitor.Client.Services
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
+    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Components;
@@ -43,6 +44,7 @@ namespace YourShipping.Monitor.Client.Services
                 opt => { opt.Transports = HttpTransportType.WebSockets; }).WithAutomaticReconnect().Build();
 
             this.connection.On<AlertSource>(ClientMethods.SourceChanged, this.OnSourceChanged);
+            this.connection.On<AlertSource, string>(ClientMethods.EntityChanged, this.OnEntityStateChanged);
             Task.Run(() => this.connection.StartAsync());
         }
 
@@ -253,6 +255,75 @@ namespace YourShipping.Monitor.Client.Services
         public async Task UnFollowStoreAsync(Store store)
         {
             await this.httpClient.DeleteAsync($"Stores/{store.Id}");
+        }
+
+        protected virtual void OnEntityStateChanged(AlertSource alertSource, string serializedEntity)
+        {
+            
+            switch (alertSource)
+            {
+                case AlertSource.Products:
+                    {
+                        var receivedProduct = JsonSerializer.Deserialize<Product>(serializedEntity);
+                        var storedProduct = this.products.FirstOrDefault(product => product.Url == receivedProduct.Url);
+                        if (storedProduct != null)
+                        {
+                            storedProduct.Url = receivedProduct.Url;
+                            storedProduct.IsAvailable = receivedProduct.IsAvailable;
+                            storedProduct.Department = receivedProduct.Department;
+                            storedProduct.Currency = receivedProduct.Currency;
+                            storedProduct.Store = receivedProduct.Store;
+                            storedProduct.IsStored = receivedProduct.IsStored;
+                            storedProduct.Name = receivedProduct.Name;
+                            storedProduct.HasChanged = receivedProduct.HasChanged;
+                        }
+
+                        break;
+                    }
+
+                case AlertSource.Departments:
+                    {
+                        var receivedDepartment = JsonSerializer.Deserialize<Department>(serializedEntity);
+                        var storedDepartment =
+                            this.departments.FirstOrDefault(department => department.Url == receivedDepartment.Url);
+                        if (storedDepartment != null)
+                        {
+                            storedDepartment.Url = receivedDepartment.Url;
+                            storedDepartment.Name = receivedDepartment.Name;
+                            storedDepartment.Category = receivedDepartment.Category;
+                            storedDepartment.ProductsCount = receivedDepartment.ProductsCount;
+                            storedDepartment.Store = receivedDepartment.Store;
+                            storedDepartment.IsAvailable = receivedDepartment.IsAvailable;
+                            storedDepartment.IsStored = receivedDepartment.IsStored;
+                            storedDepartment.HasChanged = receivedDepartment.HasChanged;
+
+                            Console.WriteLine($"Stored Department Changed: {storedDepartment.HasChanged}");
+                        }
+
+                        break;
+                    }
+
+                case AlertSource.Stores:
+                    {
+                        var receivedStore = JsonSerializer.Deserialize<Store>(serializedEntity);
+                        var storedDepartment = this.stores.FirstOrDefault(store => store.Url == receivedStore.Url);
+                        if (storedDepartment != null)
+                        {
+                            storedDepartment.Url = receivedStore.Url;
+                            storedDepartment.Name = receivedStore.Name;
+                            storedDepartment.Province = receivedStore.Province;
+                            storedDepartment.DepartmentsCount = receivedStore.DepartmentsCount;
+                            storedDepartment.CategoriesCount = receivedStore.CategoriesCount;
+                            storedDepartment.IsAvailable = receivedStore.IsAvailable;
+                            storedDepartment.IsStored = receivedStore.IsStored;
+                            storedDepartment.HasChanged = receivedStore.HasChanged;
+                        }
+
+                        break;
+                    }
+            }
+
+            this.OnSourceChanged(alertSource);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)

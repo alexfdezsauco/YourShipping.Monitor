@@ -15,6 +15,7 @@ namespace YourShipping.Monitor.Server
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services;
+    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;

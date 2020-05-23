@@ -117,7 +117,16 @@
 
         protected override async Task OnInitializedAsync()
         {
-            await this.RefreshAsync(this.ApplicationState.RemoveAlertsFrom(AlertSource.Products));
+            this.ApplicationState.SourceChanged += async (sender, args) =>
+                {
+                    if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Products))
+                    {
+                        await this.RefreshAsync();
+                    }
+                };
+
+            this.ApplicationState.RemoveAlertsFrom(AlertSource.Products);
+            await this.RefreshAsync();
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -126,16 +135,9 @@
             {
                 this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(this.Products))
+            else if (e.PropertyName == nameof(this.Products) && this.Products != null)
             {
-                if (this.Products == null)
-                {
-                    this.ApplicationState.InvalidateProductsCache();
-                }
-                else
-                {
-                    this.IsLoading = false;
-                }
+                this.IsLoading = false;
             }
         }
 
@@ -143,6 +145,7 @@
         {
             if (reload)
             {
+                this.ApplicationState.InvalidateProductsCache();
                 this.Products = null;
             }
 

@@ -42,16 +42,16 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         void InvalidateStoresCache();
 
+        bool RemoveAlertsFrom(AlertSource alertSource);
+
+        Task TurnOffScanAsync(Store store);
+
+        Task TurnOnScanAsync(Store store);
+
         Task UnFollowDepartmentAsync(Department department);
 
         Task UnFollowProductAsync(Product product);
 
         Task UnFollowStoreAsync(Store store);
-
-        Task TurnOnScanAsync(Store store);
-
-        Task TurnOffScanAsync(Store store);
-
-        bool RemoveAlertsFrom(AlertSource alertSource);
     }
 }

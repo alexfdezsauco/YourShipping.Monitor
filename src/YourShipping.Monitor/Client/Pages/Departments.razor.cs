@@ -59,34 +59,26 @@
                         {
                             Label = "Buy",
                             IsDisabled = department.ProductsCount == 0,
-                            Action = async o => await this.BuyOrBrowse(o as Department)
+                            Action = async o => await this.BuyOrBrowseAsync(o as Department)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Department)
+                            Label = "Browse", Action = async o => await this.BuyOrBrowseAsync(o as Department)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
                             Label = "Inspect",
                             IsDisabled = department.ProductsCount == 0,
-                            Action = async o => await this.Inspect(o as Department)
+                            Action = async o => await this.InspectAsync(o as Department)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "Delete", Action = async o => await this.Delete(o as Department)
+                            Label = "UnFollow", Action = async o => await this.UnFollowAsync(o as Department)
                         });
                 actionDefinitions.Add(new SeparatorActionDefinition());
-                actionDefinitions.Add(
-                    new CallActionDefinition
-                        {
-                            Label = "Add all products",
-                            IsDisabled = department.ProductsCount == 0,
-                            Action = async o => await this.AddAll(o as Department)
-                        });
-
                 return actionDefinitions;
             }
 
@@ -119,7 +111,8 @@
 
                 if (!department.IsAvailable)
                 {
-                    return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
+                    return
+                        "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
                 }
             }
 
@@ -137,7 +130,16 @@
 
         protected override async Task OnInitializedAsync()
         {
-            await this.RefreshAsync(this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments));
+            this.ApplicationState.SourceChanged += async (sender, args) =>
+                {
+                    if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments))
+                    {
+                        await this.RefreshAsync();
+                    }
+                };
+
+            this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments);
+            await this.RefreshAsync();
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -146,16 +148,9 @@
             {
                 this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(this.Departments))
+            else if (e.PropertyName == nameof(this.Departments) && this.Departments != null)
             {
-                if (this.Departments == null)
-                {
-                    this.ApplicationState.InvalidateDepartmentsCache();
-                }
-                else
-                {
-                    this.IsLoading = false;
-                }
+                this.IsLoading = false;
             }
         }
 
@@ -163,18 +158,14 @@
         {
             if (reload)
             {
+                this.ApplicationState.InvalidateDepartmentsCache();
                 this.Departments = null;
             }
 
             this.IsLoading = true;
         }
 
-        private async Task AddAll(Department department)
-        {
-            throw new NotImplementedException();
-        }
-
-        private async Task BuyOrBrowse(Department department)
+        private async Task BuyOrBrowseAsync(Department department)
         {
             if (department != null)
             {
@@ -182,16 +173,16 @@
             }
         }
 
-        private async Task Delete(Department department)
+        private async Task InspectAsync(Department department)
+        {
+            this.NavigationManager.NavigateTo($"/inspect-department/{department.Id}");
+        }
+
+        private async Task UnFollowAsync(Department department)
         {
             await this.HttpClient.DeleteAsync($"Departments/{department.Id}");
             this.Departments.Remove(department);
             this.StateHasChanged();
-        }
-
-        private async Task Inspect(Department department)
-        {
-            this.NavigationManager.NavigateTo($"/inspect-department/{department.Id}");
         }
     }
 }

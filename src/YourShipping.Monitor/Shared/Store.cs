@@ -1,23 +1,171 @@
 ﻿namespace YourShipping.Monitor.Shared
 {
-    public class Store
+    using System.ComponentModel;
+    using System.Runtime.CompilerServices;
+
+    using YourShipping.Monitor.Shared.Annotations;
+
+    public class Store : INotifyPropertyChanged
     {
-        public float CategoriesCount { get; set; }
+        private float categoriesCount;
 
-        public float DepartmentsCount { get; set; }
+        private float departmentsCount;
 
-        public bool HasChanged { get; set; }
+        private bool hasChanged;
 
-        public int Id { get; set; }
+        private int id;
 
-        public bool IsAvailable { get; set; }
+        private bool isAvailable;
 
-        public string Name { get; set; }
+        private bool isStored;
 
-        public string Province { get; set; }
+        private string name;
 
-        public string Url { get; set; }
+        private string province;
 
-        public bool IsStored { get; set; }
+        private string url;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public float CategoriesCount
+        {
+            get => this.categoriesCount;
+            set
+            {
+                if (value.Equals(this.categoriesCount))
+                {
+                    return;
+                }
+
+                this.categoriesCount = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public float DepartmentsCount
+        {
+            get => this.departmentsCount;
+            set
+            {
+                if (value.Equals(this.departmentsCount))
+                {
+                    return;
+                }
+
+                this.departmentsCount = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool HasChanged
+        {
+            get => this.hasChanged;
+            set
+            {
+                if (value == this.hasChanged)
+                {
+                    return;
+                }
+
+                this.hasChanged = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public int Id
+        {
+            get => this.id;
+            set
+            {
+                if (value == this.id)
+                {
+                    return;
+                }
+
+                this.id = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsAvailable
+        {
+            get => this.isAvailable;
+            set
+            {
+                if (value == this.isAvailable)
+                {
+                    return;
+                }
+
+                this.isAvailable = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsStored
+        {
+            get => this.isStored;
+            set
+            {
+                if (value == this.isStored)
+                {
+                    return;
+                }
+
+                this.isStored = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Name
+        {
+            get => this.name;
+            set
+            {
+                if (value == this.name)
+                {
+                    return;
+                }
+
+                this.name = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Province
+        {
+            get => this.province;
+            set
+            {
+                if (value == this.province)
+                {
+                    return;
+                }
+
+                this.province = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Url
+        {
+            get => this.url;
+            set
+            {
+                if (value == this.url)
+                {
+                    return;
+                }
+
+                this.url = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

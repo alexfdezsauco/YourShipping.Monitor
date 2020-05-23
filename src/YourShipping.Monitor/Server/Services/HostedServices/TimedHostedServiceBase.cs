@@ -1,4 +1,4 @@
-namespace YourShipping.Monitor.Server.Services
+namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
     using System.Collections.Generic;
@@ -9,7 +9,6 @@ namespace YourShipping.Monitor.Server.Services
 
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Microsoft.Extensions.Logging;
 
     using Serilog;
 
