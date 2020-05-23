@@ -56,7 +56,16 @@
             Log.Information("Scrapping Product from {Url}", url);
 
             var store = await this.storeScrapper.GetAsync(url);
+            if (store == null)
+            {
+                return null;
+            }
+
             var department = await this.departmentScrapper.GetAsync(url);
+            if (department == null)
+            {
+                return null;
+            }
 
             var storeName = store?.Name;
             var departmentName = department?.Name;

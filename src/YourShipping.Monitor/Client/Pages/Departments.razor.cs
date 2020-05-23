@@ -107,7 +107,7 @@
         {
             if (department != null && department.HasChanged)
             {
-                if (department.IsAvailable)
+                if (department.IsAvailable && department.ProductsCount > 0)
                 {
                     return "border-left: 3px solid var(--pf-global--primary-color--100);";
                 }

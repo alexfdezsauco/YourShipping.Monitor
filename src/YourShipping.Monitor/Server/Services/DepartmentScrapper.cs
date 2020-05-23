@@ -13,6 +13,8 @@
     using Catel.Caching;
     using Catel.Caching.Policies;
 
+    using Microsoft.Extensions.DependencyInjection;
+
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
@@ -27,21 +29,29 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
+        private readonly IServiceProvider serviceProvider;
+
         private readonly IEntityScrapper<Store> storeScrapper;
 
         public DepartmentScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
-            ICacheStorage<string, Department> cacheStorage)
+            ICacheStorage<string, Department> cacheStorage,
+            IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
+            this.serviceProvider = serviceProvider;
         }
 
         public async Task<Department> GetAsync(string url, bool force = false)
         {
-            url = Regex.Replace(url, @"(&?)(ProdPid=\d+(&?)|page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
+            url = Regex.Replace(
+                url,
+                @"(&?)(ProdPid=\d+(&?)|page=\d+(&?)|img=\d+(&?))",
+                string.Empty,
+                RegexOptions.IgnoreCase).Trim(' ');
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        () => this.GetDirectAsync(url),
@@ -51,11 +61,17 @@
 
         private async Task<Department> GetDirectAsync(string url)
         {
+            var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
+
             Log.Information("Scrapping Department from {Url}", url);
 
             var store = await this.storeScrapper.GetAsync(url);
-            var storeName = store?.Name;
+            if (store == null)
+            {
+                return null;
+            }
 
+            var storeName = store?.Name;
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
@@ -105,6 +121,18 @@
                 if (mainPanelElement != null)
                 {
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
+                    var count = 0;
+                    foreach (var productElement in productElements)
+                    {
+                        var element = productElement.QuerySelector<IElement>("a");
+                        var elementAttribute = element.Attributes["href"];
+                        var product = await productScrapper.GetAsync(url + "/" + elementAttribute);
+                        if (product != null && product.IsAvailable)
+                        {
+                            count++;
+                        }
+                    }
+
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
                         .ToList();
 
@@ -113,14 +141,15 @@
                         var departmentCategory = departmentElements[^2].TextContent.Trim();
                         var departmentName = departmentElements[^1].TextContent.Trim();
 
-                        if (!string.IsNullOrWhiteSpace(departmentName))
+                        if (!string.IsNullOrWhiteSpace(departmentName)
+                            && !string.IsNullOrWhiteSpace(departmentCategory))
                         {
                             var department = new Department
                                                  {
                                                      Url = url,
                                                      Name = departmentName,
                                                      Category = departmentCategory,
-                                                     ProductsCount = productElements.Count,
+                                                     ProductsCount = count,
                                                      Store = storeName,
                                                      IsAvailable = true
                                                  };
