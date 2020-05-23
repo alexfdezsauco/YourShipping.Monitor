@@ -119,7 +119,7 @@
         {
             this.ApplicationState.SourceChanged += async (sender, args) =>
                 {
-                    if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Products))
+                    if (this.ApplicationState.HasAlertsFrom(AlertSource.Products))
                     {
                         await this.RefreshAsync();
                     }
