@@ -67,9 +67,9 @@
                 return null;
             }
 
-            var storeName = store?.Name;
-            var departmentName = department?.Name;
-            var departmentCategory = department?.Category;
+            var storeName = store.Name;
+            var departmentName = department.Name;
+            var departmentCategory = department.Category;
 
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
