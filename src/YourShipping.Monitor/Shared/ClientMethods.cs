@@ -4,6 +4,6 @@
     {
         public const string SourceChanged = "SourceChanged";
 
-        public static string EntityChanged = "EntityChanged";
+        public const string EntityChanged = "EntityChanged";
     }
 }

@@ -48,7 +48,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         entityChanged = true;
                         product.IsAvailable = false;
                         product.Updated = dateTime;
-                        product.Sha256 = JsonSerializer.Serialize(storedProduct.IsAvailable).ComputeSHA256();
+                        product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
                         sourceChanged = true;
 
                         Log.Information(

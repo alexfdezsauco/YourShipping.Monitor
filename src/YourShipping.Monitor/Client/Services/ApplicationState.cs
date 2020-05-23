@@ -284,6 +284,7 @@ namespace YourShipping.Monitor.Client.Services
                 case AlertSource.Departments:
                     {
                         var receivedDepartment = JsonSerializer.Deserialize<Department>(serializedEntity);
+                        Console.WriteLine(receivedDepartment);
                         var storedDepartment =
                             this.departments.FirstOrDefault(department => department.Url == receivedDepartment.Url);
                         if (storedDepartment != null)

@@ -115,12 +115,11 @@
                 }
 
                 var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
-
-                var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
-                filterElement?.Remove();
-
                 if (mainPanelElement != null)
                 {
+                    var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
+                    filterElement?.Remove();
+
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var count = 0;
                     foreach (var productElement in productElements)
