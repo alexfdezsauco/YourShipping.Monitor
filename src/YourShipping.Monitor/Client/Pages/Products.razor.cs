@@ -95,12 +95,12 @@
                     return "border-left: 3px solid var(--pf-global--primary-color--100);";
                 }
 
-                return "border-left: 3px solid var(--pf-global--danger-color--100);";
+                return "border-left: 3px solid var(--pf-global--danger-color--100); text-decoration: line-through;";
             }
 
             if (!product.IsAvailable)
             {
-                return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
+                return "text-decoration: line-through;";
             }
 
             return string.Empty;

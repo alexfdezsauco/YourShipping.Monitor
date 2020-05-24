@@ -7,9 +7,9 @@
 
     public class Store : INotifyPropertyChanged
     {
-        private float categoriesCount;
+        private int categoriesCount;
 
-        private float departmentsCount;
+        private int departmentsCount;
 
         private bool hasChanged;
 
@@ -27,7 +27,7 @@
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public float CategoriesCount
+        public int CategoriesCount
         {
             get => this.categoriesCount;
             set
@@ -42,7 +42,7 @@
             }
         }
 
-        public float DepartmentsCount
+        public int DepartmentsCount
         {
             get => this.departmentsCount;
             set

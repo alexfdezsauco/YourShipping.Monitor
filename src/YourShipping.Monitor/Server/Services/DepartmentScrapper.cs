@@ -122,11 +122,12 @@
 
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var count = 0;
+                    var baseUrl = Regex.Replace(url, "/(Products|Item)[?]depPid=\\d+", string.Empty, RegexOptions.Singleline);
                     foreach (var productElement in productElements)
                     {
                         var element = productElement.QuerySelector<IElement>("a");
                         var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync($"{url}/{elementAttribute.Value}");
+                        var product = await productScrapper.GetAsync($"{baseUrl}/{elementAttribute.Value}");
                         if (product != null && product.IsAvailable)
                         {
                             count++;

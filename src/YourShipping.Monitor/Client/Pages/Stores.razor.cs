@@ -147,12 +147,12 @@
                     return "border-left: 3px solid var(--pf-global--primary-color--100);";
                 }
 
-                return "border-left: 3px solid var(--pf-global--danger-color--100);  text-decoration: line-through;";
+                return "border-left: 3px solid var(--pf-global--danger-color--100);  background-color: var(--pf-global--palette--black-400)";
             }
 
-            if (!store.IsAvailable)
+            if (!store.IsAvailable || (store.CategoriesCount == 0 && store.DepartmentsCount == 0))
             {
-                return "border-left: 3px solid var(--pf-global--disabled-color--100);  text-decoration: line-through;";
+                return "border-left: 3px solid var(--pf-global--disabled-color--100); background-color: var(--pf-global--palette--black-400)";
             }
 
             return string.Empty;

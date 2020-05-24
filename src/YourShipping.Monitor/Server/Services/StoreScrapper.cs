@@ -36,7 +36,8 @@
         public async Task<Store> GetAsync(string url, bool force = false)
         {
             var uri = new Uri(url);
-            url = $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}";
+            url =
+                $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}/Products?depPid=0";
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        () => this.GetDirectAsync(url),
