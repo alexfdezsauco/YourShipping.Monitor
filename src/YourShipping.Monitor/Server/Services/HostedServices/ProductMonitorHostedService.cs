@@ -39,7 +39,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
-                var product = await productScrapper.GetAsync(storedProduct.Url, true);
+                var product = await productScrapper.GetAsync(storedProduct.Url);
                 if (product == null)
                 {
                     product = storedProduct;

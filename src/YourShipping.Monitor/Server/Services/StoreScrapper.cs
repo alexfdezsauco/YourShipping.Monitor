@@ -65,7 +65,7 @@
                 Log.Error(e, "Error requesting Store from '{url}'", url);
             }
 
-            var storeToImport = storesToImport?.FirstOrDefault(s => s.Url.Trim() == url.Trim());
+            var storeToImport = storesToImport?.FirstOrDefault(s => $"{s.Url.Trim()}/Products?depPid=0" == url.Trim());
             var storeName = storeToImport?.Name;
             var isAvailable = false;
             var categoriesCount = 0;

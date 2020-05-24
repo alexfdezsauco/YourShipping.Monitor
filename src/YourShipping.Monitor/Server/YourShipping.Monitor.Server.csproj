@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-825" />
+    <PackageReference Include="System.Interactive.Async" Version="4.1.1" />
     <PackageReference Include="Catel.Core" Version="5.12.6" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.0-rc1.20223.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.4" />

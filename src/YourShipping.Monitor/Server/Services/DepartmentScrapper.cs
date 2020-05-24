@@ -34,11 +34,10 @@
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
-        public DepartmentScrapper(
-            IBrowsingContext browsingContext,
-            IEntityScrapper<Store> storeScrapper,
-            ICacheStorage<string, Department> cacheStorage,
-           IServiceProvider serviceProvider)
+        public DepartmentScrapper(IBrowsingContext browsingContext,
+                                  IEntityScrapper<Store> storeScrapper,
+                                  ICacheStorage<string, Department> cacheStorage,
+                                  IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
@@ -63,7 +62,7 @@
 
         private async Task<Department> GetDirectAsync(string url, bool deep)
         {
-            var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
+            var productsScrapper = this.serviceProvider.GetService<IMultiEntityScrapper<Product>>();
 
             Log.Information("Scrapping Department from {Url}", url);
 
@@ -124,18 +123,7 @@
                     var count = 0;
                     if (deep)
                     {
-                        var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                        var baseUrl = Regex.Replace(url, "/(Products|Item)[?]depPid=\\d+", string.Empty, RegexOptions.Singleline);
-                        foreach (var productElement in productElements)
-                        {
-                            var element = productElement.QuerySelector<IElement>("a");
-                            var elementAttribute = element.Attributes["href"];
-                            var product = await productScrapper.GetAsync($"{baseUrl}/{elementAttribute.Value}");
-                            if (product != null && product.IsAvailable)
-                            {
-                                count++;
-                            }
-                        }
+                        count = await productsScrapper.GetAsync(url).CountAsync();
                     }
 
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
