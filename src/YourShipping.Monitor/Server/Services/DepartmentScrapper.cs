@@ -46,21 +46,22 @@
             this.serviceProvider = serviceProvider;
         }
 
-        public async Task<Department> GetAsync(string url, bool force = false)
+        public async Task<Department> GetAsync(string url, bool deep = true, bool force = false)
         {
             url = Regex.Replace(
                 url,
                 @"(&?)(ProdPid=\d+(&?)|page=\d+(&?)|img=\d+(&?))",
                 string.Empty,
-                RegexOptions.IgnoreCase).Trim(' ');
+                RegexOptions.IgnoreCase).Trim(' ').Replace("/Item", "/Products");
+
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       () => this.GetDirectAsync(url),
+                       $"{url}/{deep}",
+                       () => this.GetDirectAsync(url, deep),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);
         }
 
-        private async Task<Department> GetDirectAsync(string url)
+        private async Task<Department> GetDirectAsync(string url, bool deep)
         {
             var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
 
@@ -120,17 +121,20 @@
                     var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
                     filterElement?.Remove();
 
-                    var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var count = 0;
-                    var baseUrl = Regex.Replace(url, "/(Products|Item)[?]depPid=\\d+", string.Empty, RegexOptions.Singleline);
-                    foreach (var productElement in productElements)
+                    if (deep)
                     {
-                        var element = productElement.QuerySelector<IElement>("a");
-                        var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync($"{baseUrl}/{elementAttribute.Value}");
-                        if (product != null && product.IsAvailable)
+                        var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
+                        var baseUrl = Regex.Replace(url, "/(Products|Item)[?]depPid=\\d+", string.Empty, RegexOptions.Singleline);
+                        foreach (var productElement in productElements)
                         {
-                            count++;
+                            var element = productElement.QuerySelector<IElement>("a");
+                            var elementAttribute = element.Attributes["href"];
+                            var product = await productScrapper.GetAsync($"{baseUrl}/{elementAttribute.Value}");
+                            if (product != null && product.IsAvailable)
+                            {
+                                count++;
+                            }
                         }
                     }
 

@@ -12,6 +12,8 @@
     using Catel.Caching;
     using Catel.Caching.Policies;
 
+    using Microsoft.AspNetCore.Builder;
+
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
@@ -45,13 +47,14 @@
             this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Product> GetAsync(string url, bool force = false)
+        public async Task<Product> GetAsync(string url, bool deep, bool force = false)
         {
             url = Regex.Replace(url, @"(&?)(page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(url, () => this.GetDirectAsync(url), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync($"{url}/{deep}"
+                       , () => this.GetDirectAsync(url, deep), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
-        private async Task<Product> GetDirectAsync(string url)
+        private async Task<Product> GetDirectAsync(string url, bool deep)
         {
             Log.Information("Scrapping Product from {Url}", url);
 
@@ -61,7 +64,7 @@
                 return null;
             }
 
-            var department = await this.departmentScrapper.GetAsync(url);
+            var department = await this.departmentScrapper.GetAsync(url, deep: false);
             if (department == null)
             {
                 return null;

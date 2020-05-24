@@ -33,18 +33,18 @@
             this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Store> GetAsync(string url, bool force = false)
+        public async Task<Store> GetAsync(string url, bool deep = true, bool force = false)
         {
             var uri = new Uri(url);
             url =
                 $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}/Products?depPid=0";
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       () => this.GetDirectAsync(url),
+                       $"{url}/{deep}",
+                       () => this.GetDirectAsync(url, deep),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
-        private async Task<Store> GetDirectAsync(string url)
+        private async Task<Store> GetDirectAsync(string url, bool deep)
         {
             Log.Information("Scrapping Store from {Url}", url);
 
