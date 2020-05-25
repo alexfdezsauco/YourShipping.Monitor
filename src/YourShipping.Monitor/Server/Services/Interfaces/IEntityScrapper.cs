@@ -5,6 +5,6 @@ namespace YourShipping.Monitor.Server.Services.Interfaces
 
     public interface IEntityScrapper<TEntity>
     {
-        Task<TEntity> GetAsync(string url, bool deep = true, bool force = false);
+        Task<TEntity> GetAsync(string url, bool force = false, params object[] parents);
     }
 }

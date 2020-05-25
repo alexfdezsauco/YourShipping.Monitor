@@ -1,6 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
     using System.Text.RegularExpressions;
@@ -47,24 +48,26 @@
             this.cacheStorage = cacheStorage;
         }
 
-        public async Task<Product> GetAsync(string url, bool deep, bool force = false)
+        public async Task<Product> GetAsync(string url, bool force = false, params object[] parents)
         {
+            Store store = parents?.OfType<Store>().FirstOrDefault();
+            Department department = parents?.OfType<Department>().FirstOrDefault();
             url = Regex.Replace(url, @"(&?)(page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
-            return await this.cacheStorage.GetFromCacheOrFetchAsync($"{url}/{deep}"
-                       , () => this.GetDirectAsync(url, deep), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(url
+                       , () => this.GetDirectAsync(url, store, department), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
-        private async Task<Product> GetDirectAsync(string url, bool deep)
+        private async Task<Product> GetDirectAsync(string url, Store parentStore, Department parentDepartment)
         {
             Log.Information("Scrapping Product from {Url}", url);
 
-            var store = await this.storeScrapper.GetAsync(url);
+            var store = parentStore ?? await this.storeScrapper.GetAsync(url);
             if (store == null)
             {
                 return null;
             }
 
-            var department = await this.departmentScrapper.GetAsync(url, deep: false);
+            var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, force:false, store);
             if (department == null)
             {
                 return null;
