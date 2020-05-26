@@ -88,9 +88,11 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                     Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
+                else
+                {
+                    await transaction.RollbackAsync();
+                }
             }
-
-         
 
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",

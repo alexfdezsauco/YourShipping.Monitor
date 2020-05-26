@@ -86,9 +86,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         AlertSource.Departments,
                         JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
-                    transaction.CommitAsync();
+                    await transaction.CommitAsync();
 
                     Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                }
+                else
+                {
+                    await transaction.RollbackAsync();
                 }
             }
 
