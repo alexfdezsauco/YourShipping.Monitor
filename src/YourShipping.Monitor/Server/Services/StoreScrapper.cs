@@ -49,10 +49,19 @@
             Log.Information("Scrapping Store from {Url}", url);
 
             var requestIdParam = "requestId=" + Guid.NewGuid();
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
-            var storesToImport =
-                await httpClient.GetFromJsonAsync<OficialStoreInfo[]>(
-                    $"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+            var httpClient = new HttpClient
+                                 {
+                                     Timeout = ScrappingConfiguration.HttpClientTimeout
+                                 };
+            OficialStoreInfo[] storesToImport = null;
+            try
+            {
+                storesToImport = await httpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error requesting stores.json");
+            }
 
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
@@ -123,18 +132,23 @@
                 }
             }
 
-            var store = new Store
-                            {
-                                Name = storeName,
-                                DepartmentsCount = departmentsCount,
-                                CategoriesCount = categoriesCount,
-                                Province = storeToImport?.Province,
-                                Url = url,
-                                IsAvailable = isAvailable
-                            };
+            if (!string.IsNullOrEmpty(storeName))
+            {
+                var store = new Store
+                                {
+                                    Name = storeName,
+                                    DepartmentsCount = departmentsCount,
+                                    CategoriesCount = categoriesCount,
+                                    Province = storeToImport?.Province,
+                                    Url = url,
+                                    IsAvailable = isAvailable
+                                };
 
-            store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
-            return store;
+                store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+                return store;
+            }
+
+            return null;
         }
     }
 }
