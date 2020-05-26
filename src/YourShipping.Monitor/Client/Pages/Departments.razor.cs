@@ -58,7 +58,7 @@
                     new CallActionDefinition
                         {
                             Label = "Buy",
-                            IsDisabled = !department.IsAvailable,
+                            IsDisabled = !department.IsAvailable || department.ProductsCount == 0,
                             Action = async o => await this.BuyOrBrowseAsync(o as Department)
                         });
                 actionDefinitions.Add(
