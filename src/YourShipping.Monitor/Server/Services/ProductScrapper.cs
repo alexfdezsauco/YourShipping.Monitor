@@ -13,8 +13,6 @@
     using Catel.Caching;
     using Catel.Caching.Policies;
 
-    using Microsoft.AspNetCore.Builder;
-
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
@@ -32,29 +30,40 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-        private readonly IEntityScrapper<Store> storeScrapper;
-
         private readonly IEntityScrapper<Department> departmentScrapper;
+
+        private readonly HttpClient httpClient;
+
+        private readonly IEntityScrapper<Store> storeScrapper;
 
         public ProductScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
-            ICacheStorage<string, Product> cacheStorage)
+            ICacheStorage<string, Product> cacheStorage,
+            HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
+            this.httpClient = httpClient;
         }
 
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parents)
         {
-            Store store = parents?.OfType<Store>().FirstOrDefault();
-            Department department = parents?.OfType<Department>().FirstOrDefault();
-            url = Regex.Replace(url, @"(&?)(page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
-            return await this.cacheStorage.GetFromCacheOrFetchAsync($"{url}/{store!=null}/{department!=null}"
-                       , () => this.GetDirectAsync(url, store, department), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
+            var store = parents?.OfType<Store>().FirstOrDefault();
+            var department = parents?.OfType<Department>().FirstOrDefault();
+            url = Regex.Replace(
+                url,
+                @"(&?)(page=\d+(&?)|img=\d+(&?))",
+                string.Empty,
+                RegexOptions.IgnoreCase).Trim(' ');
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       $"{url}/{store != null}/{department != null}",
+                       () => this.GetDirectAsync(url, store, department),
+                       ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
+                       force);
         }
 
         private async Task<Product> GetDirectAsync(string url, Store parentStore, Department parentDepartment)
@@ -67,7 +76,7 @@
                 return null;
             }
 
-            var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, force:false, store);
+            var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, false, store);
             if (department == null)
             {
                 return null;
@@ -77,13 +86,12 @@
             var departmentName = department.Name;
             var departmentCategory = department.Category;
 
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
             try
             {
-                content = await httpClient.GetStringAsync(requestUri);
+                content = await this.httpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {

@@ -42,6 +42,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
+                Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 if (department == null)
                 {
@@ -92,6 +93,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else
                 {
+                    Log.Information("No change detected for department '{url}'", storedDepartment.Url);
+
                     await transaction.RollbackAsync();
                 }
             }

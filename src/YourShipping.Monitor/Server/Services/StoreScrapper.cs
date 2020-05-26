@@ -27,10 +27,13 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
-        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage)
+        private readonly HttpClient httpClient;
+
+        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage, HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
+            this.httpClient = httpClient;
         }
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parents)
@@ -49,10 +52,8 @@
             Log.Information("Scrapping Store from {Url}", url);
 
             var requestIdParam = "requestId=" + Guid.NewGuid();
-            var httpClient = new HttpClient
-                                 {
-                                     Timeout = ScrappingConfiguration.HttpClientTimeout
-                                 };
+          
+
             OficialStoreInfo[] storesToImport = null;
             try
             {

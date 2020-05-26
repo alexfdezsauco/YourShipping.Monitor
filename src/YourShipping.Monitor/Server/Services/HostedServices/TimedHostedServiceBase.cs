@@ -51,10 +51,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private Task DoWorkAsync(CancellationToken cancellationToken)
         {
+
+            
             try
             {
-                lock (this.syncObj)
-                {
+               lock (this.syncObj)
+               {
                     var executeMethod = this.GetType()
                         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                         .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
@@ -70,7 +72,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                         return Task.FromResult(result);
                     }
-                }
+               }
             }
             catch (Exception e)
             {

@@ -1,5 +1,7 @@
 namespace YourShipping.Monitor.Server
 {
+    using System.Net.Http;
+
     using AngleSharp;
 
     using Catel.Caching;
@@ -77,6 +79,15 @@ namespace YourShipping.Monitor.Server
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
+            services.AddTransient(sp =>
+                {
+                    var httpClient = new HttpClient
+                                         {
+                                             Timeout = ScrappingConfiguration.HttpClientTimeout
+                                         };
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+                    return httpClient;
+                });
 
             services.AddScoped<IStoreService, StoreService>();
 

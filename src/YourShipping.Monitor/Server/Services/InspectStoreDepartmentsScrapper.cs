@@ -11,7 +11,6 @@ namespace YourShipping.Monitor.Server
     using Serilog;
 
     using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Services;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     public class InspectStoreDepartmentsScrapper : IMultiEntityScrapper<Department>
@@ -20,25 +19,28 @@ namespace YourShipping.Monitor.Server
 
         private readonly IEntityScrapper<Department> entityScrapper;
 
+        private readonly HttpClient httpClient;
+
         public InspectStoreDepartmentsScrapper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Department> entityScrapper)
+            IEntityScrapper<Department> entityScrapper,
+            HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.entityScrapper = entityScrapper;
+            this.httpClient = httpClient;
         }
 
         public async IAsyncEnumerable<Department> GetAsync(string url)
         {
             Log.Information("Scrapping Departments from {Url}", url);
 
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
             try
             {
-                content = await httpClient.GetStringAsync(requestUri);
+                content = await this.httpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {

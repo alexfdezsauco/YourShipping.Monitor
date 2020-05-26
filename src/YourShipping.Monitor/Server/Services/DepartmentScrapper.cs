@@ -29,6 +29,7 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
+        private readonly HttpClient httpClient;
 
         private readonly IServiceProvider serviceProvider;
 
@@ -37,11 +38,13 @@
         public DepartmentScrapper(IBrowsingContext browsingContext,
                                   IEntityScrapper<Store> storeScrapper,
                                   ICacheStorage<string, Department> cacheStorage,
+                                  HttpClient httpClient,
                                   IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
+            this.httpClient = httpClient;
             this.serviceProvider = serviceProvider;
         }
 
@@ -74,7 +77,6 @@
             }
 
             var storeName = store?.Name;
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;

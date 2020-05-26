@@ -42,6 +42,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var product = await productScrapper.GetAsync(storedProduct.Url);
+                Log.Information("Updating scrapped product '{url}'", storedProduct.Url);
                 var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 if (product == null)
                 {
@@ -90,6 +91,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else
                 {
+                    Log.Information("No change detected for product '{url}'", storedProduct.Url);
+
                     await transaction.RollbackAsync();
                 }
             }

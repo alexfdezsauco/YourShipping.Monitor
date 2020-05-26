@@ -23,12 +23,16 @@ namespace YourShipping.Monitor.Server
 
         private readonly IEntityScrapper<Product> productScrapper;
 
+        private readonly HttpClient httpClient;
+
         public InspectDepartmentProductsScrapper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Product> productScrapper)
+            IEntityScrapper<Product> productScrapper,
+            HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.productScrapper = productScrapper;
+            this.httpClient = httpClient;
         }
 
         public async IAsyncEnumerable<Product> GetAsync(string url)
@@ -36,7 +40,7 @@ namespace YourShipping.Monitor.Server
             Log.Information("Scrapping Products from {Url}", url);
 
             var products = new HashSet<string>();
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+          
             bool found;
             var page = -1;
             do

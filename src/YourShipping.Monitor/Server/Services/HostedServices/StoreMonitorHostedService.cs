@@ -40,8 +40,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
-                var store = await storeScrapper.GetAsync(storedStore.Url);
+                var store = await storeScrapper.GetAsync(storedStore.Url, true);
                 var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                Log.Information("Updating scrapped store '{url}'", storedStore.Url);
                 if (store == null)
                 {
                     store = storedStore;
@@ -88,6 +89,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else
                 {
+                    Log.Information("No change detected for store '{url}'", storedStore.Url);
                     await transaction.RollbackAsync();
                 }
             }

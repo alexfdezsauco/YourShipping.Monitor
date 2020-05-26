@@ -70,6 +70,13 @@
                                 Label = "Buy",
                                 IsDisabled = !store.IsAvailable,
                                 Action = async o => await this.BuyOrBrowseAsync(o as Store)
+                            });   
+                    
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Browse",
+                                Action = async o => await this.BuyOrBrowseAsync(o as Store)
                             });
 
                     actionDefinitions.Add(
