@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Data;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -35,6 +36,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information("Running {Source} Monitor.", AlertSource.Products);
 
             var sourceChanged = false;
+            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+
             foreach (var storedProduct in productRepository.All())
             {
                 var entityChanged = false;
@@ -75,7 +78,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    bool error = true;
+                    var error = true;
                     while (error)
                     {
                         try
@@ -87,7 +90,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                 JsonSerializer.Serialize(product.ToDataTransferObject(true)));
 
                             Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
-                            
+
                             error = false;
                         }
                         catch (Exception e)
@@ -96,9 +99,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             await Task.Delay(100);
                         }
                     }
-
                 }
             }
+
+            await transaction.CommitAsync();
 
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",

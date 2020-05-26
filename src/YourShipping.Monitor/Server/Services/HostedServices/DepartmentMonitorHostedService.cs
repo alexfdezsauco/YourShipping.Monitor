@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Data;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -35,6 +36,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information("Running {Source} Monitor.", AlertSource.Departments);
 
             var sourceChanged = false;
+            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var entityChanged = false;
@@ -89,6 +91,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                 AlertSource.Departments,
                                 JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
+                            transaction.Commit();
+
                             Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
 
                             error = false;
@@ -102,6 +106,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
             }
 
+            await transaction.CommitAsync();
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Departments);

@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Data;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -35,6 +36,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         {
             Log.Information("Running {Source} Monitor.", AlertSource.Stores);
 
+            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             var sourceChanged = false;
             foreach (var storedStore in storeRepository.All())
             {
@@ -101,6 +103,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
             }
 
+            await transaction.CommitAsync();
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Stores);
