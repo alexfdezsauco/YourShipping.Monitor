@@ -55,7 +55,7 @@
                 RegexOptions.IgnoreCase).Trim(' ').Replace("/Item", "/Products");
 
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       url,
+                       $"{url}/{store!=null}",
                        () => this.GetDirectAsync(url, store),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);

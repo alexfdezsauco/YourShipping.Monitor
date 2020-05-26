@@ -53,7 +53,7 @@
             Store store = parents?.OfType<Store>().FirstOrDefault();
             Department department = parents?.OfType<Department>().FirstOrDefault();
             url = Regex.Replace(url, @"(&?)(page=\d+(&?)|img=\d+(&?))", string.Empty, RegexOptions.IgnoreCase).Trim(' ');
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(url
+            return await this.cacheStorage.GetFromCacheOrFetchAsync($"{url}/{store!=null}/{department!=null}"
                        , () => this.GetDirectAsync(url, store, department), ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 
