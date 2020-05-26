@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -26,6 +27,7 @@
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
+
             var storedProduct = productRepository.Find(product => product.Url == absoluteUrl).FirstOrDefault();
             if (storedProduct == null)
             {
@@ -37,8 +39,10 @@
                     product.Updated = dateTime;
                     product.Read = dateTime;
 
+                    var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
                     return product.ToDataTransferObject(true);
                 }
@@ -50,8 +54,10 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
+            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
 
         [HttpGet]
@@ -59,6 +65,7 @@
             [FromServices] IRepository<Models.Product, int> productRepository)
         {
             var products = new List<Product>();
+            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
 
             foreach (var storedProduct in productRepository.All())
             {
@@ -68,6 +75,7 @@
             }
 
             await productRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
             return products;
         }
     }

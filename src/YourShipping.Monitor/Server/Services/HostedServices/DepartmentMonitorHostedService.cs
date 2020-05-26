@@ -36,13 +36,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information("Running {Source} Monitor.", AlertSource.Departments);
 
             var sourceChanged = false;
-            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
-
+                var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 if (department == null)
                 {
                     department = storedDepartment;
@@ -80,33 +80,18 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    bool error = true;
-                    while (error)
-                    {
-                        try
-                        {
-                            await departmentRepository.SaveChangesAsync();
-                            await messageHubContext.Clients.All.SendAsync(
-                                ClientMethods.EntityChanged,
-                                AlertSource.Departments,
-                                JsonSerializer.Serialize(department.ToDataTransferObject(true)));
+                    await departmentRepository.SaveChangesAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Departments,
+                        JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
-                            transaction.Commit();
+                    transaction.CommitAsync();
 
-                            Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
-
-                            error = false;
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error saving department '{0}'", department.Url);
-                            await Task.Delay(100);
-                        }
-                    }
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
             }
 
-            await transaction.CommitAsync();
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Departments);

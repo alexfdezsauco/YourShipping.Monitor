@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -30,8 +31,10 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
         {
+            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             storeRepository.Delete(store => store.Id == id);
             await storeRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
         }       
         
         [HttpPost("[action]/{id}")]
@@ -71,6 +74,7 @@
             [FromServices] IEntityScrapper<Models.Store> entityScrapper)
         {
             var stores = new List<Store>();
+            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             foreach (var storedStore in storeRepository.All())
             {
                 bool hasChanged = storedStore.Read < storedStore.Updated;
@@ -79,7 +83,7 @@
             }
 
             await storeRepository.SaveChangesAsync();
-
+            await transaction.CommitAsync();
             return stores;
         }
 

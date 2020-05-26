@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -39,8 +40,10 @@
                     department.Updated = dateTime;
                     department.Read = dateTime;
 
+                    var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                     departmentRepository.Add(department);
                     await departmentRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
                     return department.ToDataTransferObject(true);
                 }
@@ -57,8 +60,10 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Department, int> departmentRepository, int id)
         {
+            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             departmentRepository.Delete(department => department.Id == id);
             await departmentRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
 
         [HttpGet("{id}")]
@@ -77,10 +82,10 @@
 
         [HttpGet]
         public async Task<IEnumerable<Department>> Get(
-            [FromServices] IRepository<Models.Department, int> departmentRepository,
-            [FromServices] IEntityScrapper<Models.Department> entityScrapper)
+            [FromServices] IRepository<Models.Department, int> departmentRepository)
         {
             var departments = new List<Department>();
+            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             foreach (var storedDepartment in departmentRepository.All())
             {
                 storedDepartment.Read = DateTime.Now;
@@ -89,6 +94,7 @@
             }
 
             await departmentRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return departments;
         }

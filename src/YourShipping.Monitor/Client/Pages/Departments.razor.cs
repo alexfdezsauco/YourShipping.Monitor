@@ -58,7 +58,7 @@
                     new CallActionDefinition
                         {
                             Label = "Buy",
-                            IsDisabled = department.ProductsCount == 0,
+                            IsDisabled = !department.IsAvailable,
                             Action = async o => await this.BuyOrBrowseAsync(o as Department)
                         });
                 actionDefinitions.Add(
@@ -70,7 +70,7 @@
                     new CallActionDefinition
                         {
                             Label = "Inspect",
-                            IsDisabled = department.ProductsCount == 0,
+                            IsDisabled = !department.IsAvailable || department.ProductsCount == 0,
                             Action = async o => await this.InspectAsync(o as Department)
                         });
                 actionDefinitions.Add(

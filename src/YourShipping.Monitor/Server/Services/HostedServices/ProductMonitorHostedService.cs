@@ -36,13 +36,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information("Running {Source} Monitor.", AlertSource.Products);
 
             var sourceChanged = false;
-            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
 
             foreach (var storedProduct in productRepository.All())
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var product = await productScrapper.GetAsync(storedProduct.Url);
+                var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 if (product == null)
                 {
                     product = storedProduct;
@@ -78,31 +78,19 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    var error = true;
-                    while (error)
-                    {
-                        try
-                        {
-                            await productRepository.SaveChangesAsync();
-                            await messageHubContext.Clients.All.SendAsync(
-                                ClientMethods.EntityChanged,
-                                AlertSource.Products,
-                                JsonSerializer.Serialize(product.ToDataTransferObject(true)));
+                    await productRepository.SaveChangesAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Products,
+                        JsonSerializer.Serialize(product.ToDataTransferObject(true)));
 
-                            Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                    await transaction.CommitAsync();
 
-                            error = false;
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error saving product '{0}'", product.Url);
-                            await Task.Delay(100);
-                        }
-                    }
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
             }
 
-            await transaction.CommitAsync();
+         
 
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",

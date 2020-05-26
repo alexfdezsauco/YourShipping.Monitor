@@ -3,7 +3,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System;
     using System.Data;
     using System.Text.Json;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -36,14 +35,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         {
             Log.Information("Running {Source} Monitor.", AlertSource.Stores);
 
-            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             var sourceChanged = false;
             foreach (var storedStore in storeRepository.All())
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var store = await storeScrapper.GetAsync(storedStore.Url);
-
+                var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 if (store == null)
                 {
                     store = storedStore;
@@ -79,31 +77,17 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    bool error = true;
-                    while (error)
-                    {
-                        try
-                        {
-                            await storeRepository.SaveChangesAsync();
-                            await messageHubContext.Clients.All.SendAsync(
-                                ClientMethods.EntityChanged,
-                                AlertSource.Stores,
-                                JsonSerializer.Serialize(store.ToDataTransferObject(true)));
-                            
-                            Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
-                            
-                            error = false;
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error saving store '{0}'", store.Url);
-                            await Task.Delay(100);
-                        }
-                    }
+                    await storeRepository.SaveChangesAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Stores,
+                        JsonSerializer.Serialize(store.ToDataTransferObject(true)));
+
+                    await transaction.CommitAsync();
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
                 }
             }
 
-            await transaction.CommitAsync();
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Stores);
