@@ -85,16 +85,16 @@
             [FromServices] IRepository<Models.Department, int> departmentRepository)
         {
             var departments = new List<Department>();
-            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             foreach (var storedDepartment in departmentRepository.All())
             {
-                storedDepartment.Read = DateTime.Now;
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
+                var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                storedDepartment.Read = DateTime.Now;
+                await departmentRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
                 departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
             }
 
-            await departmentRepository.SaveChangesAsync();
-            await transaction.CommitAsync();
 
             return departments;
         }

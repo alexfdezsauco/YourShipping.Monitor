@@ -65,17 +65,17 @@
             [FromServices] IRepository<Models.Product, int> productRepository)
         {
             var products = new List<Product>();
-            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
 
             foreach (var storedProduct in productRepository.All())
             {
-                storedProduct.Read = DateTime.Now;
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
+                var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                storedProduct.Read = DateTime.Now;
+                await productRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
                 products.Add(storedProduct.ToDataTransferObject(hasChanged));
             }
 
-            await productRepository.SaveChangesAsync();
-            await transaction.CommitAsync();
             return products;
         }
     }

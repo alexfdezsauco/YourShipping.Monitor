@@ -74,16 +74,16 @@
             [FromServices] IEntityScrapper<Models.Store> entityScrapper)
         {
             var stores = new List<Store>();
-            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
             foreach (var storedStore in storeRepository.All())
             {
                 bool hasChanged = storedStore.Read < storedStore.Updated;
+                var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 storedStore.Read = DateTime.Now;
+                await storeRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));
             }
 
-            await storeRepository.SaveChangesAsync();
-            await transaction.CommitAsync();
             return stores;
         }
 
