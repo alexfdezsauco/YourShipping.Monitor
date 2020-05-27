@@ -3,7 +3,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System;
     using System.Data;
     using System.Text.Json;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -43,9 +42,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
-                Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
-                Log.Information("Begin transaction for department '{url}'", storedDepartment.Url);
+                Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 if (department == null)
                 {
                     department = storedDepartment;
@@ -84,23 +82,20 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 if (entityChanged)
                 {
                     await departmentRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
                     await messageHubContext.Clients.All.SendAsync(
                         ClientMethods.EntityChanged,
                         AlertSource.Departments,
                         JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
-                    await transaction.CommitAsync();
-
                     Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
                 else
                 {
-                    Log.Information("No change detected for department '{url}'", storedDepartment.Url);
-
                     await transaction.RollbackAsync();
+                    Log.Information("No change detected for department '{url}'", storedDepartment.Url);
                 }
-
-                await Task.Delay(10);
             }
 
             Log.Information(

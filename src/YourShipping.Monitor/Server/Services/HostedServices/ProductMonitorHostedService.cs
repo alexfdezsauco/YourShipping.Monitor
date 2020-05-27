@@ -2,6 +2,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
     using System.Data;
+    using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -37,14 +38,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             var sourceChanged = false;
 
+            
             foreach (var storedProduct in productRepository.All())
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var product = await productScrapper.GetAsync(storedProduct.Url);
-                Log.Information("Updating scrapped product '{url}'", storedProduct.Url);
                 var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
-                Log.Information("Begin transaction for product '{url}'", storedProduct.Url);
+                Log.Information("Updating scrapped product '{url}'", storedProduct.Url);
                 if (product == null)
                 {
                     product = storedProduct;
@@ -81,24 +82,22 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 if (entityChanged)
                 {
                     await productRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
                     await messageHubContext.Clients.All.SendAsync(
                         ClientMethods.EntityChanged,
                         AlertSource.Products,
                         JsonSerializer.Serialize(product.ToDataTransferObject(true)));
 
-                    await transaction.CommitAsync();
-
                     Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
                 else
                 {
-                    Log.Information("No change detected for product '{url}'", storedProduct.Url);
-
                     await transaction.RollbackAsync();
+                    Log.Information("No change detected for product '{url}'", storedProduct.Url);
                 }
-
-                await Task.Delay(10);
             }
+
 
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",

@@ -41,9 +41,10 @@
             var uri = new Uri(url);
             url =
                 $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}/Products?depPid=0";
+
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
-                       () => this.GetDirectAsync(url),
+                       async () => await this.GetDirectAsync(url),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
         }
 

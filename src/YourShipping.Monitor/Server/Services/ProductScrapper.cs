@@ -50,18 +50,22 @@
             this.httpClient = httpClient;
         }
 
+       
+
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parents)
         {
             var store = parents?.OfType<Store>().FirstOrDefault();
             var department = parents?.OfType<Department>().FirstOrDefault();
+
             url = Regex.Replace(
                 url,
                 @"(&?)(page=\d+(&?)|img=\d+(&?))",
                 string.Empty,
                 RegexOptions.IgnoreCase).Trim(' ');
+
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        $"{url}/{store != null}/{department != null}",
-                       () => this.GetDirectAsync(url, store, department),
+                       async () => await this.GetDirectAsync(url, store, department),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);
         }

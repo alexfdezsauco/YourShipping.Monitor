@@ -22,7 +22,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private readonly object syncObj = new object();
 
-        private Timer _timer;
+        private Timer timer;
 
         public TimedHostedServiceBase(IServiceProvider serviceProvider)
         {
@@ -32,7 +32,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         public void Dispose()
         {
-            this._timer?.Dispose();
+            this.timer?.Dispose();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -44,7 +44,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         {
             Log.Information("Timed Hosted Service is stopping.");
 
-            this._timer?.Change(Timeout.Infinite, 0);
+            this.timer?.Change(Timeout.Infinite, 0);
 
             return Task.CompletedTask;
         }
@@ -125,7 +125,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             {
                 Log.Information("Timed Hosted Service running.");
 
-                this._timer = new Timer(
+                this.timer = new Timer(
                     o => this.DoWorkAsync(cancellationToken),
                     null,
                     TimeSpan.Zero,

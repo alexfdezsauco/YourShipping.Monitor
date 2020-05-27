@@ -95,12 +95,12 @@ namespace YourShipping.Monitor.Server
             services.AddSingleton<ICacheStorage<string, Department>>(provider => new CacheStorage<string, Department>(storeNullValues: true));
             services.AddSingleton<ICacheStorage<string, Store>>(provider => new CacheStorage<string, Store>(storeNullValues: true));
 
-            services.AddScoped<IEntityScrapper<Product>, ProductScrapper>();
-            services.AddScoped<IEntityScrapper<Department>, DepartmentScrapper>();
-            services.AddScoped<IEntityScrapper<Store>, StoreScrapper>();
+            services.AddTransient<IEntityScrapper<Product>, ProductScrapper>();
+            services.AddTransient<IEntityScrapper<Department>, DepartmentScrapper>();
+            services.AddTransient<IEntityScrapper<Store>, StoreScrapper>();
 
-            services.AddScoped<IMultiEntityScrapper<Product>, InspectDepartmentProductsScrapper>();
-            services.AddScoped<IMultiEntityScrapper<Department>, InspectStoreDepartmentsScrapper>();
+            services.AddTransient<IMultiEntityScrapper<Product>, InspectDepartmentProductsScrapper>();
+            services.AddTransient<IMultiEntityScrapper<Department>, InspectStoreDepartmentsScrapper>();
 
             services.AddSingleton<ImportStoresHostedService>();
 

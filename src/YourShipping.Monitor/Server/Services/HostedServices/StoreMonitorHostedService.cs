@@ -36,14 +36,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information("Running {Source} Monitor.", AlertSource.Stores);
 
             var sourceChanged = false;
+
             foreach (var storedStore in storeRepository.All())
             {
                 var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var store = await storeScrapper.GetAsync(storedStore.Url, true);
-                Log.Information("Updating scrapped store '{url}'", storedStore.Url);
                 var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
-                Log.Information("Begin transaction for store '{url}'", storedStore.Url);
+                Log.Information("Updating scrapped store '{url}'", storedStore.Url);
                 if (store == null)
                 {
                     store = storedStore;
@@ -80,21 +80,21 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 if (entityChanged)
                 {
                     await storeRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
                     await messageHubContext.Clients.All.SendAsync(
                         ClientMethods.EntityChanged,
                         AlertSource.Stores,
                         JsonSerializer.Serialize(store.ToDataTransferObject(true)));
 
-                    await transaction.CommitAsync();
                     Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
                 }
                 else
                 {
-                    Log.Information("No change detected for store '{url}'", storedStore.Url);
                     await transaction.RollbackAsync();
-                }
 
-                await Task.Delay(10);
+                    Log.Information("No change detected for store '{url}'", storedStore.Url);
+                }
             }
 
             Log.Information(
