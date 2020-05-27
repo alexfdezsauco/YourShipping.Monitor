@@ -6,6 +6,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
@@ -39,21 +40,20 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             foreach (var storedStore in storeRepository.All())
             {
-                var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var store = await storeScrapper.GetAsync(storedStore.Url, true);
-                var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                IDbContextTransaction transaction = null;
                 Log.Information("Updating scrapped store '{url}'", storedStore.Url);
                 if (store == null)
                 {
                     store = storedStore;
                     if (store.IsAvailable)
                     {
+                        transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
                         store.IsAvailable = false;
                         store.Updated = dateTime;
                         store.Sha256 = JsonSerializer.Serialize(storedStore).ComputeSHA256();
                         sourceChanged = true;
-                        entityChanged = true;
 
                         Log.Information(
                             "Store {Store} from {Province} has changed. Is Available: {IsAvailable}",
@@ -68,7 +68,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Store.Added), nameof(Store.Read));
                     sourceChanged = true;
-                    entityChanged = true;
 
                     Log.Information(
                         "Store {Store} from {Province} has changed. Is Available: {IsAvailable}",
@@ -77,42 +76,25 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         store.IsAvailable);
                 }
 
-                if (entityChanged)
+                if (transaction != null)
                 {
-                    bool error = true;
-                    try
-                    {
-                        await storeRepository.SaveChangesAsync();
-                        await transaction.CommitAsync();
-                        error = false;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e, "Error commiting changes of store '{url}'", store.Url);
+                    await storeRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Stores,
+                        JsonSerializer.Serialize(store.ToDataTransferObject(true)));
 
-                        await transaction.RollbackAsync();
-                    }
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Stores,
+                        JsonSerializer.Serialize(store.ToDataTransferObject(true)));
 
-                    if (!error)
-                    {
-                        await messageHubContext.Clients.All.SendAsync(
-                            ClientMethods.EntityChanged,
-                            AlertSource.Stores,
-                            JsonSerializer.Serialize(store.ToDataTransferObject(true)));
-
-                        Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
-                        await messageHubContext.Clients.All.SendAsync(
-                            ClientMethods.EntityChanged,
-                            AlertSource.Stores,
-                            JsonSerializer.Serialize(store.ToDataTransferObject(true)));
-
-                        Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
-                    }
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
                 }
                 else
                 {
-                    await transaction.RollbackAsync();
-
                     Log.Information("No change detected for store '{url}'", storedStore.Url);
                 }
             }

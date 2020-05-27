@@ -11,6 +11,8 @@
 
     using Orc.EntityFrameworkCore;
 
+    using Serilog;
+
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -39,7 +41,7 @@
                     product.Updated = dateTime;
                     product.Read = dateTime;
 
-                    var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                    var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -54,7 +56,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
-            var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+            var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -65,16 +67,18 @@
             [FromServices] IRepository<Models.Product, int> productRepository)
         {
             var products = new List<Product>();
-
+        
             foreach (var storedProduct in productRepository.All())
             {
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
-                var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
                 storedProduct.Read = DateTime.Now;
                 await productRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 products.Add(storedProduct.ToDataTransferObject(hasChanged));
             }
+
 
             return products;
         }

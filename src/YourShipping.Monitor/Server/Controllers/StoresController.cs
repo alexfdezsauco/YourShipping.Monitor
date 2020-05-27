@@ -31,7 +31,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
         {
-            var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+            var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
             storeRepository.Delete(store => store.Id == id);
             await storeRepository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -74,15 +74,17 @@
             [FromServices] IEntityScrapper<Models.Store> entityScrapper)
         {
             var stores = new List<Store>();
+
             foreach (var storedStore in storeRepository.All())
             {
                 bool hasChanged = storedStore.Read < storedStore.Updated;
-                var transaction = storeRepository.BeginTransaction(IsolationLevel.ReadCommitted);
                 storedStore.Read = DateTime.Now;
+                var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+                stores.Add(storedStore.ToDataTransferObject(hasChanged));
                 await storeRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
-                stores.Add(storedStore.ToDataTransferObject(hasChanged));
             }
+
 
             return stores;
         }

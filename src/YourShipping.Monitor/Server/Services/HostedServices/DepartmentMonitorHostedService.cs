@@ -6,6 +6,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
@@ -39,23 +40,22 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             foreach (var storedDepartment in departmentRepository.All())
             {
-                var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
-                var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                IDbContextTransaction transaction = null;
                 Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 if (department == null)
                 {
                     department = storedDepartment;
                     if (department.IsAvailable)
                     {
+                        transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+
                         department.IsAvailable = false;
                         department.Updated = dateTime;
                         department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
 
                         sourceChanged = true;
-                        entityChanged = true;
-
                         Log.Information(
                             "Department {Department} from {Store} has changed. Is Available: {IsAvailable}",
                             department.Name,
@@ -65,12 +65,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (department.Sha256 != storedDepartment.Sha256)
                 {
+                    transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
                     departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
-
                     sourceChanged = true;
-                    entityChanged = true;
 
                     Log.Information(
                         "Department {Department} from {Store} has changed. Is Available: {IsAvailable}",
@@ -79,33 +79,19 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         department.IsAvailable);
                 }
 
-                if (entityChanged)
+                if (transaction != null)
                 {
-                    var error = true;
-                    try
-                    {
-                        await departmentRepository.SaveChangesAsync();
-                        await transaction.CommitAsync();
-                        error = false;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e, "Error commiting changes of department {url}", department.Url);
-                    }
+                    await departmentRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Departments,
+                        JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
-                    if (!error)
-                    {
-                        await messageHubContext.Clients.All.SendAsync(
-                            ClientMethods.EntityChanged,
-                            AlertSource.Departments,
-                            JsonSerializer.Serialize(department.ToDataTransferObject(true)));
-
-                        Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
-                    }
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
                 else
                 {
-                    await transaction.RollbackAsync();
                     Log.Information("No change detected for department '{url}'", storedDepartment.Url);
                 }
             }

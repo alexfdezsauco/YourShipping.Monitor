@@ -6,6 +6,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
@@ -39,17 +40,16 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             foreach (var storedProduct in productRepository.All())
             {
-                var entityChanged = false;
                 var dateTime = DateTime.Now;
                 var product = await productScrapper.GetAsync(storedProduct.Url);
-                var transaction = productRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                IDbContextTransaction transaction = null;
                 Log.Information("Updating scrapped product '{url}'", storedProduct.Url);
                 if (product == null)
                 {
                     product = storedProduct;
                     if (product.IsAvailable)
                     {
-                        entityChanged = true;
+                        transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
                         product.IsAvailable = false;
                         product.Updated = dateTime;
                         product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
@@ -64,7 +64,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (product.Sha256 != storedProduct.Sha256)
                 {
-                    entityChanged = true;
+                    transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
                     product.Id = storedProduct.Id;
                     product.Updated = dateTime;
                     productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));
@@ -77,35 +77,16 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         product.IsAvailable);
                 }
 
-                if (entityChanged)
+                if (transaction != null)
                 {
-                    bool error = true;
-                    try
-                    {
-                        await productRepository.SaveChangesAsync();
-                        await transaction.CommitAsync();
-                        error = false;
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e, "Error commiting changes of product '{url}'", product.Url);
-                        await transaction.RollbackAsync();
-                    }
+                    await productRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    await messageHubContext.Clients.All.SendAsync(
+                        ClientMethods.EntityChanged,
+                        AlertSource.Products,
+                        JsonSerializer.Serialize(product.ToDataTransferObject(true)));
 
-                    if (!error)
-                    {
-                        await messageHubContext.Clients.All.SendAsync(
-                            ClientMethods.EntityChanged,
-                            AlertSource.Products,
-                            JsonSerializer.Serialize(product.ToDataTransferObject(true)));
-
-                        Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
-                    }
-                }
-                else
-                {
-                    await transaction.RollbackAsync();
-                    Log.Information("No change detected for product '{url}'", storedProduct.Url);
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }
             }
 

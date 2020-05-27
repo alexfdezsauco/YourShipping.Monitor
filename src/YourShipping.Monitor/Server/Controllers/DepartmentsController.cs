@@ -11,6 +11,8 @@
 
     using Orc.EntityFrameworkCore;
 
+    using Serilog;
+
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -40,7 +42,7 @@
                     department.Updated = dateTime;
                     department.Read = dateTime;
 
-                    var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                    var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
                     departmentRepository.Add(department);
                     await departmentRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -60,7 +62,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Department, int> departmentRepository, int id)
         {
-            var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+            var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
             departmentRepository.Delete(department => department.Id == id);
             await departmentRepository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -85,16 +87,24 @@
             [FromServices] IRepository<Models.Department, int> departmentRepository)
         {
             var departments = new List<Department>();
-            foreach (var storedDepartment in departmentRepository.All())
+            var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+            try
             {
-                var hasChanged = storedDepartment.Read < storedDepartment.Updated;
-                var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
-                storedDepartment.Read = DateTime.Now;
+                foreach (var storedDepartment in departmentRepository.All())
+                {
+                    var hasChanged = storedDepartment.Read < storedDepartment.Updated;
+                    storedDepartment.Read = DateTime.Now;
+                    departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
+                }
+
                 await departmentRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
-                departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
             }
-
+            catch (Exception e)
+            {
+                Log.Error(e, "Error reading stored departments"); 
+                await transaction.RollbackAsync();
+            }
 
             return departments;
         }
