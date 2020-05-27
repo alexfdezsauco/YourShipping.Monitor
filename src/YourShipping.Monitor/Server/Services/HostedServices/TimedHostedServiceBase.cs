@@ -51,32 +51,33 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private Task DoWorkAsync(CancellationToken cancellationToken)
         {
-
-            
             try
             {
-               lock (this.syncObj)
-               {
-                    var executeMethod = this.GetType()
-                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+                Monitor.Enter(this.syncObj);
 
-                    if (executeMethod != null)
+                var executeMethod = this.GetType()
+                    .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                    .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+
+                if (executeMethod != null)
+                {
+                    var parameters = this.ResolveParameters(executeMethod, cancellationToken);
+                    var result = executeMethod.Invoke(this, parameters);
+                    if (result is Task task)
                     {
-                        var parameters = this.ResolveParameters(executeMethod, cancellationToken);
-                        var result = executeMethod.Invoke(this, parameters);
-                        if (result is Task task)
-                        {
-                            return task;
-                        }
-
-                        return Task.FromResult(result);
+                        return task;
                     }
-               }
+
+                    return Task.FromResult(result);
+                }
             }
             catch (Exception e)
             {
                 Log.Error(e.Message);
+            }
+            finally
+            {
+                Monitor.Exit(this.syncObj);
             }
 
             return Task.CompletedTask;

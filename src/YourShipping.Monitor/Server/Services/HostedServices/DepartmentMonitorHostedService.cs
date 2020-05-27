@@ -3,6 +3,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System;
     using System.Data;
     using System.Text.Json;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.SignalR;
@@ -44,6 +45,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
                 Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 var transaction = departmentRepository.BeginTransaction(IsolationLevel.ReadCommitted);
+                Log.Information("Begin transaction for department '{url}'", storedDepartment.Url);
                 if (department == null)
                 {
                     department = storedDepartment;
@@ -97,6 +99,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                     await transaction.RollbackAsync();
                 }
+
+                await Task.Delay(10);
             }
 
             Log.Information(
