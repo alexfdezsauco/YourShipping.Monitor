@@ -79,15 +79,35 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    await storeRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    bool error = true;
+                    try
+                    {
+                        await storeRepository.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        error = false;
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error commiting changes of store '{url}'", store.Url);
 
-                    await messageHubContext.Clients.All.SendAsync(
-                        ClientMethods.EntityChanged,
-                        AlertSource.Stores,
-                        JsonSerializer.Serialize(store.ToDataTransferObject(true)));
+                        await transaction.RollbackAsync();
+                    }
 
-                    Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
+                    if (!error)
+                    {
+                        await messageHubContext.Clients.All.SendAsync(
+                            ClientMethods.EntityChanged,
+                            AlertSource.Stores,
+                            JsonSerializer.Serialize(store.ToDataTransferObject(true)));
+
+                        Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
+                        await messageHubContext.Clients.All.SendAsync(
+                            ClientMethods.EntityChanged,
+                            AlertSource.Stores,
+                            JsonSerializer.Serialize(store.ToDataTransferObject(true)));
+
+                        Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
+                    }
                 }
                 else
                 {

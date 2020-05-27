@@ -81,15 +81,27 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    await departmentRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    var error = true;
+                    try
+                    {
+                        await departmentRepository.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        error = false;
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error commiting changes of department {url}", department.Url);
+                    }
 
-                    await messageHubContext.Clients.All.SendAsync(
-                        ClientMethods.EntityChanged,
-                        AlertSource.Departments,
-                        JsonSerializer.Serialize(department.ToDataTransferObject(true)));
+                    if (!error)
+                    {
+                        await messageHubContext.Clients.All.SendAsync(
+                            ClientMethods.EntityChanged,
+                            AlertSource.Departments,
+                            JsonSerializer.Serialize(department.ToDataTransferObject(true)));
 
-                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                        Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                    }
                 }
                 else
                 {

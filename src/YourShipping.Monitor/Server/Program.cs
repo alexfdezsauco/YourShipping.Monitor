@@ -19,7 +19,7 @@
 
         public static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {ThreadId} {Level:u3}] {Message:lj}{NewLine}{Exception}").Enrich.WithThreadId().CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
             CreateHostBuilder(args).Build().Run();
         }

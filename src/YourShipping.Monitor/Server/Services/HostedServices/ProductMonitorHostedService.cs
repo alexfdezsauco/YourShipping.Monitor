@@ -2,7 +2,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
     using System.Data;
-    using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -38,7 +37,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             var sourceChanged = false;
 
-            
             foreach (var storedProduct in productRepository.All())
             {
                 var entityChanged = false;
@@ -81,15 +79,28 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 if (entityChanged)
                 {
-                    await productRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    bool error = true;
+                    try
+                    {
+                        await productRepository.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        error = false;
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error commiting changes of product '{url}'", product.Url);
+                        await transaction.RollbackAsync();
+                    }
 
-                    await messageHubContext.Clients.All.SendAsync(
-                        ClientMethods.EntityChanged,
-                        AlertSource.Products,
-                        JsonSerializer.Serialize(product.ToDataTransferObject(true)));
+                    if (!error)
+                    {
+                        await messageHubContext.Clients.All.SendAsync(
+                            ClientMethods.EntityChanged,
+                            AlertSource.Products,
+                            JsonSerializer.Serialize(product.ToDataTransferObject(true)));
 
-                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                        Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                    }
                 }
                 else
                 {
@@ -97,7 +108,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     Log.Information("No change detected for product '{url}'", storedProduct.Url);
                 }
             }
-
 
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
