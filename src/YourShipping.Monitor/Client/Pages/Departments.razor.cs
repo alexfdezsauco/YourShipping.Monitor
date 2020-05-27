@@ -108,7 +108,7 @@
                     return "border-left: 3px solid var(--pf-global--danger-color--100); background-color: var(--pf-global--palette--black-400)";
                 }
 
-                if (!department.IsAvailable)
+                if (!department.IsAvailable || department.ProductsCount == 0)
                 {
                     return
                         "border-left: 3px solid var(--pf-global--disabled-color--100);  background-color: var(--pf-global--palette--black-400)";
