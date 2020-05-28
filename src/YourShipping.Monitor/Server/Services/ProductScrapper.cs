@@ -30,9 +30,11 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-        private readonly IEntityScrapper<Department> departmentScrapper;
+        private readonly IHttpClientFactory httpClientFactory;
 
-        private readonly HttpClient httpClient;
+        private readonly HttpClient webPageHttpClient;
+
+        private readonly IEntityScrapper<Department> departmentScrapper;
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
@@ -41,13 +43,15 @@
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage,
-            HttpClient httpClient)
+            IHttpClientFactory httpClientFactory,
+            HttpClient webPageHttpClient)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
-            this.httpClient = httpClient;
+            this.httpClientFactory = httpClientFactory;
+            this.webPageHttpClient = webPageHttpClient;
         }
 
        
@@ -93,9 +97,11 @@
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             string content = null;
+
+         
             try
             {
-                content = await this.httpClient.GetStringAsync(requestUri);
+                content = await webPageHttpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {

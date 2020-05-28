@@ -27,13 +27,16 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
-        private readonly HttpClient httpClient;
+        private readonly IHttpClientFactory clientFactory;
 
-        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage, HttpClient httpClient)
+        private readonly HttpClient webPageHttpClient;
+
+        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage, IHttpClientFactory clientFactory, HttpClient webPageHttpClient)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
-            this.httpClient = httpClient;
+            this.clientFactory = clientFactory;
+            this.webPageHttpClient = webPageHttpClient;
         }
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parents)
@@ -53,12 +56,12 @@
             Log.Information("Scrapping Store from {Url}", url);
 
             var requestIdParam = "requestId=" + Guid.NewGuid();
-          
 
+            var jsonHttpClient = this.clientFactory.CreateClient("json");
             OficialStoreInfo[] storesToImport = null;
             try
             {
-                storesToImport = await httpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+                storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
             }
             catch (Exception e)
             {
@@ -69,7 +72,7 @@
             string content = null;
             try
             {
-                content = await httpClient.GetStringAsync(requestUri);
+                content = await webPageHttpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {

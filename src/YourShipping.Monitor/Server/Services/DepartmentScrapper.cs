@@ -29,22 +29,27 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
-        private readonly HttpClient httpClient;
+        private readonly IHttpClientFactory httpClientFactory;
 
         private readonly IServiceProvider serviceProvider;
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
-        public DepartmentScrapper(IBrowsingContext browsingContext,
-                                  IEntityScrapper<Store> storeScrapper,
-                                  ICacheStorage<string, Department> cacheStorage,
-                                  HttpClient httpClient,
-                                  IServiceProvider serviceProvider)
+        private readonly HttpClient webPageHttpClient;
+
+        public DepartmentScrapper(
+            IBrowsingContext browsingContext,
+            IEntityScrapper<Store> storeScrapper,
+            ICacheStorage<string, Department> cacheStorage,
+            IHttpClientFactory httpClientFactory,
+            HttpClient webPageHttpClient,
+            IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
-            this.httpClient = httpClient;
+            this.httpClientFactory = httpClientFactory;
+            this.webPageHttpClient = webPageHttpClient;
             this.serviceProvider = serviceProvider;
         }
 
@@ -79,10 +84,11 @@
             var storeName = store?.Name;
             var requestIdParam = "requestId=" + Guid.NewGuid();
             var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+
             string content = null;
             try
             {
-                content = await httpClient.GetStringAsync(requestUri);
+                content = await this.webPageHttpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {
@@ -123,8 +129,6 @@
                     var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
                     filterElement?.Remove();
 
-
-
                     var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a")
                         .ToList();
 
@@ -134,28 +138,36 @@
                         var departmentCategory = departmentElements[^2].TextContent.Trim();
                         var departmentName = departmentElements[^1].TextContent.Trim();
 
-                        if (!string.IsNullOrWhiteSpace(departmentName) && !string.IsNullOrWhiteSpace(departmentCategory))
+                        if (!string.IsNullOrWhiteSpace(departmentName)
+                            && !string.IsNullOrWhiteSpace(departmentCategory))
                         {
                             department = new Department
-                                                        {
-                                                            Url = url,
-                                                            Name = departmentName,
-                                                            Category = departmentCategory,
-                                                            Store = storeName,
-                                                            IsAvailable = true
-                                                        };
-
+                                             {
+                                                 Url = url,
+                                                 Name = departmentName,
+                                                 Category = departmentCategory,
+                                                 Store = storeName,
+                                                 IsAvailable = true
+                                             };
                         }
                     }
 
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var productsCount = 0;
-                    var baseUrl = Regex.Replace(url, "/(Products|Item)[?]depPid=\\d+", string.Empty, RegexOptions.Singleline);
+                    var baseUrl = Regex.Replace(
+                        url,
+                        "/(Products|Item)[?]depPid=\\d+",
+                        string.Empty,
+                        RegexOptions.Singleline);
                     foreach (var productElement in productElements)
                     {
                         var element = productElement.QuerySelector<IElement>("a");
                         var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync($"{baseUrl}/{elementAttribute.Value}", force:false, store, department);
+                        var product = await productScrapper.GetAsync(
+                                          $"{baseUrl}/{elementAttribute.Value}",
+                                          false,
+                                          store,
+                                          department);
                         if (product != null && product.IsAvailable)
                         {
                             productsCount++;

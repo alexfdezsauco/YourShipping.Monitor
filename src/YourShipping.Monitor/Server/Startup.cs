@@ -1,6 +1,10 @@
 namespace YourShipping.Monitor.Server
 {
+    using System.Net;
     using System.Net.Http;
+    using System.Reflection.Metadata.Ecma335;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     using AngleSharp;
 
@@ -79,22 +83,62 @@ namespace YourShipping.Monitor.Server
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
-            services.AddTransient(sp =>
-                {
-                    var httpClient = new HttpClient
-                                         {
-                                             Timeout = ScrappingConfiguration.HttpClientTimeout
-                                         };
+            services.AddTransient(
+                sp =>
+                    {
+                        var handler = new HttpClientHandler
+                                          {
+                                              AutomaticDecompression =
+                                                  DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                          };
 
-                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-                    return httpClient;
-                });
+                        var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "accept-encoding",
+                            "gzip, deflate, br");
+                        return httpClient;
+                    });
+
+            services.AddHttpClient(
+                "json",
+                httpClient =>
+                    {
+                        httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+                    });
+
+            services.AddTransient(
+                sp =>
+                    {
+                        var httpClient = new HttpClient(
+                                             new HttpClientHandler
+                                                 {
+                                                     AutomaticDecompression =
+                                                         DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                                 }) { Timeout = ScrappingConfiguration.HttpClientTimeout };
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "accept-encoding",
+                            "gzip, deflate, br");
+                        return httpClient;
+                    });
 
             services.AddScoped<IStoreService, StoreService>();
 
-            services.AddSingleton<ICacheStorage<string, Product>>(provider => new CacheStorage<string, Product>(storeNullValues: true));
-            services.AddSingleton<ICacheStorage<string, Department>>(provider => new CacheStorage<string, Department>(storeNullValues: true));
-            services.AddSingleton<ICacheStorage<string, Store>>(provider => new CacheStorage<string, Store>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Product>>(
+                provider => new CacheStorage<string, Product>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Department>>(
+                provider => new CacheStorage<string, Department>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Store>>(
+                provider => new CacheStorage<string, Store>(storeNullValues: true));
 
             services.AddTransient<IEntityScrapper<Product>, ProductScrapper>();
             services.AddTransient<IEntityScrapper<Department>, DepartmentScrapper>();
