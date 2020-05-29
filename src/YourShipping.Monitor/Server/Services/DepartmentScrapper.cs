@@ -151,6 +151,19 @@
                                              };
                         }
                     }
+                    else if (url.Contains("/Search.aspx?keywords="))
+                    {
+                        var s = url.Split("?")[1];
+                        var parameters = s.Split("&").ToDictionary(s1 => s1.Split("=")[0], s2 => s2.Split("=")[1]);
+                        department = new Department
+                                         {
+                                             Url = url,
+                                             Name = "Search",
+                                             Category = "Keywords: " + parameters["keywords"],
+                                             Store = storeName,
+                                             IsAvailable = true
+                                         };
+                    }
 
                     var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                     var productsCount = 0;
