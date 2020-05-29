@@ -11,19 +11,18 @@ namespace YourShipping.Monitor.Server
     using Serilog;
 
     using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Services;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     /// <summary>
-        ///     The inspect department product scrapper.
-        /// </summary>
-        public class InspectDepartmentProductsScrapper : IMultiEntityScrapper<Product>
+    ///     The inspect department product scrapper.
+    /// </summary>
+    public class InspectDepartmentProductsScrapper : IMultiEntityScrapper<Product>
     {
         private readonly IBrowsingContext browsingContext;
 
-        private readonly IEntityScrapper<Product> productScrapper;
-
         private readonly HttpClient httpClient;
+
+        private readonly IEntityScrapper<Product> productScrapper;
 
         public InspectDepartmentProductsScrapper(
             IBrowsingContext browsingContext,
@@ -35,12 +34,12 @@ namespace YourShipping.Monitor.Server
             this.httpClient = httpClient;
         }
 
-        public async IAsyncEnumerable<Product> GetAsync(string url)
+        public async IAsyncEnumerable<Product> GetAsync(string url, bool force)
         {
             Log.Information("Scrapping Products from {Url}", url);
 
             var products = new HashSet<string>();
-          
+
             bool found;
             var page = -1;
             do
@@ -53,7 +52,7 @@ namespace YourShipping.Monitor.Server
                 string content = null;
                 try
                 {
-                    content = await httpClient.GetStringAsync(requestUri);
+                    content = await this.httpClient.GetStringAsync(requestUri);
                 }
                 catch (Exception e)
                 {
@@ -85,7 +84,7 @@ namespace YourShipping.Monitor.Server
 
                         found = true;
 
-                        var product = await this.productScrapper.GetAsync(productUrl);
+                        var product = await this.productScrapper.GetAsync(productUrl, force);
                         if (product != null)
                         {
                             yield return product;

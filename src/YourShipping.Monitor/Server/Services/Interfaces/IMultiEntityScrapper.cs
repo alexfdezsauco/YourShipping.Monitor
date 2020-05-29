@@ -4,6 +4,6 @@
 
     public interface IMultiEntityScrapper<TEntity>
     {
-        IAsyncEnumerable<TEntity> GetAsync(string url);
+        IAsyncEnumerable<TEntity> GetAsync(string url, bool force = false);
     }
 }

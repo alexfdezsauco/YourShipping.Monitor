@@ -31,7 +31,7 @@ namespace YourShipping.Monitor.Server
             this.httpClient = httpClient;
         }
 
-        public async IAsyncEnumerable<Department> GetAsync(string url)
+        public async IAsyncEnumerable<Department> GetAsync(string url, bool b)
         {
             Log.Information("Scrapping Departments from {Url}", url);
 

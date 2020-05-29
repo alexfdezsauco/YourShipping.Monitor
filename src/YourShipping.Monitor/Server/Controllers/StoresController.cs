@@ -108,7 +108,7 @@
                     var url = storedStore.Url.Replace(
                         "/Products?depPid=0",
                         $"/Search.aspx?keywords={keyword}&depPid=0");
-                    await foreach (var product in productsScrapper.GetAsync(url))
+                    await foreach (var product in productsScrapper.GetAsync(url, true))
                     {
                         products.Add(product.ToDataTransferObject(false, false));
                     }

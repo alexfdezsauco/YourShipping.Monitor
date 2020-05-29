@@ -1,6 +1,5 @@
 ﻿namespace YourShipping.Monitor.Client.Pages
 {
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Net.Http;
@@ -99,15 +98,11 @@
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
-            if (this.IsLoading)
+            if (this.IsLoading && !string.IsNullOrWhiteSpace(this.Keywords))
             {
-                // this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
+                this.Products = await this.ApplicationState.SearchAsync(this.Keywords);
+                // this.StateHasChanged();
             }
-        }
-
-        protected override async Task OnInitializedAsync()
-        {
-            await this.RefreshAsync();
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -122,15 +117,10 @@
             }
         }
 
-        protected async Task RefreshAsync(bool reload = false)
-        {
-        }
-
         protected async Task SearchAsync()
         {
-            this.Products = await this.ApplicationState.SearchAsync(this.Keywords);
-            this.Keywords = string.Empty;
-            this.StateHasChanged();
+            this.Products = null;
+            this.IsLoading = true;
         }
 
         private async Task BuyOrBrowse(Product product)

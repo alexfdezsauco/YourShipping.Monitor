@@ -161,6 +161,11 @@
                     }
 
                     var name = productNameElement?.TextContent.Trim();
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
+                        name = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?.TextContent.Trim();
+                    }
 
                     float price = 0;
                     string currency = null;
