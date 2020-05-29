@@ -51,7 +51,14 @@ namespace YourShipping.Monitor.Client.Services
                 opt => { opt.Transports = HttpTransportType.WebSockets; }).WithAutomaticReconnect().Build();
 
             this.connection.On<AlertSource>(ClientMethods.SourceChanged, this.OnSourceChanged);
-            this.connection.On<AlertSource, string>(ClientMethods.EntityChanged, this.OnEntityStateChanged);
+            this.connection.On<AlertSource, string>(
+                ClientMethods.EntityChanged,
+                async (source, s) =>
+                    {
+                        await this.jsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor (*)");
+                        this.OnEntityStateChanged(source, s);
+                    });
+
             Task.Run(() => this.connection.StartAsync());
         }
 
@@ -282,8 +289,6 @@ namespace YourShipping.Monitor.Client.Services
 
         protected virtual void OnEntityStateChanged(AlertSource alertSource, string serializedEntity)
         {
-            this.jsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor (*)").GetAwaiter().GetResult();
-
             switch (alertSource)
             {
                 case AlertSource.Products:

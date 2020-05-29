@@ -195,11 +195,7 @@
                     }
                 };
 
-            if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Stores))
-            {
-                await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
-            }
-
+            await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
             await this.RefreshAsync();
         }
 
