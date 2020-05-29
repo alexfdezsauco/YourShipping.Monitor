@@ -146,6 +146,7 @@
                     }
                 };
 
+            this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments);
             await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
             await this.RefreshAsync();
         }
