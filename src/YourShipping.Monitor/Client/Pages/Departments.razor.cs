@@ -105,13 +105,22 @@
                         return "border-left: 3px solid var(--pf-global--primary-color--100);";
                     }
 
-                    return "border-left: 3px solid var(--pf-global--danger-color--100); background-color: var(--pf-global--palette--black-400)";
+                    if (department.ProductsCount == 0)
+                    {
+                        return "text-decoration: line-through;";
+                    }
+
+                    return "border-left: 3px solid var(--pf-global--danger-color--100); color: var(--pf-global--palette--black-400)";
                 }
 
-                if (!department.IsAvailable || department.ProductsCount == 0)
+                if (!department.IsAvailable)
                 {
-                    return
-                        "border-left: 3px solid var(--pf-global--disabled-color--100);  background-color: var(--pf-global--palette--black-400)";
+                    return "border-left: 3px solid var(--pf-global--disabled-color--100);  color: var(--pf-global--palette--black-400)";
+                }
+
+                if (department.ProductsCount == 0)
+                {
+                    return "text-decoration: line-through;";
                 }
             }
 
@@ -137,7 +146,11 @@
                     }
                 };
 
-            this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments);
+            if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Departments))
+            {
+                await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
+            }
+
             await this.RefreshAsync();
         }
 

@@ -70,13 +70,12 @@
                                 Label = "Buy",
                                 IsDisabled = !store.IsAvailable,
                                 Action = async o => await this.BuyOrBrowseAsync(o as Store)
-                            });   
-                    
+                            });
+
                     actionDefinitions.Add(
                         new CallActionDefinition
                             {
-                                Label = "Browse",
-                                Action = async o => await this.BuyOrBrowseAsync(o as Store)
+                                Label = "Browse", Action = async o => await this.BuyOrBrowseAsync(o as Store)
                             });
 
                     actionDefinitions.Add(
@@ -140,11 +139,6 @@
             }
         }
 
-        protected async Task ImportStoresAsync()
-        {
-            await this.ApplicationState.ImportStoresAsync();
-        }
-
         protected string GetHighlightStyle(Store store)
         {
             if (store.HasChanged)
@@ -154,15 +148,32 @@
                     return "border-left: 3px solid var(--pf-global--primary-color--100);";
                 }
 
-                return "border-left: 3px solid var(--pf-global--danger-color--100);  background-color: var(--pf-global--palette--black-400)";
+                if (store.CategoriesCount == 0 && store.DepartmentsCount == 0)
+                {
+                    return "text-decoration: line-through;";
+                }
+
+                return
+                    "border-left: 3px solid var(--pf-global--danger-color--100);  color: var(--pf-global--palette--black-400)";
             }
 
-            if (!store.IsAvailable || (store.CategoriesCount == 0 && store.DepartmentsCount == 0))
+            if (!store.IsAvailable)
             {
-                return "border-left: 3px solid var(--pf-global--disabled-color--100); background-color: var(--pf-global--palette--black-400)";
+                return
+                    "border-left: 3px solid var(--pf-global--disabled-color--100); background-color: var(--pf-global--palette--black-400)";
+            }
+
+            if (store.CategoriesCount == 0 && store.DepartmentsCount == 0)
+            {
+                return "text-decoration: line-through;";
             }
 
             return string.Empty;
+        }
+
+        protected async Task ImportStoresAsync()
+        {
+            await this.ApplicationState.ImportStoresAsync();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -184,7 +195,11 @@
                     }
                 };
 
-            this.ApplicationState.RemoveAlertsFrom(AlertSource.Stores);
+            if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Stores))
+            {
+                await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
+            }
+
             await this.RefreshAsync();
         }
 

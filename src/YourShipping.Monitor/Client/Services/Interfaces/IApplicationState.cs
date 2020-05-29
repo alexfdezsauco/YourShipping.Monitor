@@ -53,5 +53,7 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
         Task UnFollowProductAsync(Product product);
 
         Task UnFollowStoreAsync(Store store);
+
+        Task<List<Product>> SearchAsync(string keywords);
     }
 }

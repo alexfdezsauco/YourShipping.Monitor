@@ -15,9 +15,9 @@
     using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
-    public class ProductsComponent : BlorcComponentBase
+    public class SearchProductComponent : BlorcComponentBase
     {
-        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
+        public bool HasError => string.IsNullOrWhiteSpace(this.Keywords);
 
         public bool IsLoading
         {
@@ -25,10 +25,10 @@
             set => this.SetPropertyValue(nameof(this.IsLoading), value);
         }
 
-        public string Url
+        public string Keywords
         {
-            get => this.GetPropertyValue<string>(nameof(this.Url));
-            set => this.SetPropertyValue(nameof(this.Url), value);
+            get => this.GetPropertyValue<string>(nameof(this.Keywords));
+            set => this.SetPropertyValue(nameof(this.Keywords), value);
         }
 
         [Inject]
@@ -76,16 +76,6 @@
             return actionDefinitions;
         }
 
-        protected async Task AddAsync()
-        {
-            var product = await this.ApplicationState.FollowProductAsync(this.Url);
-            if (product != null)
-            {
-                this.Url = string.Empty;
-                this.StateHasChanged();
-            }
-        }
-
         protected string GetHighlightStyle(Product product)
         {
             if (product.HasChanged)
@@ -111,25 +101,12 @@
             await base.OnAfterRenderAsync(firstRender);
             if (this.IsLoading)
             {
-                this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
+                // this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
             }
         }
 
         protected override async Task OnInitializedAsync()
         {
-            this.ApplicationState.SourceChanged += async (sender, args) =>
-                {
-                    if (this.ApplicationState.HasAlertsFrom(AlertSource.Products))
-                    {
-                        await this.RefreshAsync();
-                    }
-                };
-
-            if (this.ApplicationState.RemoveAlertsFrom(AlertSource.Products))
-            {
-                await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
-            }
-
             await this.RefreshAsync();
         }
 
@@ -147,13 +124,13 @@
 
         protected async Task RefreshAsync(bool reload = false)
         {
-            if (reload)
-            {
-                this.ApplicationState.InvalidateProductsCache();
-                this.Products = null;
-            }
+        }
 
-            this.IsLoading = true;
+        protected async Task SearchAsync()
+        {
+            this.Products = await this.ApplicationState.SearchAsync(this.Keywords);
+            this.Keywords = string.Empty;
+            this.StateHasChanged();
         }
 
         private async Task BuyOrBrowse(Product product)

@@ -11,6 +11,9 @@ namespace YourShipping.Monitor.Client.Services
     using Microsoft.AspNetCore.Components;
     using Microsoft.AspNetCore.Http.Connections;
     using Microsoft.AspNetCore.SignalR.Client;
+    using Microsoft.JSInterop;
+
+    using Serilog;
 
     using YourShipping.Monitor.Client.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -27,6 +30,8 @@ namespace YourShipping.Monitor.Client.Services
 
         private readonly HttpClient httpClient;
 
+        private readonly IJSRuntime jsRuntime;
+
         private readonly List<Product> products = new List<Product>();
 
         private readonly Dictionary<int, List<Product>> productsOfDepartments = new Dictionary<int, List<Product>>();
@@ -36,8 +41,10 @@ namespace YourShipping.Monitor.Client.Services
         public ApplicationState(
             HubConnectionBuilder hubConnectionBuilder,
             NavigationManager navigationManager,
+            IJSRuntime jsRuntime,
             HttpClient httpClient)
         {
+            this.jsRuntime = jsRuntime;
             this.httpClient = httpClient;
             this.connection = hubConnectionBuilder.WithUrl(
                 $"{navigationManager.BaseUri.TrimEnd('/')}/hubs/messages",
@@ -210,6 +217,22 @@ namespace YourShipping.Monitor.Client.Services
             return false;
         }
 
+        public async Task<List<Product>> SearchAsync(string keywords)
+        {
+            try
+            {
+                var searchResults =
+                    await this.httpClient.GetFromJsonAsync<Product[]>($"Stores/Search?keywords={keywords}");
+                return searchResults?.ToList();
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.Message);
+
+                return null;
+            }
+        }
+
         public async Task TurnOffScanAsync(Store store)
         {
             await this.httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
@@ -259,7 +282,8 @@ namespace YourShipping.Monitor.Client.Services
 
         protected virtual void OnEntityStateChanged(AlertSource alertSource, string serializedEntity)
         {
-            
+            this.jsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor (*)").GetAwaiter().GetResult();
+
             switch (alertSource)
             {
                 case AlertSource.Products:

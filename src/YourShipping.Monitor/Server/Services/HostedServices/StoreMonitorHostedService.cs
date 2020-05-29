@@ -64,6 +64,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (store.Sha256 != storedStore.Sha256)
                 {
+                    transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
                     store.Id = storedStore.Id;
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Store.Added), nameof(Store.Read));

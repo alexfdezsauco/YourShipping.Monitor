@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
-    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
@@ -13,7 +12,6 @@
 
     using Serilog;
 
-    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -35,23 +33,6 @@
             storeRepository.Delete(store => store.Id == id);
             await storeRepository.SaveChangesAsync();
             await transaction.CommitAsync();
-        }       
-        
-        [HttpPost("[action]/{id}")]
-        public async Task TurnOffScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
-        {
-            Log.Information("Turning Off");
-            // storeRepository.Delete(store => store.Id == id);
-            // await storeRepository.SaveChangesAsync();
-        }
-
-        [HttpPost("[action]/{id}")]
-        public async Task TurnOnScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
-        {
-            Log.Information("Turning On");
-
-            // storeRepository.Delete(store => store.Id == id);
-            // await storeRepository.SaveChangesAsync();
         }
 
         [HttpGet("{id}")]
@@ -69,22 +50,19 @@
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Store>> Get(
-            [FromServices] IRepository<Models.Store, int> storeRepository,
-            [FromServices] IEntityScrapper<Models.Store> entityScrapper)
+        public async Task<IEnumerable<Store>> Get([FromServices] IRepository<Models.Store, int> storeRepository)
         {
             var stores = new List<Store>();
 
             foreach (var storedStore in storeRepository.All())
             {
-                bool hasChanged = storedStore.Read < storedStore.Updated;
+                var hasChanged = storedStore.Read < storedStore.Updated;
                 storedStore.Read = DateTime.Now;
                 var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));
                 await storeRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
-
 
             return stores;
         }
@@ -111,6 +89,51 @@
             }
 
             return departments;
+        }
+
+        [HttpGet("[action]")]
+        public async Task<IEnumerable<Product>> Search(
+            [FromServices] IRepository<Models.Store, int> storeRepository,
+            [FromServices] IMultiEntityScrapper<Models.Product> productsScrapper,
+            string keywords)
+        {
+            var keywordList = keywords.Split(',', ';').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList();
+            var products = new List<Product>();
+
+            foreach (var storedStore in storeRepository.All())
+            {
+                foreach (var keyword in keywordList)
+                {
+                    var url = storedStore.Url.Replace(
+                        "/Products?depPid=0",
+                        $"/Search.aspx?keywords={keyword}&depPid=0");
+                    await foreach (var product in productsScrapper.GetAsync(url))
+                    {
+                        products.Add(product.ToDataTransferObject(false, false));
+                    }
+                }
+            }
+
+            return products;
+        }
+
+        [HttpPost("[action]/{id}")]
+        public async Task TurnOffScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            Log.Information("Turning Off");
+
+            // storeRepository.Delete(store => store.Id == id);
+            // await storeRepository.SaveChangesAsync();
+        }
+
+        [HttpPost("[action]/{id}")]
+        public async Task TurnOnScan([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            Log.Information("Turning On");
+
+            // storeRepository.Delete(store => store.Id == id);
+            // await storeRepository.SaveChangesAsync();
         }
     }
 }
