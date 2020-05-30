@@ -89,7 +89,7 @@ namespace YourShipping.Monitor.Server
             {
                 if (token == "%TELEGRAM_BOT_TOKEN%")
                 {
-                    Log.Warning("Telegram notification is disable %TELEGRAM_BOT_TOKEN% with a valid bot token.");
+                    Log.Warning("Telegram notification is disable. Replace %TELEGRAM_BOT_TOKEN% placeholder in the configuration file with a valid bot token.");
                 }
                 else
                 {
