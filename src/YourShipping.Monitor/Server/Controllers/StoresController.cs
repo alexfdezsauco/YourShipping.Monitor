@@ -57,8 +57,8 @@
             foreach (var storedStore in storeRepository.All())
             {
                 var hasChanged = storedStore.Read < storedStore.Updated;
-                storedStore.Read = DateTime.Now;
                 var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+                storedStore.Read = DateTime.Now;
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));
                 await storeRepository.SaveChangesAsync();
                 await transaction.CommitAsync();

@@ -49,7 +49,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             return Task.CompletedTask;
         }
 
-        private Task DoWorkAsync(CancellationToken cancellationToken)
+        private void DoWork(CancellationToken cancellationToken)
         {
             try
             {
@@ -65,10 +65,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     var result = executeMethod.Invoke(this, parameters);
                     if (result is Task task)
                     {
-                        return task;
+                        task.GetAwaiter().GetResult();
                     }
 
-                    return Task.FromResult(result);
+                    // await Task.FromResult(result);
                 }
             }
             catch (Exception e)
@@ -79,8 +79,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             {
                 Monitor.Exit(this.syncObj);
             }
-
-            return Task.CompletedTask;
         }
 
         private object[] ResolveParameters(MethodInfo executeMethodInfo, CancellationToken cancellationToken)
@@ -126,7 +124,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 Log.Information("Timed Hosted Service running.");
 
                 this.timer = new Timer(
-                    o => this.DoWorkAsync(cancellationToken),
+                    o =>  this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
                     TimeSpan.FromMinutes(5));

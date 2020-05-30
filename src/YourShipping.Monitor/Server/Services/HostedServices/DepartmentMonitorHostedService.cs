@@ -1,7 +1,9 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -12,8 +14,11 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Serilog;
 
+    using Telegram.Bot;
+
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Hubs;
+    using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -30,13 +35,16 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         [Execute]
         public async Task Execute(
-            IRepository<Department, int> departmentRepository,
+            IUnitOfWork unitOfWork, 
             IEntityScrapper<Department> departmentScrapper,
-            IHubContext<MessagesHub> messageHubContext)
+            IHubContext<MessagesHub> messageHubContext,
+            ITelegramBotClient telegramBotClient = null)
         {
             Log.Information("Running {Source} Monitor.", AlertSource.Departments);
 
             var sourceChanged = false;
+
+            var departmentRepository = unitOfWork.GetRepository<Department, int>();
 
             foreach (var storedDepartment in departmentRepository.All())
             {
@@ -50,7 +58,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     if (department.IsAvailable)
                     {
                         transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
-
+                    
                         department.IsAvailable = false;
                         department.Updated = dateTime;
                         department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
@@ -83,10 +91,27 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 {
                     await departmentRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
+
+                    var dataTransferObject = department.ToDataTransferObject(true);
+                    var message = JsonSerializer.Serialize(dataTransferObject);
                     await messageHubContext.Clients.All.SendAsync(
                         ClientMethods.EntityChanged,
                         AlertSource.Departments,
-                        JsonSerializer.Serialize(department.ToDataTransferObject(true)));
+                        message);
+
+                    var userRepository = unitOfWork.GetRepository<User, int>();
+                    var users = userRepository.Find(user => user.IsEnable).ToList();
+                    foreach (var user in users)
+                    {
+                        try
+                        {
+                            await telegramBotClient.SendTextMessageAsync(user.ChatId, "Product Set Changed: " + message);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error sending message via telegram to {UserName}", user.Name);
+                        }
+                    }
 
                     Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
                 }

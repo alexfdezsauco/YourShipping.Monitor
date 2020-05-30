@@ -75,10 +75,8 @@
                 storedProduct.Read = DateTime.Now;
                 await productRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
-
                 products.Add(storedProduct.ToDataTransferObject(hasChanged));
             }
-
 
             return products;
         }

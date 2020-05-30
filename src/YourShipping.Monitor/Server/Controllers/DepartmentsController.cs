@@ -4,16 +4,12 @@
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
-    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
 
     using Orc.EntityFrameworkCore;
 
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
@@ -37,7 +33,6 @@
                 if (department != null)
                 {
                     var dateTime = DateTime.Now;
-
                     department.Added = dateTime;
                     department.Updated = dateTime;
                     department.Read = dateTime;
@@ -87,23 +82,15 @@
             [FromServices] IRepository<Models.Department, int> departmentRepository)
         {
             var departments = new List<Department>();
-            var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
-            try
-            {
-                foreach (var storedDepartment in departmentRepository.All())
-                {
-                    var hasChanged = storedDepartment.Read < storedDepartment.Updated;
-                    storedDepartment.Read = DateTime.Now;
-                    departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
-                }
 
+            foreach (var storedDepartment in departmentRepository.All())
+            {
+                var hasChanged = storedDepartment.Read < storedDepartment.Updated;
+                var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+                storedDepartment.Read = DateTime.Now;
                 await departmentRepository.SaveChangesAsync();
                 await transaction.CommitAsync();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error reading stored departments"); 
-                await transaction.RollbackAsync();
+                departments.Add(storedDepartment.ToDataTransferObject(hasChanged));
             }
 
             return departments;

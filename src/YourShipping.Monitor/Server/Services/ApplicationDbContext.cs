@@ -1,6 +1,5 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
-    using System.IO;
     using System.Reflection;
 
     using Microsoft.EntityFrameworkCore;
@@ -15,6 +14,8 @@
 
         public DbSet<Store> Stores { get; set; }
 
+        public DbSet<User> Users { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(
@@ -28,6 +29,13 @@
             modelBuilder.Entity<Product>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
             modelBuilder.Entity<Department>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
             modelBuilder.Entity<Store>(entity => { entity.HasIndex(e => e.Url).IsUnique(); });
+            modelBuilder.Entity<User>(
+                entity =>
+                    {
+                        entity.HasIndex(e => e.Name).IsUnique();
+                        entity.HasIndex(e => e.ChatId).IsUnique();
+                    });
+
             base.OnModelCreating(modelBuilder);
         }
     }

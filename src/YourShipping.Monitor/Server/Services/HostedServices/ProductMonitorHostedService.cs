@@ -1,7 +1,9 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -12,8 +14,11 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Serilog;
 
+    using Telegram.Bot;
+
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Hubs;
+    using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -30,14 +35,16 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         [Execute]
         public async Task Execute(
-            IRepository<Product, int> productRepository,
+            IUnitOfWork unitOfWork,
             IEntityScrapper<Product> productScrapper,
-            IHubContext<MessagesHub> messageHubContext)
+            IHubContext<MessagesHub> messageHubContext,
+            ITelegramBotClient telegramBotClient = null)
         {
             Log.Information("Running {Source} Monitor.", AlertSource.Products);
 
             var sourceChanged = false;
 
+            var productRepository = unitOfWork.GetRepository<Product, int>();
             foreach (var storedProduct in productRepository.All())
             {
                 var dateTime = DateTime.Now;
@@ -81,12 +88,28 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 {
                     await productRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
+
+                    var message = JsonSerializer.Serialize(product.ToDataTransferObject(true));
                     await messageHubContext.Clients.All.SendAsync(
                         ClientMethods.EntityChanged,
                         AlertSource.Products,
-                        JsonSerializer.Serialize(product.ToDataTransferObject(true)));
+                        message);
 
-                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                    Log.Information("Entity changed at source {Source}.", AlertSource.Products);
+
+                    var userRepository = unitOfWork.GetRepository<User, int>();
+                    var users = userRepository.Find(user => user.IsEnable).ToList();
+                    foreach (var user in users)
+                    {
+                        try
+                        {
+                            await telegramBotClient.SendTextMessageAsync(user.ChatId, "Product Changed: " + message);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error sending message via telegram to {UserName}", user.Name);
+                        }
+                    }
                 }
             }
 

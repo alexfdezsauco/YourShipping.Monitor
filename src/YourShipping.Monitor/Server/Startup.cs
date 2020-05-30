@@ -18,6 +18,8 @@ namespace YourShipping.Monitor.Server
 
     using Orc.EntityFrameworkCore;
 
+    using Telegram.Bot;
+
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services;
@@ -81,6 +83,12 @@ namespace YourShipping.Monitor.Server
             services.AddDbContext<DbContext, ApplicationDbContext>();
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
+
+            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
+            }
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
             services.AddTransient(
@@ -152,6 +160,7 @@ namespace YourShipping.Monitor.Server
             services.AddHostedService<DepartmentMonitorHostedService>();
             services.AddHostedService<ProductMonitorHostedService>();
             services.AddHostedService<StoreMonitorHostedService>();
+            services.AddHostedService<SyncUsersFromTelegramHostedService>();
         }
     }
 }
