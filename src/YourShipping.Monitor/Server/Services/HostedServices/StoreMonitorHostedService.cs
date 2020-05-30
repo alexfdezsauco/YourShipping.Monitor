@@ -11,11 +11,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Orc.EntityFrameworkCore;
 
+    using Polly;
+
     using Serilog;
 
     using Telegram.Bot;
 
     using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
@@ -55,7 +58,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     store = storedStore;
                     if (store.IsAvailable)
                     {
-                        transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+
                         store.IsAvailable = false;
                         store.Updated = dateTime;
                         store.Sha256 = JsonSerializer.Serialize(storedStore).ComputeSHA256();
@@ -70,7 +74,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (store.Sha256 != storedStore.Sha256)
                 {
-                    transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+                    transaction = PolicyHelper.WaitAndRetryForever().Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+
                     store.Id = storedStore.Id;
                     store.Updated = dateTime;
                     storeRepository.TryAddOrUpdate(store, nameof(Store.Added), nameof(Store.Read));
@@ -119,5 +124,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Stores);
         }
+
     }
 }

@@ -1,7 +1,6 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
-    using System.Collections.Generic;
     using System.Data;
     using System.Linq;
     using System.Text.Json;
@@ -17,6 +16,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using Telegram.Bot;
 
     using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
@@ -56,7 +56,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     product = storedProduct;
                     if (product.IsAvailable)
                     {
-                        transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => productRepository.BeginTransaction(IsolationLevel.Serializable));
+
                         product.IsAvailable = false;
                         product.Updated = dateTime;
                         product.Sha256 = JsonSerializer.Serialize(storedProduct).ComputeSHA256();
@@ -71,7 +73,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (product.Sha256 != storedProduct.Sha256)
                 {
-                    transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
+                    transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        () => productRepository.BeginTransaction(IsolationLevel.Serializable));
+
                     product.Id = storedProduct.Id;
                     product.Updated = dateTime;
                     productRepository.TryAddOrUpdate(product, nameof(Product.Added), nameof(Product.Read));

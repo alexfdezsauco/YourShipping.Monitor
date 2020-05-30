@@ -4,17 +4,18 @@
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
-    using System.Text.Json;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
-    using Serilog;
+    using Polly;
 
-    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
+    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -40,8 +41,9 @@
                     product.Added = dateTime;
                     product.Updated = dateTime;
                     product.Read = dateTime;
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
-                    var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -56,22 +58,29 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
-            var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
+            IDbContextTransaction transaction = null;
+            Policy.Handle<Exception>()
+                .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
+                    () => transaction = productRepository.BeginTransaction(IsolationLevel.Serializable));
+
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
             await transaction.CommitAsync();
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Product>> Get(
-            [FromServices] IRepository<Models.Product, int> productRepository)
+        public async Task<IEnumerable<Product>> Get([FromServices] IRepository<Models.Product, int> productRepository)
         {
             var products = new List<Product>();
-        
+
             foreach (var storedProduct in productRepository.All())
             {
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
-                var transaction = productRepository.BeginTransaction(IsolationLevel.Serializable);
+                IDbContextTransaction transaction = null;
+                Policy.Handle<Exception>()
+                    .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
+                        () => transaction = productRepository.BeginTransaction(IsolationLevel.Serializable));
+
                 storedProduct.Read = DateTime.Now;
                 await productRepository.SaveChangesAsync();
                 await transaction.CommitAsync();

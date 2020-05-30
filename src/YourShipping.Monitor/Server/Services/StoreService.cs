@@ -1,6 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Data;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
@@ -10,8 +11,10 @@
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
+    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
     public class StoreService : IStoreService
@@ -40,8 +43,11 @@
                     store.Updated = dateTime;
                     store.Read = dateTime;
 
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        () => this.storesRepository.BeginTransaction(IsolationLevel.Serializable));
                     this.storesRepository.Add(store);
                     await this.storesRepository.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
                     return store.ToDataTransferObject(true);
                 }

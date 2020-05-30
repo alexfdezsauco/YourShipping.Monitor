@@ -7,10 +7,15 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
+    using Polly;
+
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
+    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -86,7 +91,9 @@
             foreach (var storedDepartment in departmentRepository.All())
             {
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
-                var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(() => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+
                 storedDepartment.Read = DateTime.Now;
                 await departmentRepository.SaveChangesAsync();
                 await transaction.CommitAsync();

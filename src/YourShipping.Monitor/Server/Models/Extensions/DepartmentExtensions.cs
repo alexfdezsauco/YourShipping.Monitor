@@ -1,10 +1,15 @@
 ﻿namespace YourShipping.Monitor.Server.Models.Extensions
 {
+    using YourShipping.Monitor.Shared;
+
     using Department = YourShipping.Monitor.Server.Models.Department;
 
     public static class DepartmentExtensions
     {
-        public static Shared.Department ToDataTransferObject(this Department department, bool hasChanged = false, bool stored = true)
+        public static Shared.Department ToDataTransferObject(
+            this Department department,
+            bool hasChanged = false,
+            bool stored = true)
         {
             return new Shared.Department
                        {

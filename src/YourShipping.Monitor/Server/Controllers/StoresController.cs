@@ -7,12 +7,17 @@
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
+    using Polly;
+
     using Serilog;
 
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
+    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -29,7 +34,11 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
         {
-            var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+            IDbContextTransaction transaction = null;
+            Policy.Handle<Exception>()
+                .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
+                    () => transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable));
+
             storeRepository.Delete(store => store.Id == id);
             await storeRepository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -57,7 +66,9 @@
             foreach (var storedStore in storeRepository.All())
             {
                 var hasChanged = storedStore.Read < storedStore.Updated;
-                var transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable);
+
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+
                 storedStore.Read = DateTime.Now;
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));
                 await storeRepository.SaveChangesAsync();

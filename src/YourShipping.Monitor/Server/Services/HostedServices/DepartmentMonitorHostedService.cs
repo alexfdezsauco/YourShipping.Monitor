@@ -1,7 +1,6 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
-    using System.Collections.Generic;
     using System.Data;
     using System.Linq;
     using System.Text.Json;
@@ -12,11 +11,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Orc.EntityFrameworkCore;
 
+    using Polly;
+
     using Serilog;
 
     using Telegram.Bot;
 
     using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
@@ -35,7 +37,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         [Execute]
         public async Task Execute(
-            IUnitOfWork unitOfWork, 
+            IUnitOfWork unitOfWork,
             IEntityScrapper<Department> departmentScrapper,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
@@ -57,8 +59,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     department = storedDepartment;
                     if (department.IsAvailable)
                     {
-                        transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
-                    
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+
                         department.IsAvailable = false;
                         department.Updated = dateTime;
                         department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
@@ -73,7 +76,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 else if (department.Sha256 != storedDepartment.Sha256)
                 {
-                    transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+                    transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
@@ -105,7 +109,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     {
                         try
                         {
-                            await telegramBotClient.SendTextMessageAsync(user.ChatId, "Product Set Changed: " + message);
+                            await telegramBotClient.SendTextMessageAsync(
+                                user.ChatId,
+                                "Product Set Changed: " + message);
                         }
                         catch (Exception e)
                         {

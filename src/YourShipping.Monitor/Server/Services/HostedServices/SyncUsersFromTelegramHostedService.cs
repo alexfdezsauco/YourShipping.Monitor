@@ -13,6 +13,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using Telegram.Bot;
     using Telegram.Bot.Types;
 
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Services.Attributes;
 
     using User = YourShipping.Monitor.Server.Models.User;
@@ -25,7 +26,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         }
 
         [Execute]
-        public async Task ExecuteAsync(IRepository<User, int> userRepository, ITelegramBotClient telegramBotClient = null)
+        public async Task ExecuteAsync(
+            IRepository<User, int> userRepository,
+            ITelegramBotClient telegramBotClient = null)
         {
             if (telegramBotClient == null)
             {
@@ -54,14 +57,15 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             {
                 foreach (var user in users)
                 {
-
                     var storedUser = userRepository.Find(u => u.Name == user.Name).FirstOrDefault();
                     if (storedUser != null)
                     {
                         user.Id = storedUser.Id;
                     }
 
-                    var transaction = userRepository.BeginTransaction(IsolationLevel.Serializable);
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        () => userRepository.BeginTransaction(IsolationLevel.Serializable));
+
                     userRepository.TryAddOrUpdate(user, nameof(User.IsEnable));
                     await userRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
