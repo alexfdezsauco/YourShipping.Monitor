@@ -2,9 +2,6 @@ namespace YourShipping.Monitor.Server
 {
     using System.Net;
     using System.Net.Http;
-    using System.Reflection.Metadata.Ecma335;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     using AngleSharp;
 
@@ -17,6 +14,8 @@ namespace YourShipping.Monitor.Server
     using Microsoft.Extensions.Hosting;
 
     using Orc.EntityFrameworkCore;
+
+    using Serilog;
 
     using Telegram.Bot;
 
@@ -85,9 +84,22 @@ namespace YourShipping.Monitor.Server
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
             var token = this.Configuration.GetSection("TelegramBot")?["Token"];
+
             if (!string.IsNullOrWhiteSpace(token))
             {
-                services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
+                if (token == "%TELEGRAM_BOT_TOKEN%")
+                {
+                    Log.Warning("Telegram notification is disable %TELEGRAM_BOT_TOKEN% with a valid bot token.");
+                }
+                else
+                {
+                    Log.Information("Telegram notification is enable.");
+                    services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
+                }
+            }
+            else
+            {
+                Log.Warning("Telegram notification is disable. To enable it, add a TelegramBot section with a key Token.");
             }
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
@@ -129,7 +141,9 @@ namespace YourShipping.Monitor.Server
                                                  {
                                                      AutomaticDecompression =
                                                          DecompressionMethods.GZip | DecompressionMethods.Deflate
-                                                 }) { Timeout = ScrappingConfiguration.HttpClientTimeout };
+                                                 }) {
+                                                       Timeout = ScrappingConfiguration.HttpClientTimeout 
+                                                    };
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
