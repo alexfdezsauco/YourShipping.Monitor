@@ -60,7 +60,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         product = storedProduct;
                         if (product.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                                () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                             product.IsAvailable = false;
                             product.Updated = dateTime;
@@ -76,7 +77,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (product.Sha256 != storedProduct.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                         product.Id = storedProduct.Id;
                         product.Updated = dateTime;
@@ -109,8 +111,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             var messageStringBuilder = new StringBuilder();
                             messageStringBuilder.AppendLine("*Product Changed*");
                             messageStringBuilder.AppendLine($"*Name:* _{productDataTransferObject.Name}_");
-                            messageStringBuilder.AppendLine($"*Price:* _{productDataTransferObject.Price.ToString("C")} {productDataTransferObject.Currency}_");
-                            messageStringBuilder.AppendLine($"*Is IsAvailable:* _{productDataTransferObject.IsAvailable}_");
+                            messageStringBuilder.AppendLine(
+                                $"*Price:* _{productDataTransferObject.Price.ToString("C")} {productDataTransferObject.Currency}_");
+                            messageStringBuilder.AppendLine(
+                                $"*Is IsAvailable:* _{productDataTransferObject.IsAvailable}_");
                             if (productDataTransferObject.IsAvailable)
                             {
                                 messageStringBuilder.AppendLine(
@@ -119,7 +123,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                             messageStringBuilder.AppendLine($"*Store:* _{productDataTransferObject.Store}_");
                             messageStringBuilder.AppendLine($"*Department:* _{productDataTransferObject.Department}_");
-                            messageStringBuilder.AppendLine($"*Category:* _{productDataTransferObject.DepartmentCategory}_");
+                            messageStringBuilder.AppendLine(
+                                $"*Category:* _{productDataTransferObject.DepartmentCategory}_");
 
                             var markdownMessage = messageStringBuilder.ToString();
 

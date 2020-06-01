@@ -2,6 +2,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -67,7 +68,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         user.Id = storedUser.Id;
                     }
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(userRepository.BeginTransaction);
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        () => userRepository.BeginTransaction(IsolationLevel.Serializable));
 
                     userRepository.TryAddOrUpdate(user, nameof(User.IsEnable));
                     await userRepository.SaveChangesAsync();

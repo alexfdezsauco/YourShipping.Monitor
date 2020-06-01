@@ -60,7 +60,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         store = storedStore;
                         if (store.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                                () => storeRepository.BeginTransaction(IsolationLevel.Serializable));
 
                             store.IsAvailable = false;
                             store.Updated = dateTime;
@@ -76,7 +77,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (store.Sha256 != storedStore.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            () => storeRepository.BeginTransaction(IsolationLevel.Serializable));
 
                         store.Id = storedStore.Id;
                         store.Updated = dateTime;
@@ -115,7 +117,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                 $"*Departments Count:* _{storeDataTransferObject.DepartmentsCount}_");
                             if (storeDataTransferObject.IsAvailable)
                             {
-                                messageStringBuilder.AppendLine($"*Link:* [{storeDataTransferObject.Url}]({storeDataTransferObject.Url})");
+                                messageStringBuilder.AppendLine(
+                                    $"*Link:* [{storeDataTransferObject.Url}]({storeDataTransferObject.Url})");
                             }
 
                             var markdownMessage = messageStringBuilder.ToString();

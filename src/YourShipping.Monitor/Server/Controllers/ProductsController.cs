@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@
                     product.Updated = dateTime;
                     product.Read = dateTime;
                     var transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                        productRepository.BeginTransaction);
+                        () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
@@ -53,7 +54,8 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
-            var transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
+            var transaction = PolicyHelper.WaitAndRetryForever()
+                .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
@@ -68,7 +70,8 @@
             foreach (var storedProduct in productRepository.All())
             {
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
-                var transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                    () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                 storedProduct.Read = DateTime.Now;
                 await productRepository.SaveChangesAsync();
