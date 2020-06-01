@@ -37,7 +37,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         [Execute]
         public async Task Execute(
-            IUnitOfWork unitOfWork,
+            IRepository<User, int> userRepository,
+            IRepository<Department, int> departmentRepository,
             IEntityScrapper<Department> departmentScrapper,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
@@ -46,9 +47,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             var sourceChanged = false;
 
-            var departmentRepository = unitOfWork.GetRepository<Department, int>();
-
-            foreach (var storedDepartment in departmentRepository.All())
+            var storedDepartments = departmentRepository.All().ToList();
+            foreach (var storedDepartment in storedDepartments)
             {
                 if (storedDepartment.IsEnabled)
                 {
@@ -61,7 +61,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         department = storedDepartment;
                         if (department.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            transaction = PolicyHelper.WaitAndRetry().Execute(
                                 () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
                             department.IsAvailable = false;
@@ -78,7 +78,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (department.Sha256 != storedDepartment.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        transaction = PolicyHelper.WaitAndRetry().Execute(
                             () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
                         department.Id = storedDepartment.Id;
@@ -128,7 +128,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             messageStringBuilder.AppendLine($"*Store:* _{departmentDataTransferObject.Store}_");
                             var markdownMessage = messageStringBuilder.ToString();
 
-                            var userRepository = unitOfWork.GetRepository<User, int>();
                             var users = userRepository.Find(user => user.IsEnable).ToList();
                             foreach (var user in users)
                             {

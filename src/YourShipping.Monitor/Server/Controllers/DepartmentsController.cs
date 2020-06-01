@@ -38,7 +38,7 @@
                     department.Updated = dateTime;
                     department.Read = dateTime;
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                    var transaction = PolicyHelper.WaitAndRetry().Execute(
                         () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
                     departmentRepository.Add(department);
                     await departmentRepository.SaveChangesAsync();
@@ -59,7 +59,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Department, int> departmentRepository, int id)
         {
-            var transaction = PolicyHelper.WaitAndRetryForever()
+            var transaction = PolicyHelper.WaitAndRetry()
                 .Execute(() => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
             departmentRepository.Delete(department => department.Id == id);
             await departmentRepository.SaveChangesAsync();
@@ -90,7 +90,7 @@
             {
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
 
-                var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                var transaction = PolicyHelper.WaitAndRetry().Execute(
                     () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
                 storedDepartment.Read = DateTime.Now;

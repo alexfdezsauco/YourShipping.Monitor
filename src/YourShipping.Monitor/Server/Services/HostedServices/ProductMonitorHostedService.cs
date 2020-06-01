@@ -37,7 +37,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         [Execute]
         public async Task Execute(
-            IUnitOfWork unitOfWork,
+            IRepository<User, int> userRepository,
+            IRepository<Product, int> productRepository,
             IEntityScrapper<Product> productScrapper,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
@@ -46,8 +47,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             var sourceChanged = false;
 
-            var productRepository = unitOfWork.GetRepository<Product, int>();
-            foreach (var storedProduct in productRepository.All())
+            var storedProducts = productRepository.All().ToList();
+            foreach (var storedProduct in storedProducts)
             {
                 if (storedProduct.IsEnabled)
                 {
@@ -60,7 +61,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         product = storedProduct;
                         if (product.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                            transaction = PolicyHelper.WaitAndRetry().Execute(
                                 () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                             product.IsAvailable = false;
@@ -77,7 +78,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (product.Sha256 != storedProduct.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                        transaction = PolicyHelper.WaitAndRetry().Execute(
                             () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 
                         product.Id = storedProduct.Id;
@@ -128,7 +129,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                             var markdownMessage = messageStringBuilder.ToString();
 
-                            var userRepository = unitOfWork.GetRepository<User, int>();
                             var users = userRepository.Find(user => user.IsEnable).ToList();
                             foreach (var user in users)
                             {

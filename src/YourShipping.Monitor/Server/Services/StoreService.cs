@@ -42,12 +42,12 @@
                     store.Updated = dateTime;
                     store.Read = dateTime;
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                    var transaction = PolicyHelper.WaitAndRetry().Execute(
                         () => this.storesRepository.BeginTransaction(IsolationLevel.Serializable));
+
                     this.storesRepository.Add(store);
                     await this.storesRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
-
                     return store.ToDataTransferObject(true);
                 }
             }

@@ -68,7 +68,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         user.Id = storedUser.Id;
                     }
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                    var transaction = PolicyHelper.WaitAndRetry().Execute(
                         () => userRepository.BeginTransaction(IsolationLevel.Serializable));
 
                     userRepository.TryAddOrUpdate(user, nameof(User.IsEnable));

@@ -30,7 +30,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
         {
-            var transaction = PolicyHelper.WaitAndRetryForever()
+            var transaction = PolicyHelper.WaitAndRetry()
                 .Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
 
             storeRepository.Delete(store => store.Id == id);
@@ -61,7 +61,7 @@
             {
                 var hasChanged = storedStore.Read < storedStore.Updated;
 
-                var transaction = PolicyHelper.WaitAndRetryForever()
+                var transaction = PolicyHelper.WaitAndRetry()
                     .Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
 
                 storedStore.Read = DateTime.Now;
