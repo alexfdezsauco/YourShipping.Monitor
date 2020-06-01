@@ -17,7 +17,6 @@
 
     using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -67,7 +66,8 @@
             {
                 var hasChanged = storedStore.Read < storedStore.Updated;
 
-                var transaction = PolicyHelper.WaitAndRetryForever().Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+                var transaction = PolicyHelper.WaitAndRetryForever()
+                    .Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
 
                 storedStore.Read = DateTime.Now;
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));
@@ -114,14 +114,17 @@
 
             foreach (var storedStore in storeRepository.All())
             {
-                foreach (var keyword in keywordList)
+                if (storedStore.IsEnabled)
                 {
-                    var url = storedStore.Url.Replace(
-                        "/Products?depPid=0",
-                        $"/Search.aspx?keywords={keyword}&depPid=0");
-                    await foreach (var product in productsScrapper.GetAsync(url, true))
+                    foreach (var keyword in keywordList)
                     {
-                        products.Add(product.ToDataTransferObject(false, false));
+                        var url = storedStore.Url.Replace(
+                            "/Products?depPid=0",
+                            $"/Search.aspx?keywords={keyword}&depPid=0");
+                        await foreach (var product in productsScrapper.GetAsync(url, true))
+                        {
+                            products.Add(product.ToDataTransferObject(false, false));
+                        }
                     }
                 }
             }
