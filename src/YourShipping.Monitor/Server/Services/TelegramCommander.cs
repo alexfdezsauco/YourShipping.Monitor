@@ -77,7 +77,7 @@ namespace YourShipping.Monitor.Server.Services
                                     await foreach (var product in productsScrapper.GetAsync(url, true))
                                     {
                                         var messageStringBuilder = new StringBuilder();
-                                        messageStringBuilder.AppendLine($"*Search Result:* _{keyword}_");
+                                        messageStringBuilder.AppendLine($"*Search result for* _{keyword}_");
                                         messageStringBuilder.AppendLine($"*Name:* _{product.Name}_");
                                         messageStringBuilder.AppendLine(
                                             $"*Price:* _{product.Price} {product.Currency}_");
@@ -101,7 +101,7 @@ namespace YourShipping.Monitor.Server.Services
                         if (!found)
                         {
                             var messageStringBuilder = new StringBuilder();
-                            messageStringBuilder.AppendLine($"*Not Products Found* : {message.Text}");
+                            messageStringBuilder.AppendLine($"*Products not found for command* {message.Text}");
                             await this.telegramBotClient.SendTextMessageAsync(
                                 message.Chat.Id,
                                 messageStringBuilder.ToString(),
