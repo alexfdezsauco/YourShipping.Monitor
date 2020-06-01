@@ -2,11 +2,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
-
-    using Catel.Runtime;
 
     using Orc.EntityFrameworkCore;
 
@@ -52,12 +49,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
 
             var users = updates
-                ?.Select(update => new User
-                                       {
-                                           ChatId = update?.Message?.Chat?.Id ?? -1, 
-                                           Name = update?.Message?.Chat?.Username ?? string.Empty
-                                       })
-                .Where(user => !string.IsNullOrWhiteSpace(user.Name)).Distinct(new UserEqualityComparer());
+                ?.Select(
+                    update => new User
+                                  {
+                                      ChatId = update?.Message?.Chat?.Id ?? -1,
+                                      Name = update?.Message?.Chat?.Username ?? string.Empty
+                                  }).Where(user => !string.IsNullOrWhiteSpace(user.Name))
+                .Distinct(new UserEqualityComparer());
 
             if (users != null)
             {
@@ -69,8 +67,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         user.Id = storedUser.Id;
                     }
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                        () => userRepository.BeginTransaction(IsolationLevel.Serializable));
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(userRepository.BeginTransaction);
 
                     userRepository.TryAddOrUpdate(user, nameof(User.IsEnable));
                     await userRepository.SaveChangesAsync();
@@ -86,7 +83,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     {
         public bool Equals(User x, User y)
         {
-            return object.Equals(x?.Name, y?.Name);
+            return Equals(x?.Name, y?.Name);
         }
 
         public int GetHashCode(User obj)

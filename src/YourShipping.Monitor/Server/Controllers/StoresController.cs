@@ -2,16 +2,12 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
-
-    using Polly;
 
     using Serilog;
 
@@ -33,10 +29,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Store, int> storeRepository, int id)
         {
-            IDbContextTransaction transaction = null;
-            Policy.Handle<Exception>()
-                .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
-                    () => transaction = storeRepository.BeginTransaction(IsolationLevel.Serializable));
+            var transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
 
             storeRepository.Delete(store => store.Id == id);
             await storeRepository.SaveChangesAsync();
@@ -66,8 +59,7 @@
             {
                 var hasChanged = storedStore.Read < storedStore.Updated;
 
-                var transaction = PolicyHelper.WaitAndRetryForever()
-                    .Execute(() => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
 
                 storedStore.Read = DateTime.Now;
                 stores.Add(storedStore.ToDataTransferObject(hasChanged));

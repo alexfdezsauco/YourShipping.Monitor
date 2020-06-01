@@ -2,20 +2,15 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
-    using Polly;
-
     using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -42,7 +37,7 @@
                     product.Updated = dateTime;
                     product.Read = dateTime;
                     var transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                            () => productRepository.BeginTransaction(IsolationLevel.Serializable));
+                        productRepository.BeginTransaction);
 
                     productRepository.Add(product);
                     await productRepository.SaveChangesAsync();
@@ -58,10 +53,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
         {
-            IDbContextTransaction transaction = null;
-            Policy.Handle<Exception>()
-                .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
-                    () => transaction = productRepository.BeginTransaction(IsolationLevel.Serializable));
+            var transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
 
             productRepository.Delete(product => product.Id == id);
             await productRepository.SaveChangesAsync();
@@ -76,10 +68,7 @@
             foreach (var storedProduct in productRepository.All())
             {
                 var hasChanged = storedProduct.Read < storedProduct.Updated;
-                IDbContextTransaction transaction = null;
-                Policy.Handle<Exception>()
-                    .WaitAndRetryForever(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))).Execute(
-                        () => transaction = productRepository.BeginTransaction(IsolationLevel.Serializable));
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
 
                 storedProduct.Read = DateTime.Now;
                 await productRepository.SaveChangesAsync();

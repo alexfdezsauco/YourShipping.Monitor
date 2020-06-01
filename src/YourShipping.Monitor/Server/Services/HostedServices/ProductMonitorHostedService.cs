@@ -60,8 +60,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         product = storedProduct;
                         if (product.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                                () => productRepository.BeginTransaction(IsolationLevel.Serializable));
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
 
                             product.IsAvailable = false;
                             product.Updated = dateTime;
@@ -77,8 +76,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (product.Sha256 != storedProduct.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                            () => productRepository.BeginTransaction(IsolationLevel.Serializable));
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(productRepository.BeginTransaction);
 
                         product.Id = storedProduct.Id;
                         product.Updated = dateTime;
@@ -111,7 +109,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             var messageStringBuilder = new StringBuilder();
                             messageStringBuilder.AppendLine("*Product Changed*");
                             messageStringBuilder.AppendLine($"*Name:* _{productDataTransferObject.Name}_");
-                            messageStringBuilder.AppendLine($"*Price:* _{productDataTransferObject.Price} {productDataTransferObject.Currency}_");
+                            messageStringBuilder.AppendLine($"*Price:* _{productDataTransferObject.Price.ToString("C")} {productDataTransferObject.Currency}_");
+                            messageStringBuilder.AppendLine($"*Is IsAvailable:* _{productDataTransferObject.IsAvailable}_");
                             if (productDataTransferObject.IsAvailable)
                             {
                                 messageStringBuilder.AppendLine(

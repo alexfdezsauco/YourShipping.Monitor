@@ -60,8 +60,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         store = storedStore;
                         if (store.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                                () => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
 
                             store.IsAvailable = false;
                             store.Updated = dateTime;
@@ -77,8 +76,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (store.Sha256 != storedStore.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                            () => storeRepository.BeginTransaction(IsolationLevel.Serializable));
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(storeRepository.BeginTransaction);
 
                         store.Id = storedStore.Id;
                         store.Updated = dateTime;

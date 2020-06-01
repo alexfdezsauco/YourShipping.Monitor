@@ -2,20 +2,15 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Threading.Tasks;
 
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore.Storage;
 
     using Orc.EntityFrameworkCore;
 
-    using Polly;
-
     using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.HostedServices;
     using YourShipping.Monitor.Server.Services.Interfaces;
     using YourShipping.Monitor.Shared;
 
@@ -42,7 +37,7 @@
                     department.Updated = dateTime;
                     department.Read = dateTime;
 
-                    var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(departmentRepository.BeginTransaction);
                     departmentRepository.Add(department);
                     await departmentRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -62,7 +57,7 @@
         [HttpDelete("{id}")]
         public async Task Delete([FromServices] IRepository<Models.Department, int> departmentRepository, int id)
         {
-            var transaction = departmentRepository.BeginTransaction(IsolationLevel.Serializable);
+            var transaction = PolicyHelper.WaitAndRetryForever().Execute(departmentRepository.BeginTransaction);
             departmentRepository.Delete(department => department.Id == id);
             await departmentRepository.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -92,7 +87,7 @@
             {
                 var hasChanged = storedDepartment.Read < storedDepartment.Updated;
 
-                var transaction = PolicyHelper.WaitAndRetryForever().Execute(() => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+                var transaction = PolicyHelper.WaitAndRetryForever().Execute(departmentRepository.BeginTransaction);
 
                 storedDepartment.Read = DateTime.Now;
                 await departmentRepository.SaveChangesAsync();

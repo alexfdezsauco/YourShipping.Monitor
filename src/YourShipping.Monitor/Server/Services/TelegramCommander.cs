@@ -131,7 +131,7 @@ namespace YourShipping.Monitor.Server.Services
                 if (!found)
                 {
                     var messageStringBuilder = new StringBuilder();
-                    messageStringBuilder.AppendLine($"*Products not found for command* {message.Text}");
+                    messageStringBuilder.AppendLine($"Products not found for _{message.Text}_");
                     await this.telegramBotClient.SendTextMessageAsync(
                         message.Chat.Id,
                         messageStringBuilder.ToString(),

@@ -61,8 +61,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         department = storedDepartment;
                         if (department.IsAvailable)
                         {
-                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                                () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(departmentRepository.BeginTransaction);
 
                             department.IsAvailable = false;
                             department.Updated = dateTime;
@@ -78,8 +77,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     }
                     else if (department.Sha256 != storedDepartment.Sha256)
                     {
-                        transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                            () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+                        transaction = PolicyHelper.WaitAndRetryForever().Execute(departmentRepository.BeginTransaction);
 
                         department.Id = storedDepartment.Id;
                         department.Updated = dateTime;
@@ -115,6 +113,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             messageStringBuilder.AppendLine($"*Name:* _{departmentDataTransferObject.Name}_");
                             messageStringBuilder.AppendLine($"*Category:* _{departmentDataTransferObject.Category}_");
                             messageStringBuilder.AppendLine($"*Products Count:* _{departmentDataTransferObject.ProductsCount}_");
+                            messageStringBuilder.AppendLine($"*Is Available:* _{departmentDataTransferObject.IsAvailable}_");
                             if (departmentDataTransferObject.IsAvailable && departmentDataTransferObject.ProductsCount > 0)
                             {
                                 messageStringBuilder.AppendLine($"*Link:* [{departmentDataTransferObject.Url}]({departmentDataTransferObject.Url})");

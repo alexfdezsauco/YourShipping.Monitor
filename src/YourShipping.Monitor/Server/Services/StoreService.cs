@@ -43,8 +43,7 @@
                     store.Updated = dateTime;
                     store.Read = dateTime;
 
-                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                        () => this.storesRepository.BeginTransaction(IsolationLevel.Serializable));
+                    var transaction = PolicyHelper.WaitAndRetryForever().Execute(this.storesRepository.BeginTransaction);
                     this.storesRepository.Add(store);
                     await this.storesRepository.SaveChangesAsync();
                     await transaction.CommitAsync();
