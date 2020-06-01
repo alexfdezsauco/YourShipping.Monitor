@@ -147,7 +147,8 @@
                                                  Name = departmentName,
                                                  Category = departmentCategory,
                                                  Store = storeName,
-                                                 IsAvailable = true
+                                                 IsAvailable = true,
+                                                 IsEnabled = true
                                              };
                         }
                     }
@@ -161,7 +162,8 @@
                                              Name = "Search",
                                              Category = "Keywords: " + parameters["keywords"],
                                              Store = storeName,
-                                             IsAvailable = true
+                                             IsAvailable = true,
+                                             IsEnabled = true
                                          };
                     }
 

@@ -185,7 +185,8 @@
                                           Store = storeName,
                                           Department = departmentName,
                                           DepartmentCategory = departmentCategory,
-                                          IsAvailable = isAvailable
+                                          IsAvailable = isAvailable,
+                                          IsEnabled = true,
                                       };
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();

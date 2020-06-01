@@ -9,6 +9,9 @@
         [JsonIgnore]
         public DateTime Added { get; set; }
 
+        [JsonIgnore]
+        public bool IsEnabled { get; set; }
+
         public int CategoriesCount { get; set; }
 
         public int DepartmentsCount { get; set; }

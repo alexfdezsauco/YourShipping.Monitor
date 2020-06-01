@@ -29,6 +29,8 @@
 
         private string url;
 
+        private bool isEnabled;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Currency
@@ -192,6 +194,17 @@
                 }
 
                 this.url = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsEnabled
+        {
+            get => this.isEnabled;
+            set
+            {
+                if (value == this.isEnabled) return;
+                this.isEnabled = value;
                 this.OnPropertyChanged();
             }
         }

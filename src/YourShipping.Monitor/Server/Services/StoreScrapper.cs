@@ -146,7 +146,8 @@
                                     CategoriesCount = categoriesCount,
                                     Province = storeToImport?.Province,
                                     Url = url,
-                                    IsAvailable = isAvailable
+                                    IsAvailable = isAvailable,
+                                    IsEnabled = true,
                                 };
 
                 store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();

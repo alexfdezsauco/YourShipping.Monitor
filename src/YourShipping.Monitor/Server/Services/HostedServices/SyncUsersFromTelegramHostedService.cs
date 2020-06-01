@@ -6,6 +6,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Catel.Runtime;
+
     using Orc.EntityFrameworkCore;
 
     using Serilog;
@@ -50,8 +52,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
 
             var users = updates
-                ?.Select(update => new User { ChatId = update.Message.Chat.Id, Name = update.Message.Chat.Username })
-                .Where(user => !string.IsNullOrWhiteSpace(user.Name)).Distinct(EqualityComparer<User>.Default);
+                ?.Select(update => new User
+                                       {
+                                           ChatId = update?.Message?.Chat?.Id ?? -1, 
+                                           Name = update?.Message?.Chat?.Username ?? string.Empty
+                                       })
+                .Where(user => !string.IsNullOrWhiteSpace(user.Name)).Distinct(new UserEqualityComparer());
 
             if (users != null)
             {
@@ -73,6 +79,19 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
 
             Log.Information("User synchronization from telegram completed");
+        }
+    }
+
+    public class UserEqualityComparer : IEqualityComparer<User>
+    {
+        public bool Equals(User x, User y)
+        {
+            return object.Equals(x?.Name, y?.Name);
+        }
+
+        public int GetHashCode(User obj)
+        {
+            return obj.GetHashCode();
         }
     }
 }

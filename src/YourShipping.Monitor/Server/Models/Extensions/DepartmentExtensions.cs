@@ -21,6 +21,7 @@
                            HasChanged = hasChanged,
                            IsAvailable = department.IsAvailable,
                            IsStored = stored,
+                           IsEnabled = department.IsEnabled,
                            ProductsCount = department.ProductsCount
                        };
         }

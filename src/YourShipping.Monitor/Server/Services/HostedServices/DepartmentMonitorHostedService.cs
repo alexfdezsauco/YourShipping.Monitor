@@ -3,6 +3,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System;
     using System.Data;
     using System.Linq;
+    using System.Text;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -11,11 +12,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Orc.EntityFrameworkCore;
 
-    using Polly;
-
     using Serilog;
 
     using Telegram.Bot;
+    using Telegram.Bot.Types.Enums;
 
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Helpers;
@@ -50,80 +50,103 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             foreach (var storedDepartment in departmentRepository.All())
             {
-                var dateTime = DateTime.Now;
-                var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
-                IDbContextTransaction transaction = null;
-                Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
-                if (department == null)
+                if (storedDepartment.IsEnabled)
                 {
-                    department = storedDepartment;
-                    if (department.IsAvailable)
+                    var dateTime = DateTime.Now;
+                    var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
+                    IDbContextTransaction transaction = null;
+                    Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
+                    if (department == null)
+                    {
+                        department = storedDepartment;
+                        if (department.IsAvailable)
+                        {
+                            transaction = PolicyHelper.WaitAndRetryForever().Execute(
+                                () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+
+                            department.IsAvailable = false;
+                            department.Updated = dateTime;
+                            department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
+
+                            sourceChanged = true;
+                            Log.Information(
+                                "Department {Department} from {Store} has changed. Is Available: {IsAvailable}",
+                                department.Name,
+                                department.Store,
+                                department.IsAvailable);
+                        }
+                    }
+                    else if (department.Sha256 != storedDepartment.Sha256)
                     {
                         transaction = PolicyHelper.WaitAndRetryForever().Execute(
                             () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
-                        department.IsAvailable = false;
+                        department.Id = storedDepartment.Id;
                         department.Updated = dateTime;
-                        department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
-
+                        departmentRepository.TryAddOrUpdate(
+                            department,
+                            nameof(Department.Added),
+                            nameof(Department.Read));
                         sourceChanged = true;
+
                         Log.Information(
                             "Department {Department} from {Store} has changed. Is Available: {IsAvailable}",
                             department.Name,
                             department.Store,
                             department.IsAvailable);
                     }
-                }
-                else if (department.Sha256 != storedDepartment.Sha256)
-                {
-                    transaction = PolicyHelper.WaitAndRetryForever().Execute(
-                            () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
 
-                    department.Id = storedDepartment.Id;
-                    department.Updated = dateTime;
-                    departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
-                    sourceChanged = true;
-
-                    Log.Information(
-                        "Department {Department} from {Store} has changed. Is Available: {IsAvailable}",
-                        department.Name,
-                        department.Store,
-                        department.IsAvailable);
-                }
-
-                if (transaction != null)
-                {
-                    await departmentRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    var dataTransferObject = department.ToDataTransferObject(true);
-                    var message = JsonSerializer.Serialize(dataTransferObject);
-                    await messageHubContext.Clients.All.SendAsync(
-                        ClientMethods.EntityChanged,
-                        AlertSource.Departments,
-                        message);
-
-                    var userRepository = unitOfWork.GetRepository<User, int>();
-                    var users = userRepository.Find(user => user.IsEnable).ToList();
-                    foreach (var user in users)
+                    if (transaction != null)
                     {
-                        try
-                        {
-                            await telegramBotClient.SendTextMessageAsync(
-                                user.ChatId,
-                                "Product Set Changed: " + message);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error sending message via telegram to {UserName}", user.Name);
-                        }
-                    }
+                        await departmentRepository.SaveChangesAsync();
+                        await transaction.CommitAsync();
 
-                    Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
-                }
-                else
-                {
-                    Log.Information("No change detected for department '{url}'", storedDepartment.Url);
+                        var departmentDataTransferObject = department.ToDataTransferObject(true);
+                        var message = JsonSerializer.Serialize(departmentDataTransferObject);
+                        await messageHubContext.Clients.All.SendAsync(
+                            ClientMethods.EntityChanged,
+                            AlertSource.Departments,
+                            message);
+
+                        if (telegramBotClient != null)
+                        {
+                            var messageStringBuilder = new StringBuilder();
+                            messageStringBuilder.AppendLine("*Product Set Changed*");
+                            messageStringBuilder.AppendLine($"*Name:* _{departmentDataTransferObject.Name}_");
+                            messageStringBuilder.AppendLine($"*Category:* _{departmentDataTransferObject.Category}_");
+                            messageStringBuilder.AppendLine($"*Products Count:* _{departmentDataTransferObject.ProductsCount}_");
+                            if (departmentDataTransferObject.IsAvailable && departmentDataTransferObject.ProductsCount > 0)
+                            {
+                                messageStringBuilder.AppendLine($"*Link:* [{departmentDataTransferObject.Url}]({departmentDataTransferObject.Url})");
+                            }
+
+                            messageStringBuilder.AppendLine($"*Store:* _{departmentDataTransferObject.Store}_");
+                            var markdownMessage = messageStringBuilder.ToString();
+
+                            var userRepository = unitOfWork.GetRepository<User, int>();
+                            var users = userRepository.Find(user => user.IsEnable).ToList();
+                            foreach (var user in users)
+                            {
+                                try
+                                {
+                                    await telegramBotClient.SendTextMessageAsync(
+                                        user.ChatId,
+                                        markdownMessage,
+                                        ParseMode.Markdown);
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Error(e, "Error sending message via telegram to {UserName}", user.Name);
+                                }
+                            }
+                        }
+
+                        Log.Information("Entity changed at source {Source}.", AlertSource.Departments);
+                    }
+                    else
+                    {
+                        Log.Information("No change detected for department '{url}'", storedDepartment.Url);
+                    }
                 }
             }
 

@@ -20,6 +20,7 @@
                            Department = product.Department,
                            DepartmentCategory = product.DepartmentCategory,
                            IsAvailable = product.IsAvailable,
+                           IsEnabled = product.IsEnabled,
                            HasChanged = hasChanged
                        };
         }

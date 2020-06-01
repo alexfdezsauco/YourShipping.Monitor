@@ -23,6 +23,10 @@
 
         private bool hasChanged;
 
+        private bool isEnabled;
+
+        private string url;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Category
@@ -141,7 +145,27 @@
             }
         }
 
-        public string Url { get; set; }
+        public string Url
+        {
+            get => this.url;
+            set
+            {
+                if (value == this.url) return;
+                this.url = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsEnabled
+        {
+            get => this.isEnabled;
+            set
+            {
+                if (value == this.isEnabled) return;
+                this.isEnabled = value;
+                this.OnPropertyChanged();
+            }
+        }
 
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

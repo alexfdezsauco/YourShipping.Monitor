@@ -73,7 +73,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
             catch (Exception e)
             {
-                Log.Error(e.Message);
+                Log.Error(e, "Error executing hosted service {Type}", this.GetType());
             }
             finally
             {
@@ -124,7 +124,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 Log.Information("Timed Hosted Service running.");
 
                 this.timer = new Timer(
-                    o =>  this.DoWork(cancellationToken),
+                    o => this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
                     TimeSpan.FromMinutes(5));

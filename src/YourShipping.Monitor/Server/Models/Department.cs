@@ -9,6 +9,9 @@
         [JsonIgnore]
         public DateTime Added { get; set; }
 
+        [JsonIgnore]
+        public bool IsEnabled { get; set; }
+
         [Key]
         [JsonIgnore]
         public int Id { get; set; }

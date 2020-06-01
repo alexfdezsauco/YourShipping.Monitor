@@ -17,6 +17,7 @@
                            CategoriesCount = store.CategoriesCount,
                            Province = store.Province,
                            DepartmentsCount = store.DepartmentsCount,
+                           IsEnabled = store.IsEnabled,
                            IsAvailable = store.IsAvailable,
                            IsStored = stored
                        };

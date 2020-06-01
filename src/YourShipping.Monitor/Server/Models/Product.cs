@@ -11,11 +11,18 @@
 
         public string Currency { get; set; }
 
+        public string Department { get; set; }
+
+        public string DepartmentCategory { get; set; }
+
         [Key]
         [JsonIgnore]
         public int Id { get; set; }
 
         public bool IsAvailable { get; set; }
+
+        [JsonIgnore]
+        public bool IsEnabled { get; set; }
 
         public string Name { get; set; }
 
@@ -33,9 +40,5 @@
         public DateTime Updated { get; set; }
 
         public string Url { get; set; }
-
-        public string Department { get; set; }
-
-        public string DepartmentCategory { get; set; }
     }
 }

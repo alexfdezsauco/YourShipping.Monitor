@@ -37,7 +37,7 @@ namespace YourShipping.Monitor.Server
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ITelegramCommander telegramCommander)
         {
             if (env.IsDevelopment())
             {
@@ -68,6 +68,8 @@ namespace YourShipping.Monitor.Server
                         endpoints.MapHub<MessagesHub>("/hubs/messages");
                         endpoints.MapFallbackToFile("index.html");
                     });
+
+            telegramCommander.Start();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -154,6 +156,7 @@ namespace YourShipping.Monitor.Server
                     });
 
             services.AddScoped<IStoreService, StoreService>();
+            services.AddSingleton<ITelegramCommander, TelegramCommander>();
 
             services.AddSingleton<ICacheStorage<string, Product>>(
                 provider => new CacheStorage<string, Product>(storeNullValues: true));

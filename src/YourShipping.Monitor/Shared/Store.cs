@@ -17,6 +17,8 @@
 
         private bool isAvailable;
 
+        private bool isEnabled;
+
         private bool isStored;
 
         private string name;
@@ -98,6 +100,21 @@
                 }
 
                 this.isAvailable = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsEnabled
+        {
+            get => this.isEnabled;
+            set
+            {
+                if (value == this.isEnabled)
+                {
+                    return;
+                }
+
+                this.isEnabled = value;
                 this.OnPropertyChanged();
             }
         }
