@@ -85,7 +85,7 @@ namespace YourShipping.Monitor.Server.Services
                                         messageStringBuilder.AppendLine($"*Store:* _{product.Store}_");
                                         messageStringBuilder.AppendLine($"*Department:* _{product.Department}_");
                                         messageStringBuilder.AppendLine(
-                                            $"*Department Category:* _{product.DepartmentCategory}_");
+                                            $"*Category:* _{product.DepartmentCategory}_");
 
                                         await this.telegramBotClient.SendTextMessageAsync(
                                             message.Chat.Id,

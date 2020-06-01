@@ -120,7 +120,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                             messageStringBuilder.AppendLine($"*Store:* _{productDataTransferObject.Store}_");
                             messageStringBuilder.AppendLine($"*Department:* _{productDataTransferObject.Department}_");
-                            messageStringBuilder.AppendLine($"*Department Category:* _{productDataTransferObject.DepartmentCategory}_");
+                            messageStringBuilder.AppendLine($"*Category:* _{productDataTransferObject.DepartmentCategory}_");
 
                             var markdownMessage = messageStringBuilder.ToString();
 
