@@ -12,6 +12,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Telegram.Bot;
     using Telegram.Bot.Types;
+    using Telegram.Bot.Types.Enums;
 
     using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Services.Attributes;
@@ -42,7 +43,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Update[] updates = null;
             try
             {
-                updates = await telegramBotClient.GetUpdatesAsync();
+                updates = await telegramBotClient.GetUpdatesAsync(-1);
             }
             catch (Exception e)
             {
@@ -56,7 +57,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                       ChatId = update?.Message?.Chat?.Id ?? -1,
                                       Name = update?.Message?.Chat?.Username ?? string.Empty
                                   }).Where(user => !string.IsNullOrWhiteSpace(user.Name))
-                .Distinct(new UserEqualityComparer());
+                /*.Distinct(new UserEqualityComparer())*/.ToList();
 
             if (users != null)
             {

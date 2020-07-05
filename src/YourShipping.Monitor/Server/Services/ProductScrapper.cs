@@ -85,17 +85,16 @@
             }
 
             var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, false, store);
-            if (department == null)
-            {
-                return null;
-            }
+            //if (department == null)
+            //{
+            //    return null;
+            //}
 
             var storeName = store.Name;
-            var departmentName = department.Name;
-            var departmentCategory = department.Category;
+            var departmentName = department?.Name;
+            var departmentCategory = department?.Category;
 
-            var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            var requestUri = url;
             string content = null;
 
          
@@ -158,13 +157,25 @@
 
                         productPriceElement = mainPanelElement.QuerySelector<IElement>(
                             "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+
+                        if (productPriceElement == null)
+                        {
+                            productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+                        }
                     }
 
                     var name = productNameElement?.TextContent.Trim();
                     if (string.IsNullOrWhiteSpace(name))
                     {
+                        name = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?.TextContent.Trim();
+                    }
+
+                    if (string.IsNullOrWhiteSpace(name))
+                    {
                         name = mainPanelElement.QuerySelector<IElement>(
-                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?.TextContent.Trim();
+                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?
+                            .TextContent.Trim();
                     }
 
                     float price = 0;

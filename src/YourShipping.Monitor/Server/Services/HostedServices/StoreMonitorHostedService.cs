@@ -106,7 +106,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                         Log.Information("Entity changed at source {Source}.", AlertSource.Stores);
 
-                        if (telegramBotClient != null)
+                        if (telegramBotClient != null && store.IsAvailable)
                         {
                             var messageStringBuilder = new StringBuilder();
                             messageStringBuilder.AppendLine("*Store Changed*");
@@ -115,11 +115,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                 $"*Categories Count:* _{storeDataTransferObject.CategoriesCount}_");
                             messageStringBuilder.AppendLine(
                                 $"*Departments Count:* _{storeDataTransferObject.DepartmentsCount}_");
-                            if (storeDataTransferObject.IsAvailable)
-                            {
-                                messageStringBuilder.AppendLine(
-                                    $"*Link:* [{storeDataTransferObject.Url}]({storeDataTransferObject.Url})");
-                            }
+                            
+                            messageStringBuilder.AppendLine(
+                                $"*Link:* [{storeDataTransferObject.Url}]({storeDataTransferObject.Url})");
 
                             var markdownMessage = messageStringBuilder.ToString();
                             var users = userRepository.Find(user => user.IsEnable).ToList();

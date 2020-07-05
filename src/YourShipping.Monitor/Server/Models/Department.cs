@@ -1,7 +1,9 @@
 ﻿namespace YourShipping.Monitor.Server.Models
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
     using System.Text.Json.Serialization;
 
     public class Department
@@ -36,5 +38,9 @@
         public string Sha256 { get; set; }
 
         public string Category { get; set; }
+
+        [NotMapped]
+        // [JsonIgnore]
+        public SortedList<string, Product> Products { get; set; } = new SortedList<string, Product>();
     }
 }

@@ -82,8 +82,9 @@
             }
 
             var storeName = store?.Name;
-            var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            //var requestIdParam = "requestId=" + Guid.NewGuid();
+            // var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            var requestUri = url + "&page=0";
 
             string content = null;
             try
@@ -167,30 +168,33 @@
                                          };
                     }
 
-                    var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                    var productsCount = 0;
-                    var baseUrl = Regex.Replace(
-                        url,
-                        "/(Products|Item)[?]depPid=\\d+",
-                        string.Empty,
-                        RegexOptions.Singleline);
-                    foreach (var productElement in productElements)
-                    {
-                        var element = productElement.QuerySelector<IElement>("a");
-                        var elementAttribute = element.Attributes["href"];
-                        var product = await productScrapper.GetAsync(
-                                          $"{baseUrl}/{elementAttribute.Value}",
-                                          false,
-                                          store,
-                                          department);
-                        if (product != null && product.IsAvailable)
-                        {
-                            productsCount++;
-                        }
-                    }
-
                     if (department != null)
                     {
+                        var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
+                        var productsCount = 0;
+                        var baseUrl = Regex.Replace(url, "/Search[.]aspx[^/]+", string.Empty, RegexOptions.IgnoreCase);
+                        baseUrl = Regex.Replace(
+                            baseUrl,
+                            "/(Products|Item)[?]depPid=\\d+",
+                            string.Empty,
+                            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+                        foreach (var productElement in productElements)
+                        {
+                            var element = productElement.QuerySelector<IElement>("a");
+                            var elementAttribute = element.Attributes["href"];
+                            var product = await productScrapper.GetAsync(
+                                              $"{baseUrl}/{elementAttribute.Value}",
+                                              false,
+                                              store,
+                                              department);
+                            if (product != null && product.IsAvailable)
+                            {
+                                department.Products.Add(product.Url, product);
+                                productsCount++;
+                            }
+                        }
+
                         department.ProductsCount = productsCount;
                         department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
                     }

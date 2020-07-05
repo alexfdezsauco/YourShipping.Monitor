@@ -35,8 +35,9 @@ namespace YourShipping.Monitor.Server
         {
             Log.Information("Scrapping Departments from {Url}", url);
 
-            var requestIdParam = "requestId=" + Guid.NewGuid();
-            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            // var requestIdParam = "requestId=" + Guid.NewGuid();
+            // var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            var requestUri = url;
             string content = null;
             try
             {

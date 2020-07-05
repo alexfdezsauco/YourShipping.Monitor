@@ -46,9 +46,13 @@ namespace YourShipping.Monitor.Server
             {
                 page++;
                 found = false;
-                var requestIdParam = "requestId=" + Guid.NewGuid();
+
+                // var requestIdParam = "requestId=" + Guid.NewGuid();
+                // var requestUri = url.Replace("&page=0", string.Empty, StringComparison.CurrentCultureIgnoreCase)
+                // + $"&page={page}&{requestIdParam}";
+
                 var requestUri = url.Replace("&page=0", string.Empty, StringComparison.CurrentCultureIgnoreCase)
-                                 + $"&page={page}&{requestIdParam}";
+                                 + $"&page={page}";
                 string content = null;
                 try
                 {

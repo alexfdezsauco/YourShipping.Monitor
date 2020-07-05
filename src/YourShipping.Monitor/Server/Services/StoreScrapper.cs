@@ -55,20 +55,22 @@
         {
             Log.Information("Scrapping Store from {Url}", url);
 
-            var requestIdParam = "requestId=" + Guid.NewGuid();
+            // var requestIdParam = "requestId=" + Guid.NewGuid();
 
             var jsonHttpClient = this.clientFactory.CreateClient("json");
             OficialStoreInfo[] storesToImport = null;
             try
             {
-                storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+                // storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
+                storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json");
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
             }
 
-            var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            //var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
+            var requestUri = url;
             string content = null;
             try
             {

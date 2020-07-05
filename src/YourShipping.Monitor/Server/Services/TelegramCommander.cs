@@ -2,7 +2,6 @@ namespace YourShipping.Monitor.Server.Services
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Eventing.Reader;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -41,6 +40,7 @@ namespace YourShipping.Monitor.Server.Services
             this.serviceProvider = serviceProvider;
 
             this.commands.Add("search", this.Search);
+            this.commands.Add("table", this.Table);
         }
 
         public void Start()
@@ -55,11 +55,18 @@ namespace YourShipping.Monitor.Server.Services
             var userRepository = serviceScope.ServiceProvider.GetService<IRepository<User, int>>();
 
             var chatUsername = message.Chat.Username;
+            var chatId = message.Chat.Id;
 
-            var user = userRepository.Find(u => u.Name == chatUsername && u.IsEnable).FirstOrDefault();
+            var user = userRepository.Find(u => u.Name == chatUsername).FirstOrDefault();
             if (user != null)
             {
-                if (message.Type == MessageType.Text)
+                if (!user.IsEnable)
+                {
+                    await this.telegramBotClient.SendTextMessageAsync(
+                        message.Chat.Id,
+                        $"Hi {chatUsername}. Please wait for the activation code.");
+                }
+                else if (message.Type == MessageType.Text)
                 {
                     var match = this.commandPattern.Match(message.Text);
                     if (match.Success)
@@ -82,6 +89,15 @@ namespace YourShipping.Monitor.Server.Services
                     }
                 }
             }
+            else
+            {
+                userRepository.Add(new User { ChatId = chatId, Name = chatUsername });
+                await userRepository.SaveChangesAsync();
+
+                await this.telegramBotClient.SendTextMessageAsync(
+                    message.Chat.Id,
+                    $"Welcome {chatUsername}. Your user is registered but disabled. Wait for activation code.");
+            }
         }
 
         private async Task Search(Message message)
@@ -90,7 +106,10 @@ namespace YourShipping.Monitor.Server.Services
                 this.serviceProvider.CreateScope().ServiceProvider.GetService<IRepository<Store, int>>();
             var productsScrapper = this.serviceProvider.GetService<IMultiEntityScrapper<Product>>();
 
-            var match = Regex.Match(message.Text, @"/([^\s]+)\s+(""[^""]+""|[^\s]+)(\s+(in)\s+(.+))?", RegexOptions.IgnoreCase);
+            var match = Regex.Match(
+                message.Text,
+                @"/([^\s]+)\s+(""[^""]+""|[^\s]+)(\s+(in)\s+(.+))?",
+                RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 var keywords = match.Groups[2].Value.Trim('"').Split(',');
@@ -126,7 +145,6 @@ namespace YourShipping.Monitor.Server.Services
                         }
                     }
                 }
-                
 
                 if (!found)
                 {
@@ -140,8 +158,27 @@ namespace YourShipping.Monitor.Server.Services
             }
             else
             {
-                await this.telegramBotClient.SendTextMessageAsync(message.Chat.Id, "I don't understand you, please repeat");
+                await this.telegramBotClient.SendTextMessageAsync(
+                    message.Chat.Id,
+                    "I don't understand you, please repeat");
             }
+        }
+
+        private async Task Table(Message message)
+        {
+            var builder = new StringBuilder();
+
+            // builder.AppendLine("<pre>");
+            builder.AppendLine("| Tables   |      Are      |  Cool |");
+            builder.AppendLine("|----------|---------------|-------|");
+            builder.AppendLine("| col 1 is |  left-aligned | $1600 |");
+            builder.AppendLine("| col 2 is |    centered   |   $12 |");
+            builder.AppendLine("| col 3 is | right-aligned |    $1 |");
+
+            // builder.AppendLine("</pre>");
+            await this.telegramBotClient.SendTextMessageAsync(message.Chat.Id, builder.ToString(), ParseMode.Markdown);
+
+            // await this.telegramBotClient.SendTextMessageAsync(message.Chat.Id, "   First Header  | Second Header\r\n  ------------- | -------------\r\n  Content Cell  | Content Cell\r\n  Content Cell  | Content Cell", ParseMode.Markdown);
         }
 
         private void TelegramBotClient_OnOnMessage(object? sender, MessageEventArgs e)

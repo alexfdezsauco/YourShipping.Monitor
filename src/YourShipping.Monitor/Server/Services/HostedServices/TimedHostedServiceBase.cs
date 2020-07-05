@@ -67,8 +67,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     {
                         task.GetAwaiter().GetResult();
                     }
-
-                    // await Task.FromResult(result);
                 }
             }
             catch (Exception e)
@@ -127,7 +125,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     o => this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
-                    TimeSpan.FromMinutes(5));
+                    TimeSpan.FromMinutes(2));
             }
 
             return Task.CompletedTask;
