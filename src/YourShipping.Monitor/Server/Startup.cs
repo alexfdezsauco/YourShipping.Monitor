@@ -1,8 +1,12 @@
 namespace YourShipping.Monitor.Server
 {
+    using System;
+    using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Text.RegularExpressions;
 
     using AngleSharp;
 
@@ -107,17 +111,34 @@ namespace YourShipping.Monitor.Server
                     "Telegram notification is disable. To enable it, add a TelegramBot section with a key Token.");
             }
 
+            services.AddTransient(sp => new CookieContainer());
+
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
+            
             services.AddTransient(
                 sp =>
                     {
+                        var cookieContainer = sp.GetService<CookieContainer>();
+
                         var handler = new HttpClientHandler
                                           {
-                                              AutomaticDecompression =
-                                                  DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                               AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
                                           };
 
-                        var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+                        if (cookieContainer != null)
+                        {
+                            handler.CookieContainer = cookieContainer;
+                            var cookieCollection = CookiesHelper.GetCollectiton();
+                            if (cookieCollection.Count > 0)
+                            {
+                                handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
+                            }
+                        }
+
+                        var httpClient = new HttpClient(handler)
+                                             {
+                                                 Timeout = ScrappingConfiguration.HttpClientTimeout
+                                             };
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
@@ -125,6 +146,8 @@ namespace YourShipping.Monitor.Server
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
                             "gzip, deflate, br");
+                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
+                        
                         return httpClient;
                     });
 
@@ -137,28 +160,6 @@ namespace YourShipping.Monitor.Server
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-                    });
-
-            services.AddTransient(
-                sp =>
-                    {
-                        var httpClient = new HttpClient(
-                                             new HttpClientHandler
-                                                 {
-                                                     AutomaticDecompression =
-                                                         DecompressionMethods.GZip | DecompressionMethods.Deflate
-                                                 }) {
-                                                       Timeout = ScrappingConfiguration.HttpClientTimeout 
-                                                    };
-                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
-
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "accept-encoding",
-                            "gzip, deflate, br");
-                        return httpClient;
                     });
 
             services.AddScoped<IStoreService, StoreService>();

@@ -1,7 +1,9 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Text.Json;
     using System.Text.RegularExpressions;
@@ -30,13 +32,15 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-        private readonly IHttpClientFactory httpClientFactory;
-
-        private readonly HttpClient webPageHttpClient;
+        private readonly CookieContainer cookieContainer;
 
         private readonly IEntityScrapper<Department> departmentScrapper;
 
+        private readonly IHttpClientFactory httpClientFactory;
+
         private readonly IEntityScrapper<Store> storeScrapper;
+
+        private readonly HttpClient webPageHttpClient;
 
         public ProductScrapper(
             IBrowsingContext browsingContext,
@@ -53,8 +57,6 @@
             this.httpClientFactory = httpClientFactory;
             this.webPageHttpClient = webPageHttpClient;
         }
-
-       
 
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parents)
         {
@@ -85,22 +87,20 @@
             }
 
             var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, false, store);
-            //if (department == null)
-            //{
-            //    return null;
-            //}
 
+            // if (department == null)
+            // {
+            // return null;
+            // }
             var storeName = store.Name;
             var departmentName = department?.Name;
             var departmentCategory = department?.Category;
 
-            var requestUri = url;
             string content = null;
 
-         
             try
             {
-                content = await webPageHttpClient.GetStringAsync(requestUri);
+                content = await this.webPageHttpClient.GetStringAsync(url);
             }
             catch (Exception e)
             {
@@ -137,6 +137,12 @@
                 var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
                 if (mainPanelElement != null)
                 {
+                    var errorElement = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_lblError");
+                    if (errorElement != null)
+                    {
+                        return null;
+                    }
+
                     var missingProductElement = mainPanelElement.QuerySelector<IElement>(
                         "#ctl00_cphPage_formProduct_ctl00_productError_missingProduct");
 
@@ -168,14 +174,16 @@
                     var name = productNameElement?.TextContent.Trim();
                     if (string.IsNullOrWhiteSpace(name))
                     {
-                        name = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?.TextContent.Trim();
+                        name = mainPanelElement.QuerySelector<IElement>(
+                                "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
+                            ?.TextContent.Trim();
                     }
 
                     if (string.IsNullOrWhiteSpace(name))
                     {
                         name = mainPanelElement.QuerySelector<IElement>(
-                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")?
-                            .TextContent.Trim();
+                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
+                            ?.TextContent.Trim();
                     }
 
                     float price = 0;
@@ -197,8 +205,10 @@
                                           Department = departmentName,
                                           DepartmentCategory = departmentCategory,
                                           IsAvailable = isAvailable,
-                                          IsEnabled = true,
+                                          IsEnabled = true
                                       };
+
+                    await this.TryAddProductToShoppingCart(product, document);
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
 
@@ -207,6 +217,72 @@
             }
 
             return null;
+        }
+
+        private async Task TryAddProductToShoppingCart(Product product, IDocument document)
+        {
+            try
+            {
+                // TODO: Check if the product is already in the cart.
+                Log.Information("Trying to add the product '{ProductName}' to the cart", product.Name);
+                var parameters = new Dictionary<string, string>
+                                     {
+                                         {
+                                             "ctl00$ScriptManager1",
+                                             "ctl00$cphPage$UpdatePanel1|ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
+                                         },
+                                         { "__EVENTTARGET", "ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar" },
+                                         { "__EVENTARGUMENT", string.Empty },
+                                         { "__LASTFOCUS", string.Empty },
+                                         {
+                                             "PageLoadedHiddenTxtBox",
+                                             document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
+                                                 .Attributes["value"].Value
+                                         },
+                                         {
+                                             "ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState",
+                                             document.QuerySelector<IElement>(
+                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState")
+                                                 .Attributes["value"].Value
+                                         },
+                                         {
+                                             "__VIEWSTATE",
+                                             document.QuerySelector<IElement>("#__VIEWSTATE").Attributes["value"].Value
+                                         },
+                                         {
+                                             "__EVENTVALIDATION",
+                                             document.QuerySelector<IElement>("#__EVENTVALIDATION").Attributes["value"]
+                                                 .Value
+                                         },
+                                         {
+                                             "ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState",
+                                             document.QuerySelector<IElement>(
+                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState")
+                                                 .Attributes["value"].Value
+                                         },
+                                         {
+                                             "ctl00_cphPage_formProduct_ctl00_productDetail_txtCount",
+                                             document.QuerySelector<IElement>(
+                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_txtCount")
+                                                 .Attributes["value"].Value
+                                         },
+                                         { "ctl00$taxes$listCountries", "54" },
+                                         { "Language", "es-MX" },
+                                         { "CurrentLanguage", "es-MX" },
+                                         { "Currency", string.Empty },
+                                         { "__ASYNCPOST", "true" }
+                                     };
+
+                var httpResponseMessage = await this.webPageHttpClient.PostAsync(
+                                              product.Url,
+                                              new FormUrlEncodedContent(parameters));
+
+                httpResponseMessage.EnsureSuccessStatusCode();
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error adding product '{ProductName}' to the shopping cart", product.Name);
+            }
         }
     }
 }

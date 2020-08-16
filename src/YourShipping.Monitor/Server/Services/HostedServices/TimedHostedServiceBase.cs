@@ -125,7 +125,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     o => this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
-                    TimeSpan.FromMinutes(2));
+                    TimeSpan.FromMinutes(0.10));
             }
 
             return Task.CompletedTask;

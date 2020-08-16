@@ -4,7 +4,7 @@
 
     internal class ScrappingConfiguration
     {
-        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(15);
+        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(60);
 
         private static readonly Random Random = new Random();
 

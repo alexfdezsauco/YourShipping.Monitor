@@ -129,6 +129,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             var product = keyValuePair.Value;
                             messageStringBuilder.AppendLine("------------------------------");
                             messageStringBuilder.AppendLine($"*Product Name:* {product.Name}");
+                            messageStringBuilder.AppendLine($"*Product Price:* _{product.Price:C} {product.Currency}_");
                             messageStringBuilder.AppendLine($"*Product Is Available:* {product.IsAvailable}");
                             if (product.IsAvailable)
                             {
