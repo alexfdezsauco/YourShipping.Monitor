@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Collections.Immutable;
     using System.Data;
     using System.Linq;
     using System.Text;
@@ -27,6 +28,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using YourShipping.Monitor.Shared;
 
     using Department = YourShipping.Monitor.Server.Models.Department;
+    using Product = YourShipping.Monitor.Server.Models.Product;
+    using Store = YourShipping.Monitor.Shared.Store;
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
@@ -39,6 +42,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         public async Task Execute(
             IRepository<User, int> userRepository,
             IRepository<Department, int> departmentRepository,
+            IRepository<Product, int> productRepository,
             IEntityScrapper<Department> departmentScrapper,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
@@ -47,11 +51,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             var sourceChanged = false;
 
+            // TODO: Improve this.
+            var disabledProducts = productRepository.Find(p => !p.IsEnabled).Select(p => p.Url).ToImmutableSortedSet();
+
             var storedDepartments = departmentRepository.Find(s => s.IsEnabled).ToList();
             foreach (var storedDepartment in storedDepartments)
             {
                 var dateTime = DateTime.Now;
-                var department = await departmentScrapper.GetAsync(storedDepartment.Url, true);
+                var department = await departmentScrapper.GetAsync(storedDepartment.Url, true, disabledProducts);
                 IDbContextTransaction transaction = null;
                 Log.Information("Updating scrapped department '{url}'", storedDepartment.Url);
                 if (department == null)

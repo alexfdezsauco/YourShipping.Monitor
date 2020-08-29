@@ -1,13 +1,9 @@
 ﻿namespace YourShipping.Monitor.Server
 {
-    using System.Threading;
-
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Hosting;
 
     using Serilog;
-    using Serilog.Core;
-    using Serilog.Events;
 
     public class Program
     {
@@ -19,10 +15,10 @@
 
         public static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.File("log.txt", rollingInterval: RollingInterval.Day).WriteTo
+                .Console().CreateLogger();
 
             CreateHostBuilder(args).Build().Run();
         }
     }
-
 }

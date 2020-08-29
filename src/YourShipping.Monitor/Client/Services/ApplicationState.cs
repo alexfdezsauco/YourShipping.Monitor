@@ -88,6 +88,16 @@ namespace YourShipping.Monitor.Client.Services
             return store;
         }
 
+        public async Task DisableProductAsync(int productId)
+        {
+            await this.httpClient.PutAsync($"Products/Disable/{productId}", null);
+        }
+
+        public async Task EnableProductAsync(int productId)
+        {
+            await this.httpClient.PutAsync($"Products/Enable/{productId}", null);
+        }
+
         public async Task<Department> FollowDepartmentAsync(string productUrl)
         {
             var responseMessage = await this.httpClient.PostAsync(

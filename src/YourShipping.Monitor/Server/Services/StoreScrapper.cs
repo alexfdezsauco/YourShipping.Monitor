@@ -1,6 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
@@ -39,7 +40,10 @@
             this.webPageHttpClient = webPageHttpClient;
         }
 
-        public async Task<Store> GetAsync(string url, bool force = false, params object[] parents)
+        public async Task<Store> GetAsync(
+            string url,
+            bool force = false,
+            params object[] parameters)
         {
             var uri = new Uri(url);
             url =

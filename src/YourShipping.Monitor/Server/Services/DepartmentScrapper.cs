@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -59,9 +60,10 @@
             this.serviceProvider = serviceProvider;
         }
 
-        public async Task<Department> GetAsync(string url, bool force = false, params object[] parents)
+        public async Task<Department> GetAsync(string url, bool force = false, params object[] parameters)
         {
-            var store = parents?.OfType<Store>().FirstOrDefault();
+            var store = parameters?.OfType<Store>().FirstOrDefault();
+            var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
             url = Regex.Replace(
                 url,
                 @"(&?)(ProdPid=\d+(&?)|page=\d+(&?)|img=\d+(&?))",
@@ -75,12 +77,15 @@
 
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        $"{url}/{store != null}",
-                       async () => await this.GetDirectAsync(url, store),
+                       async () => await this.GetDirectAsync(url, store, disabledProducts),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);
         }
 
-        private async Task<Department> GetDirectAsync(string url, Store parentStore)
+        private async Task<Department> GetDirectAsync(
+            string url,
+            Store parentStore,
+            ImmutableSortedSet<string> disabledProducts)
         {
             var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
 
@@ -112,7 +117,8 @@
                     {
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await this.webPageHttpClient.PostAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage =
+                            await this.webPageHttpClient.PostAsync(requestUri, formUrlEncodedContent);
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
                     }
                     catch (Exception e)
@@ -214,16 +220,30 @@
                                 {
                                     var element = productElement.QuerySelector<IElement>("a");
                                     var elementAttribute = element.Attributes["href"];
-                                    var product = await productScrapper.GetAsync(
-                                                      $"{baseUrl}/{elementAttribute.Value}",
-                                                      true, // Why was in false.
-                                                      store,
-                                                      department);
 
-                                    if (product != null && product.IsAvailable)
+                                    var productUrl = Regex.Replace(
+                                        $"{baseUrl}/{elementAttribute.Value}",
+                                        @"(&?)(page=\d+(&?)|img=\d+(&?))",
+                                        string.Empty,
+                                        RegexOptions.IgnoreCase).Trim(' ');
+
+                                    if (disabledProducts == null || !disabledProducts.Contains(productUrl))
                                     {
-                                        department.Products.Add(product.Url, product);
-                                        productsCount++;
+                                        var product = await productScrapper.GetAsync(
+                                                          productUrl,
+                                                          true, // Why was in false.
+                                                          store,
+                                                          department);
+
+                                        if (product != null && product.IsAvailable)
+                                        {
+                                            department.Products.Add(product.Url, product);
+                                            productsCount++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Log.Information("Skipped product with url '{ProductUrl}'", productUrl);
                                     }
                                 }
 

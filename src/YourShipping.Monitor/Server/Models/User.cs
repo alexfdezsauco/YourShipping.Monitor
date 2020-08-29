@@ -1,14 +1,15 @@
 ﻿namespace YourShipping.Monitor.Server.Models
 {
     using System.ComponentModel.DataAnnotations;
-    using System.Text.Json.Serialization;
+
+    using Newtonsoft.Json;
 
     public class User
     {
         public long ChatId { get; set; }
 
         [Key]
-        [JsonIgnore]
+        [System.Text.Json.Serialization.JsonIgnore]
         public int Id { get; set; }
 
         public bool IsEnable { get; set; }

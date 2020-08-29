@@ -62,6 +62,38 @@
             await transaction.CommitAsync();
         }
 
+        [HttpPut("[action]/{id}")]
+        public async Task Disable([FromServices] IRepository<Models.Product, int> productRepository, int id)
+        {
+            var transaction = PolicyHelper.WaitAndRetry()
+                .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
+
+            var product = productRepository.Find(p => p.Id == id).FirstOrDefault();
+            if (product != null)
+            {
+                product.IsEnabled = false;
+            }
+
+            await productRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+
+        [HttpPut("[action]/{id}")]
+        public async Task Enable([FromServices] IRepository<Models.Product, int> productRepository, int id)
+        {
+            var transaction = PolicyHelper.WaitAndRetry()
+                .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
+
+            var product = productRepository.Find(p => p.Id == id).FirstOrDefault();
+            if (product != null)
+            {
+                product.IsEnabled = true;
+            }
+
+            await productRepository.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+
         [HttpGet]
         public async Task<IEnumerable<Product>> Get([FromServices] IRepository<Models.Product, int> productRepository)
         {

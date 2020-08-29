@@ -14,6 +14,10 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         Task<Store> AddStoreAsync(string url);
 
+        Task DisableProductAsync(int productId);
+
+        Task EnableProductAsync(int productId);
+
         Task<Department> FollowDepartmentAsync(string productUrl);
 
         Task<Product> FollowProductAsync(string url);
@@ -44,6 +48,8 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
 
         bool RemoveAlertsFrom(AlertSource alertSource);
 
+        Task<List<Product>> SearchAsync(string keywords);
+
         Task TurnOffScanAsync(Store store);
 
         Task TurnOnScanAsync(Store store);
@@ -53,7 +59,5 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
         Task UnFollowProductAsync(Product product);
 
         Task UnFollowStoreAsync(Store store);
-
-        Task<List<Product>> SearchAsync(string keywords);
     }
 }

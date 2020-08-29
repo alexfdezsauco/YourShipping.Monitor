@@ -346,3 +346,4 @@ healthchecksdb
 *.db
 *.db-shm
 *.db-wal
+/src/YourShipping.Monitor/Server/cookies.txt

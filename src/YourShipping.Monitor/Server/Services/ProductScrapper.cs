@@ -32,11 +32,9 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-        private readonly CookieContainer cookieContainer;
 
         private readonly IEntityScrapper<Department> departmentScrapper;
 
-        private readonly IHttpClientFactory httpClientFactory;
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
@@ -47,21 +45,22 @@
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage,
-            IHttpClientFactory httpClientFactory,
             HttpClient webPageHttpClient)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
-            this.httpClientFactory = httpClientFactory;
-            this.webPageHttpClient = webPageHttpClient;
+           this.webPageHttpClient = webPageHttpClient;
         }
 
-        public async Task<Product> GetAsync(string url, bool force = false, params object[] parents)
+        public async Task<Product> GetAsync(
+            string url,
+            bool force = false,
+            params object[] parameters)
         {
-            var store = parents?.OfType<Store>().FirstOrDefault();
-            var department = parents?.OfType<Department>().FirstOrDefault();
+            var store = parameters?.OfType<Store>().FirstOrDefault();
+            var department = parameters?.OfType<Department>().FirstOrDefault();
 
             url = Regex.Replace(
                 url,
@@ -74,6 +73,14 @@
                        async () => await this.GetDirectAsync(url, store, department),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);
+        }
+
+        private static bool IsInCart(Product product, IDocument document)
+        {
+            var querySelectorAll =
+                document.QuerySelectorAll<IElement>("#ctl00_UpperCartPanel > div > table > tbody > tr > td > a");
+            var any = querySelectorAll.Any(element => product.Url.EndsWith(element.Attributes["href"].Value));
+            return any;
         }
 
         private async Task<Product> GetDirectAsync(string url, Store parentStore, Department parentDepartment)
@@ -223,61 +230,92 @@
         {
             try
             {
-                // TODO: Check if the product is already in the cart.
-                Log.Information("Trying to add the product '{ProductName}' to the cart", product.Name);
-                var parameters = new Dictionary<string, string>
-                                     {
-                                         {
-                                             "ctl00$ScriptManager1",
-                                             "ctl00$cphPage$UpdatePanel1|ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
-                                         },
-                                         { "__EVENTTARGET", "ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar" },
-                                         { "__EVENTARGUMENT", string.Empty },
-                                         { "__LASTFOCUS", string.Empty },
-                                         {
-                                             "PageLoadedHiddenTxtBox",
-                                             document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
-                                                 .Attributes["value"].Value
-                                         },
-                                         {
-                                             "ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState",
-                                             document.QuerySelector<IElement>(
-                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState")
-                                                 .Attributes["value"].Value
-                                         },
-                                         {
-                                             "__VIEWSTATE",
-                                             document.QuerySelector<IElement>("#__VIEWSTATE").Attributes["value"].Value
-                                         },
-                                         {
-                                             "__EVENTVALIDATION",
-                                             document.QuerySelector<IElement>("#__EVENTVALIDATION").Attributes["value"]
-                                                 .Value
-                                         },
-                                         {
-                                             "ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState",
-                                             document.QuerySelector<IElement>(
-                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState")
-                                                 .Attributes["value"].Value
-                                         },
-                                         {
-                                             "ctl00_cphPage_formProduct_ctl00_productDetail_txtCount",
-                                             document.QuerySelector<IElement>(
-                                                     "#ctl00_cphPage_formProduct_ctl00_productDetail_txtCount")
-                                                 .Attributes["value"].Value
-                                         },
-                                         { "ctl00$taxes$listCountries", "54" },
-                                         { "Language", "es-MX" },
-                                         { "CurrentLanguage", "es-MX" },
-                                         { "Currency", string.Empty },
-                                         { "__ASYNCPOST", "true" }
-                                     };
+                if (IsInCart(product, document))
+                {
+                    product.IsInCart = true;
 
-                var httpResponseMessage = await this.webPageHttpClient.PostAsync(
-                                              product.Url,
-                                              new FormUrlEncodedContent(parameters));
+                    Log.Information(
+                        "Product '{ProductName}' is already in the shopping cart on the store '{StoreName}'",
+                        product.Name,
+                        product.Store);
+                }
+                else
+                {
+                    // TODO: Check if the product is already in the cart.
+                    Log.Information(
+                        "Trying to add the product '{ProductName}' to the cart on the store '{StoreName}'",
+                        product.Name,
+                        product.Store);
+                    var parameters = new Dictionary<string, string>
+                                         {
+                                             {
+                                                 "ctl00$ScriptManager1",
+                                                 "ctl00$cphPage$UpdatePanel1|ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
+                                             },
+                                             {
+                                                 "__EVENTTARGET",
+                                                 "ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
+                                             },
+                                             { "__EVENTARGUMENT", string.Empty },
+                                             { "__LASTFOCUS", string.Empty },
+                                             {
+                                                 "PageLoadedHiddenTxtBox",
+                                                 document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "__VIEWSTATE",
+                                                 document.QuerySelector<IElement>("#__VIEWSTATE")?.Attributes["value"]
+                                                     ?.Value
+                                             },
+                                             {
+                                                 "__EVENTVALIDATION",
+                                                 document.QuerySelector<IElement>("#__EVENTVALIDATION")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_txtCount",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_txtCount")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             { "ctl00$taxes$listCountries", "54" },
+                                             { "Language", "es-MX" },
+                                             { "CurrentLanguage", "es-MX" },
+                                             { "Currency", product.Currency },
+                                             { "__ASYNCPOST", "true" }
+                                         };
 
-                httpResponseMessage.EnsureSuccessStatusCode();
+                    var httpResponseMessage = await this.webPageHttpClient.PostAsync(
+                                                  product.Url,
+                                                  new FormUrlEncodedContent(parameters));
+
+                    httpResponseMessage.EnsureSuccessStatusCode();
+
+                    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    var responseDocument = await this.browsingContext.OpenAsync(req => req.Content(content));
+
+                    if (IsInCart(product, responseDocument))
+                    {
+                        product.IsInCart = true;
+                        Log.Information(
+                            "Product '{ProductName}' was added to the cart on the store '{StoreName}'",
+                            product.Name,
+                            product.Store);
+                    }
+                }
             }
             catch (Exception e)
             {

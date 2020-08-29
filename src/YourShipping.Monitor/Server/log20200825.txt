@@ -1,0 +1,698 @@
+2020-08-25 11:28:11.468 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:28:13.521 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:28:13.523 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:28:13.524 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:28:13.920 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:13.920 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:28:13.938 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:28:14.166 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:28:14.266 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:28:14.268 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:14.342 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:28:14.344 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:15.786 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:15.797 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:15.809 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:15.813 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:28:16.670 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:16.672 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:16.675 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:17.890 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:17.927 -04:00 [INF] Store Pedregal from La Habana has changed. Is Available: true
+2020-08-25 11:28:18.065 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:28:18.202 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:28:18.204 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:28:18.220 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:28:18.223 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:19.933 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:19.935 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:28:19.946 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:28:21.454 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:28:22.266 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:22.272 -04:00 [INF] Store Cuatro Caminos from La Habana has changed. Is Available: true
+2020-08-25 11:28:22.302 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:28:23.560 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:23.563 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095
+2020-08-25 11:28:23.789 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:28:23.791 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:28:23.805 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=54
+2020-08-25 11:28:24.330 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:24.331 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095
+2020-08-25 11:28:24.915 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:28:25.081 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:25.083 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095
+2020-08-25 11:28:25.943 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:25.948 -04:00 [INF] Store Típica Boyeros from La Habana has changed. Is Available: true
+2020-08-25 11:28:25.970 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:28:26.381 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:26.384 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087
+2020-08-25 11:28:26.392 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:28:28.269 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.271 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:28.328 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:28.335 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/carlos3/Products?depPid=54'
+2020-08-25 11:28:28.337 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:28.338 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/carlos3/Products?depPid=54'
+2020-08-25 11:28:28.339 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:28.341 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:28.342 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:28.343 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:28.344 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=52
+2020-08-25 11:28:28.344 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.345 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:28.434 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:28.440 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:28.474 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:28.475 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:28.477 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:28.479 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:28.479 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:28.480 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.481 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:28.525 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:28.529 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:28.530 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:28.531 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:28.533 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:28.534 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:28.535 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.538 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:28.585 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:28.589 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:28.591 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:28.592 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:28.594 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:28.595 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:28.596 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.598 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:28.701 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:28.708 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:28.714 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:28.722 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:28.728 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:28.733 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:28.736 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:28.739 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:29.425 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:29.430 -04:00 [INF] Store Artemisa from Artemisa has changed. Is Available: true
+2020-08-25 11:28:29.445 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:28:31.536 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/carlos3/Products?depPid=52'
+2020-08-25 11:28:31.539 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/carlos3/Products?depPid=52'
+2020-08-25 11:28:31.588 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=46081
+2020-08-25 11:28:31.597 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:31.638 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:31.640 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:31.641 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:31.643 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:31.644 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:31.646 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:31.647 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:31.815 -04:00 [INF] "Stores" changes detected
+2020-08-25 11:28:31.865 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:28:31.870 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:28:32.653 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:32.654 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:32.655 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:33.379 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:33.382 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:33.384 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:34.536 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:34.578 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:34.599 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:28:34.600 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:34.670 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:34.672 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:34.673 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:34.674 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:34.675 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:34.676 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:34.677 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:35.296 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:35.300 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:35.301 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:28:35.418 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=46081'
+2020-08-25 11:28:35.420 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=46081'
+2020-08-25 11:28:35.425 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=46095
+2020-08-25 11:28:36.676 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:36.677 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:36.678 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:37.591 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:37.596 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:37.598 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:37.599 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:37.600 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:37.602 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:37.603 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:37.604 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:37.641 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:37.649 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:37.654 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:28:37.711 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:28:37.718 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:28:38.587 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:38.589 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:38.593 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:39.248 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:39.250 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:39.251 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:39.801 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:39.803 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:39.805 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:28:40.583 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:40.585 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:40.587 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:40.588 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:40.589 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:28:40.591 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:40.633 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:40.635 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:40.637 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:40.638 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:40.639 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:41.319 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=46095'
+2020-08-25 11:28:41.327 -04:00 [INF] Department Combos from Típica Boyeros has changed. Is Available: true
+2020-08-25 11:28:42.045 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:42.047 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:42.049 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:42.972 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:42.974 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:42.976 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:28:43.020 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:28:43.030 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:28:43.574 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:43.579 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:43.580 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:43.581 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:43.582 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:43.584 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:43.585 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:43.586 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:43.745 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:43.746 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:43.748 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:44.434 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:44.435 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:44.436 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:44.656 -04:00 [INF] Entity changed at source "Departments".
+2020-08-25 11:28:44.684 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=633030
+2020-08-25 11:28:44.982 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:44.985 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:44.987 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:28:45.672 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:45.674 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:45.676 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:28:46.486 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:46.488 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:46.489 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:46.571 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:46.575 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:46.577 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:46.578 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:46.580 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:46.581 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:46.583 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:46.584 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:47.961 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:47.963 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:47.964 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:28:48.005 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:28:48.010 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:28:48.703 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:48.704 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:28:48.705 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:28:49.285 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:49.287 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:28:49.288 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:28:49.585 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:28:49.594 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:28:49.597 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:28:49.603 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:28:49.611 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:28:49.615 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:28:49.617 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:28:49.618 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:28:49.832 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:49.834 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:28:49.835 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:28:49.971 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/artemisa/Products?depPid=633030'
+2020-08-25 11:28:49.974 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/artemisa/Products?depPid=633030'
+2020-08-25 11:28:49.981 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:28:50.574 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:50.575 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:28:50.576 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:28:51.310 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:51.312 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:28:51.315 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:28:52.295 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:52.297 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:28:52.298 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:28:52.344 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:29:16.576 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:29:16.585 -04:00 [WRN] Error opening transaction. Will retry in "00:00:05".
+Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 5: 'database is locked'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteNonQuery()
+   at Microsoft.Data.Sqlite.SqliteConnectionExtensions.ExecuteNonQuery(SqliteConnection connection, String commandText, SqliteParameter[] parameters)
+   at Microsoft.Data.Sqlite.SqliteTransaction..ctor(SqliteConnection connection, IsolationLevel isolationLevel)
+   at Microsoft.Data.Sqlite.SqliteConnection.BeginTransaction(IsolationLevel isolationLevel)
+   at Microsoft.Data.Sqlite.SqliteConnection.BeginDbTransaction(IsolationLevel isolationLevel)
+   at System.Data.Common.DbConnection.BeginTransaction(IsolationLevel isolationLevel)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.BeginTransaction(IsolationLevel isolationLevel)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.<>c__DisplayClass26_0.<BeginTransaction>b__0(DatabaseFacade database)
+   at Microsoft.EntityFrameworkCore.ExecutionStrategyExtensions.<>c__DisplayClass12_0`2.<Execute>b__0(DbContext c, TState s)
+   at Microsoft.EntityFrameworkCore.Storage.Internal.NoopExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ExecutionStrategyExtensions.Execute[TState,TResult](IExecutionStrategy strategy, TState state, Func`2 operation, Func`2 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.ExecutionStrategyExtensions.Execute[TState,TResult](IExecutionStrategy strategy, TState state, Func`2 operation)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.BeginTransaction(DatabaseFacade databaseFacade, IsolationLevel isolationLevel)
+   at Orc.EntityFrameworkCore.Repository`3.BeginTransaction(IsolationLevel isolationLevel)
+   at YourShipping.Monitor.Server.Controllers.ProductsController.<>c__DisplayClass4_0.<Get>b__0() in C:\Users\alexander.fernandez\source\repos\YourShipping.Monitor\src\YourShipping.Monitor\Server\Controllers\ProductsController.cs:line 106
+   at Polly.Policy`1.<>c__DisplayClass11_0.<Execute>b__0(Context ctx, CancellationToken ct)
+   at Polly.Retry.RetryEngine.Implementation[TResult](Func`3 action, Context context, CancellationToken cancellationToken, ExceptionPredicates shouldRetryExceptionPredicates, ResultPredicates`1 shouldRetryResultPredicates, Action`4 onRetry, Int32 permittedRetryCount, IEnumerable`1 sleepDurationsEnumerable, Func`4 sleepDurationProvider)
+2020-08-25 11:29:16.585 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/carlos3/Products?depPid=46095'
+2020-08-25 11:29:16.617 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:16.715 -04:00 [INF] Department MÓDULOS from Carlos III has changed. Is Available: true
+2020-08-25 11:29:16.716 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:16.717 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:16.719 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:16.724 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:16.725 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:16.726 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:16.729 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:16.796 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:16.800 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:16.800 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:16.801 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:16.802 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:16.803 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:16.804 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:16.804 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:18.999 -04:00 [INF] Entity changed at source "Departments".
+2020-08-25 11:29:19.005 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/villaclara/Products?depPid=46095
+2020-08-25 11:29:19.007 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/villaclara/Products?depPid=0
+2020-08-25 11:29:19.359 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:19.360 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:19.361 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:29:19.913 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:19.915 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:19.916 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:29:20.360 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:20.363 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:20.364 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:20.365 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:20.366 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:20.368 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:20.369 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:20.370 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:20.452 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:20.453 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:20.455 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:29:21.170 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:21.172 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:21.173 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:29:23.392 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:23.393 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:29:23.397 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:23.397 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:29:23.399 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:23.400 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:29:23.401 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:23.437 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:23.440 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:23.442 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:23.443 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:24.647 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:24.649 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:24.650 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:29:24.694 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:29:24.698 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:29:25.480 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:25.482 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:25.484 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:29:25.580 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:25.585 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:25.587 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:25.588 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:25.589 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:25.590 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:25.591 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:25.592 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:26.003 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:26.004 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:26.007 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:29:26.566 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:26.567 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:26.568 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:29:27.269 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:27.272 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:27.273 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:29:27.950 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/villaclara/Products?depPid=46095'
+2020-08-25 11:29:27.953 -04:00 [INF] Department Modulos from Villa Clara has changed. Is Available: true
+2020-08-25 11:29:28.068 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:29:28.069 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:29:28.070 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:29:29.482 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:29.486 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:29.488 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:29.491 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:29.493 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:29.494 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:29.495 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:29.496 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:30.344 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:30.346 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:30.347 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:29:30.393 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:29:30.400 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:29:31.100 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:31.101 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:29:31.102 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:29:31.210 -04:00 [INF] Entity changed at source "Departments".
+2020-08-25 11:29:31.218 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/holguin/Products?depPid=46095
+2020-08-25 11:29:31.220 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/holguin/Products?depPid=0
+2020-08-25 11:29:31.603 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:31.604 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:29:31.606 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:29:32.112 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:32.114 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:29:32.115 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:29:32.444 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:32.448 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:32.448 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:32.451 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:32.452 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:32.453 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:32.454 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:32.455 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:32.769 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:32.771 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:29:32.773 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:29:35.445 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:35.447 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:35.448 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:35.449 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:35.450 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:35.451 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:35.452 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:35.453 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:38.437 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:38.455 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:38.457 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:38.458 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:38.459 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:38.460 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:38.460 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:38.464 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:40.271 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/holguin/Products?depPid=46095'
+2020-08-25 11:29:40.275 -04:00 [INF] Department Modulos from Holguín has changed. Is Available: true
+2020-08-25 11:29:41.447 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:41.451 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:41.452 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:41.453 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:41.454 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:41.455 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:41.456 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:41.457 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:42.616 -04:00 [INF] Entity changed at source "Departments".
+2020-08-25 11:29:42.620 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/4caminos/Products?depPid=46095
+2020-08-25 11:29:44.443 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:44.446 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:44.447 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:44.448 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:44.451 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:44.452 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:44.453 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:44.454 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:46.003 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/4caminos/Products?depPid=46095'
+2020-08-25 11:29:46.006 -04:00 [INF] Department MÓDULOS from Cuatro Caminos has changed. Is Available: true
+2020-08-25 11:29:47.444 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:47.449 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:47.451 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:47.452 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:47.455 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:47.456 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:47.457 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:47.459 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:29:48.207 -04:00 [ERR] Error requesting Store from 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+System.Net.Http.HttpRequestException: Response status code does not indicate success: 504 (Gateway Time-out).
+   at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   at System.Net.Http.HttpClient.GetStringAsyncCore(Task`1 getTask)
+   at YourShipping.Monitor.Server.Services.StoreScrapper.GetDirectAsync(String url) in C:\Users\alexander.fernandez\source\repos\YourShipping.Monitor\src\YourShipping.Monitor\Server\Services\StoreScrapper.cs:line 81
+2020-08-25 11:29:48.216 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:29:48.220 -04:00 [INF] Store Típica Boyeros from La Habana has changed. Is Available: false
+2020-08-25 11:29:48.232 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:29:48.234 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:29:48.345 -04:00 [INF] Entity changed at source "Departments".
+2020-08-25 11:29:48.350 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:29:49.568 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:49.570 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:29:49.572 -04:00 [INF] "Stores" changes detected
+2020-08-25 11:29:49.653 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:29:49.673 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:29:49.674 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:29:49.675 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:29:49.697 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:29:49.699 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:29:49.700 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:29:49.700 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095'
+2020-08-25 11:29:49.701 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/caribehabana/Item?ProdPid=914268&depPid=46087'
+2020-08-25 11:29:49.702 -04:00 [INF] No "Products" changes detected
+2020-08-25 11:31:07.421 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:31:09.108 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:31:09.109 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:31:09.110 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:31:09.368 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:31:09.368 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:31:09.400 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:31:09.593 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:31:09.696 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:31:09.698 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:31:09.780 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:31:09.781 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:31:13.839 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:31:13.841 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:31:14.918 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:31:15.634 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:31:17.806 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:31:17.809 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:31:17.816 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:31:20.407 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:31:20.410 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:31:20.433 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:31:20.436 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:31:20.621 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:31:20.622 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:31:20.623 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:31:23.621 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:31:23.623 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:31:23.624 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:31:26.327 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:31:26.329 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:31:26.333 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:31:28.188 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:31:28.207 -04:00 [INF] Store Típica Boyeros from La Habana has changed. Is Available: true
+2020-08-25 11:31:28.280 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:31:32.490 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:31:32.493 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095
+2020-08-25 11:38:08.952 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:38:10.979 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:38:10.980 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:38:10.980 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:38:11.223 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:38:11.223 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:38:11.230 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:38:11.439 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:38:11.453 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:38:11.453 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:38:43.784 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:38:43.786 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:38:46.910 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:38:47.056 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:38:47.059 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:38:47.061 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:38:49.786 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:38:49.789 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:38:49.794 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:38:52.068 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:38:52.070 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:38:52.071 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:38:53.401 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:38:53.402 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:38:53.448 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:38:53.449 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:38:53.915 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:38:53.917 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:38:53.918 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:38:56.054 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:38:56.093 -04:00 [INF] Store Típica Boyeros from La Habana has changed. Is Available: true
+2020-08-25 11:38:56.237 -04:00 [INF] Entity changed at source "Stores".
+2020-08-25 11:38:57.866 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:38:57.869 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:38:57.893 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:39:06.137 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095'
+2020-08-25 11:39:06.140 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095
+2020-08-25 11:39:06.905 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:39:06.906 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:39:06.945 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=54
+2020-08-25 11:39:07.003 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:39:07.277 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914128&depPid=46095'
+2020-08-25 11:39:07.278 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095
+2020-08-25 11:39:08.230 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/carlos3/Item?ProdPid=914127&depPid=46095'
+2020-08-25 11:39:08.231 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914133&depPid=46095
+2020-08-25 11:40:07.277 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:40:08.857 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:08.859 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:08.859 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:09.082 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:40:09.083 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:40:09.094 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:40:09.442 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:40:09.448 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:40:09.448 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:40:09.650 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:40:09.651 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:40:13.272 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:40:13.273 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:40:13.304 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:40:13.498 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:40:15.635 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:40:15.637 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:40:15.638 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:40:17.490 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:40:17.493 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:40:17.495 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:40:18.900 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:40:18.902 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:40:18.959 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:40:18.961 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:40:20.305 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:40:20.306 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:40:20.307 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:40:21.286 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:40:21.289 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:40:21.312 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:40:21.886 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:40:21.888 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:40:21.889 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:40:56.567 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:40:58.228 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:58.228 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:58.229 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:40:58.445 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:40:58.445 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:40:58.454 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:40:58.652 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:42:09.891 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:42:11.454 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:42:11.456 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:42:11.457 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:42:11.706 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:42:11.706 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:42:11.731 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:43:47.304 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:43:48.835 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:43:48.836 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:43:48.837 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:43:49.116 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:43:49.116 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:43:49.135 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:43:49.328 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:43:49.350 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:43:49.350 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:43:49.670 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:43:49.672 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:43:54.427 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:43:54.431 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:43:54.621 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:43:56.906 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:43:58.892 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:43:58.894 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:43:58.895 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:44:00.601 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:44:00.604 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:44:00.660 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:44:00.662 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:44:02.138 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:44:02.140 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:44:02.142 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:44:03.544 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:44:03.546 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:44:03.548 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:44:05.383 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:44:05.385 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:44:05.412 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/carlos3/Products?depPid=46095
+2020-08-25 11:44:07.340 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:44:07.342 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:44:07.343 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:44:08.715 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:44:08.716 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:44:08.718 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:44:08.771 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:44:08.806 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:44:10.878 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:44:10.881 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:44:10.882 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:44:12.036 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:44:12.037 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:45:39.094 -04:00 [INF] Telegram notification is enable.
+2020-08-25 11:45:40.632 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:45:40.633 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:45:40.633 -04:00 [INF] Timed Hosted Service running.
+2020-08-25 11:45:40.913 -04:00 [INF] Running "Products" Monitor.
+2020-08-25 11:45:40.913 -04:00 [INF] Running "Departments" Monitor.
+2020-08-25 11:45:40.933 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:45:41.190 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:45:41.301 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55
+2020-08-25 11:45:41.302 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:45:57.013 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/caribehabana/Products?depPid=46087
+2020-08-25 11:45:57.014 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:46:04.597 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/tvpedregal/Products?depPid=55
+2020-08-25 11:46:05.003 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:46:05.004 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:46:05.006 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:46:05.533 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:46:05.535 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:46:05.536 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:46:06.072 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:46:06.073 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:46:06.074 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:46:06.712 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:46:06.714 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:46:06.715 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:46:07.593 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:46:07.595 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:46:07.596 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:46:08.685 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:46:08.687 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:46:08.688 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:46:08.731 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:46:08.740 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:46:10.153 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:46:10.155 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/carlos3/Products?depPid=0'
+2020-08-25 11:46:10.156 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/caribehabana/Products?depPid=0
+2020-08-25 11:46:10.325 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:46:10.327 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/caribehabana/Products?depPid=46087'
+2020-08-25 11:46:14.670 -04:00 [INF] Scrapping Department from https://www.tuenvio.cu/artemisa/Products?depPid=46081
+2020-08-25 11:46:14.998 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:46:15.001 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/caribehabana/Products?depPid=0'
+2020-08-25 11:46:15.002 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tvpedregal/Products?depPid=0
+2020-08-25 11:46:15.511 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:46:15.512 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tvpedregal/Products?depPid=0'
+2020-08-25 11:46:15.514 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/4caminos/Products?depPid=0
+2020-08-25 11:46:16.261 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:46:16.263 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/4caminos/Products?depPid=0'
+2020-08-25 11:46:16.264 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0
+2020-08-25 11:46:17.011 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:46:17.012 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/tipicaboyeros/Products?depPid=0'
+2020-08-25 11:46:17.014 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/artemisa/Products?depPid=0
+2020-08-25 11:46:18.444 -04:00 [INF] Updating scrapped store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:46:18.446 -04:00 [INF] No change detected for store 'https://www.tuenvio.cu/artemisa/Products?depPid=0'
+2020-08-25 11:46:18.448 -04:00 [INF] No "Stores" changes detected
+2020-08-25 11:46:18.490 -04:00 [INF] Running "Stores" Monitor.
+2020-08-25 11:46:18.497 -04:00 [INF] Scrapping Store from https://www.tuenvio.cu/carlos3/Products?depPid=0
+2020-08-25 11:46:18.846 -04:00 [INF] Updating scrapped product 'https://www.tuenvio.cu/tvpedregal/Item?ProdPid=914210&depPid=55'
+2020-08-25 11:46:18.848 -04:00 [INF] Scrapping Product from https://www.tuenvio.cu/carlos3/Item?ProdPid=914122&depPid=46095
+2020-08-25 11:46:19.591 -04:00 [INF] Updating scrapped department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'
+2020-08-25 11:46:19.593 -04:00 [INF] No change detected for department 'https://www.tuenvio.cu/artemisa/Products?depPid=46081'

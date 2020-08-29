@@ -14,7 +14,7 @@ namespace YourShipping.Monitor.Server.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.4");
+                .HasAnnotation("ProductVersion", "3.1.7");
 
             modelBuilder.Entity("YourShipping.Monitor.Server.Models.Department", b =>
                 {
@@ -85,6 +85,9 @@ namespace YourShipping.Monitor.Server.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsInCart")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")

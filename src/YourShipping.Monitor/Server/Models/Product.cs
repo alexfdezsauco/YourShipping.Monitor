@@ -52,5 +52,7 @@
         [JsonProperty(Order = 7)]
         public string Url { get; set; }
 
+        [JsonProperty(Order = 8)]
+        public bool IsInCart { get; set; }
     }
 }

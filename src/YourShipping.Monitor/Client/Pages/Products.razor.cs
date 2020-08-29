@@ -56,13 +56,33 @@
                         {
                             Label = "Buy",
                             IsDisabled = !product.IsAvailable,
-                            Action = async o => await this.BuyOrBrowse(o as Product)
+                            Action = async o => await this.BuyOrBrowseAsync(product)
                         });
                 actionDefinitions.Add(
                     new CallActionDefinition
                         {
-                            Label = "Browse", Action = async o => await this.BuyOrBrowse(o as Product)
+                            Label = "Browse", Action = async o => await this.BuyOrBrowseAsync(product)
                         });
+
+                if (!product.IsEnabled)
+                {
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Enable",
+                                Action = async o => await this.EnableAsync(product)
+                            });
+                }
+                else
+                {
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Disable",
+                                Action = async o => await this.DisableAsync(product)
+                            });
+                }
+
 
                 actionDefinitions.Add(
                     new CallActionDefinition
@@ -74,6 +94,16 @@
             }
 
             return actionDefinitions;
+        }
+
+        private async Task EnableAsync(Product product)
+        {
+            await this.ApplicationState.EnableProductAsync(product.Id);
+        }
+
+        private async Task DisableAsync(Product product)
+        {
+            await this.ApplicationState.DisableProductAsync(product.Id);
         }
 
         protected async Task AddAsync()
@@ -153,7 +183,7 @@
             this.IsLoading = true;
         }
 
-        private async Task BuyOrBrowse(Product product)
+        private async Task BuyOrBrowseAsync(Product product)
         {
             if (product != null)
             {
