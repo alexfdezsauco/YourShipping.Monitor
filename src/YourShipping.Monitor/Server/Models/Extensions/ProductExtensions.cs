@@ -21,6 +21,7 @@
                            DepartmentCategory = product.DepartmentCategory,
                            IsAvailable = product.IsAvailable,
                            IsEnabled = product.IsEnabled,
+                           IsInCart = product.IsInCart,
                            HasChanged = hasChanged
                        };
         }

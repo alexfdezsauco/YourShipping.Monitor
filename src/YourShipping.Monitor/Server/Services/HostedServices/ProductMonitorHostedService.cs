@@ -115,7 +115,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             messageStringBuilder.AppendLine(
                                 $"*Price:* _{productDataTransferObject.Price.ToString("C")} {productDataTransferObject.Currency}_");
                             messageStringBuilder.AppendLine(
-                                $"*Is Available:* _{productDataTransferObject.IsAvailable}_");
+                                $"*Is Available:* _{productDataTransferObject.IsAvailable}_");  
+                            messageStringBuilder.AppendLine(
+                                $"*Is In Cart:* _{productDataTransferObject.IsInCart}_");
                             if (productDataTransferObject.IsAvailable)
                             {
                                 messageStringBuilder.AppendLine(

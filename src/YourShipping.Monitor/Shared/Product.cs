@@ -19,6 +19,10 @@
 
         private bool isAvailable;
 
+        private bool isEnabled;
+
+        private bool isInCart;
+
         private bool isStored;
 
         private string name;
@@ -28,8 +32,6 @@
         private string store;
 
         private string url;
-
-        private bool isEnabled;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -123,6 +125,36 @@
             }
         }
 
+        public bool IsEnabled
+        {
+            get => this.isEnabled;
+            set
+            {
+                if (value == this.isEnabled)
+                {
+                    return;
+                }
+
+                this.isEnabled = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsInCart
+        {
+            get => this.isInCart;
+            set
+            {
+                if (value == this.isInCart)
+                {
+                    return;
+                }
+
+                this.isInCart = value;
+                this.OnPropertyChanged();
+            }
+        }
+
         public bool IsStored
         {
             get => this.isStored;
@@ -194,17 +226,6 @@
                 }
 
                 this.url = value;
-                this.OnPropertyChanged();
-            }
-        }
-
-        public bool IsEnabled
-        {
-            get => this.isEnabled;
-            set
-            {
-                if (value == this.isEnabled) return;
-                this.isEnabled = value;
                 this.OnPropertyChanged();
             }
         }

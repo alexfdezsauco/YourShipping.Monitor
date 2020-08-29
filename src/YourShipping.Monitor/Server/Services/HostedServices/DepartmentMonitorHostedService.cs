@@ -29,7 +29,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Department = YourShipping.Monitor.Server.Models.Department;
     using Product = YourShipping.Monitor.Server.Models.Product;
-    using Store = YourShipping.Monitor.Shared.Store;
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
@@ -52,11 +51,15 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             var sourceChanged = false;
 
             // TODO: Improve this.
-            var disabledProducts = productRepository.Find(p => !p.IsEnabled).Select(p => p.Url).ToImmutableSortedSet();
-
             var storedDepartments = departmentRepository.Find(s => s.IsEnabled).ToList();
             foreach (var storedDepartment in storedDepartments)
             {
+                var storedDepartmentStore = storedDepartment.Store;
+                var storedDepartmentName = storedDepartment.Name;
+
+                var disabledProducts = productRepository.Find(p => p.Store == storedDepartmentStore && p.Department == storedDepartmentName && !p.IsEnabled)
+                    .Select(p => p.Url).ToImmutableSortedSet();
+
                 var dateTime = DateTime.Now;
                 var department = await departmentScrapper.GetAsync(storedDepartment.Url, true, disabledProducts);
                 IDbContextTransaction transaction = null;
@@ -88,10 +91,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                     department.Id = storedDepartment.Id;
                     department.Updated = dateTime;
-                    departmentRepository.TryAddOrUpdate(
-                        department,
-                        nameof(Department.Added),
-                        nameof(Department.Read));
+                    departmentRepository.TryAddOrUpdate(department, nameof(Department.Added), nameof(Department.Read));
                     sourceChanged = true;
 
                     Log.Information(
@@ -138,6 +138,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             messageStringBuilder.AppendLine($"*Product Name:* {product.Name}");
                             messageStringBuilder.AppendLine($"*Product Price:* _{product.Price:C} {product.Currency}_");
                             messageStringBuilder.AppendLine($"*Product Is Available:* {product.IsAvailable}");
+                            messageStringBuilder.AppendLine($"*Product Is Cart:* {product.IsInCart}");
                             if (product.IsAvailable)
                             {
                                 messageStringBuilder.AppendLine($"*Product Link:* [{product.Url}]({product.Url})");

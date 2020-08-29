@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -61,6 +62,7 @@
         {
             var store = parameters?.OfType<Store>().FirstOrDefault();
             var department = parameters?.OfType<Department>().FirstOrDefault();
+            var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
 
             url = Regex.Replace(
                 url,
@@ -70,7 +72,7 @@
 
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        $"{url}/{store != null}/{department != null}",
-                       async () => await this.GetDirectAsync(url, store, department),
+                       async () => await this.GetDirectAsync(url, store, department, disabledProducts),
                        ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
                        force);
         }
@@ -83,7 +85,11 @@
             return any;
         }
 
-        private async Task<Product> GetDirectAsync(string url, Store parentStore, Department parentDepartment)
+        private async Task<Product> GetDirectAsync(
+            string url,
+            Store parentStore,
+            Department parentDepartment,
+            ImmutableSortedSet<string> disabledProducts)
         {
             Log.Information("Scrapping Product from {Url}", url);
 
@@ -215,7 +221,11 @@
                                           IsEnabled = true
                                       };
 
-                    await this.TryAddProductToShoppingCart(product, document);
+                    // This can be done in other place?
+                    if (disabledProducts == null || !disabledProducts.Contains(url))
+                    {
+                        await this.TryAddProductToShoppingCart(product, document);
+                    }
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
 
@@ -304,9 +314,8 @@
 
                     httpResponseMessage.EnsureSuccessStatusCode();
 
-                    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    var content = await this.webPageHttpClient.GetStringAsync(product.Url);
                     var responseDocument = await this.browsingContext.OpenAsync(req => req.Content(content));
-
                     if (IsInCart(product, responseDocument))
                     {
                         product.IsInCart = true;

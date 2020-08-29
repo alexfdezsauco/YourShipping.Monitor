@@ -1,12 +1,9 @@
 namespace YourShipping.Monitor.Server
 {
     using System;
-    using System.IO;
-    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
-    using System.Text.RegularExpressions;
 
     using AngleSharp;
 
@@ -86,7 +83,7 @@ namespace YourShipping.Monitor.Server
 
             services.AddSignalR();
 
-            services.AddDbContext<DbContext, ApplicationDbContext>();
+            services.AddDbContext<DbContext, ApplicationDbContext>(ServiceLifetime.Transient);
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
@@ -114,7 +111,7 @@ namespace YourShipping.Monitor.Server
             services.AddTransient(sp => new CookieContainer());
 
             services.AddTransient(sp => BrowsingContext.New(AngleSharp.Configuration.Default));
-            
+
             services.AddTransient(
                 sp =>
                     {
@@ -122,7 +119,9 @@ namespace YourShipping.Monitor.Server
 
                         var handler = new HttpClientHandler
                                           {
-                                               AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
+                                              AutomaticDecompression =
+                                                  DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                                                            | DecompressionMethods.Brotli
                                           };
 
                         if (cookieContainer != null)
@@ -135,10 +134,7 @@ namespace YourShipping.Monitor.Server
                             }
                         }
 
-                        var httpClient = new HttpClient(handler)
-                                             {
-                                                 Timeout = ScrappingConfiguration.HttpClientTimeout
-                                             };
+                        var httpClient = new HttpClient(handler) { Timeout = ScrappingConfiguration.HttpClientTimeout };
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
@@ -146,8 +142,9 @@ namespace YourShipping.Monitor.Server
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
                             "gzip, deflate, br");
-                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
-                        
+                        httpClient.DefaultRequestHeaders.CacheControl =
+                            new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
+
                         return httpClient;
                     });
 
@@ -156,7 +153,8 @@ namespace YourShipping.Monitor.Server
                 httpClient =>
                     {
                         httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
-                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
+                        httpClient.DefaultRequestHeaders.CacheControl =
+                            new CacheControlHeaderValue { NoCache = true, NoStore = true, MustRevalidate = true };
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");

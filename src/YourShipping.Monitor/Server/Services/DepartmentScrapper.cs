@@ -227,23 +227,16 @@
                                         string.Empty,
                                         RegexOptions.IgnoreCase).Trim(' ');
 
-                                    if (disabledProducts == null || !disabledProducts.Contains(productUrl))
-                                    {
-                                        var product = await productScrapper.GetAsync(
-                                                          productUrl,
-                                                          true, // Why was in false.
-                                                          store,
-                                                          department);
+                                    var product = await productScrapper.GetAsync(
+                                                      productUrl,
+                                                      true, // Why was in false.
+                                                      store,
+                                                      department, disabledProducts);
 
-                                        if (product != null && product.IsAvailable)
-                                        {
-                                            department.Products.Add(product.Url, product);
-                                            productsCount++;
-                                        }
-                                    }
-                                    else
+                                    if (product != null && product.IsAvailable)
                                     {
-                                        Log.Information("Skipped product with url '{ProductUrl}'", productUrl);
+                                        department.Products.Add(product.Url, product);
+                                        productsCount++;
                                     }
                                 }
 
