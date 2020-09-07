@@ -20,16 +20,19 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private readonly IServiceProvider serviceProvider;
 
+        private readonly TimeSpan period;
+
         private readonly object syncObj = new object();
 
         private bool isRunning;
 
         private Timer timer;
 
-        public TimedHostedServiceBase(IServiceProvider serviceProvider)
+        public TimedHostedServiceBase(IServiceProvider serviceProvider, TimeSpan period)
         {
             this.applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             this.serviceProvider = serviceProvider;
+            this.period = period;
         }
 
         public void Dispose()
@@ -151,7 +154,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     o => this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
-                    TimeSpan.FromSeconds(5));
+                    this.period);
             }
 
             return Task.CompletedTask;

@@ -22,7 +22,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public sealed class SyncUsersFromTelegramHostedService : TimedHostedServiceBase
     {
         public SyncUsersFromTelegramHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider)
+            : base(serviceProvider, TimeSpan.FromSeconds(10))
         {
         }
 

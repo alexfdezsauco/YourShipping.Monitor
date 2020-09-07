@@ -36,15 +36,14 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
         public DepartmentMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider)
+            : base(serviceProvider, TimeSpan.FromSeconds(10))
         {
         }
 
         [Execute]
         public async Task Execute(
-            IRepository<User, int> userRepository,
             IRepository<Department, int> globalDepartmentRepository,
-            IRepository<Product, int> productRepository,
+            IRepository<Product, int> globalProductRepository,
             IServiceProvider serviceProvider,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
@@ -55,7 +54,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
             // TODO: Improve this.
             var storedDepartments = globalDepartmentRepository.Find(s => s.IsEnabled).ToList();
-            var disabledProducts = productRepository.Find(p => !p.IsEnabled).Select(p => p.Url).ToImmutableSortedSet();
+            var disabledProducts = globalProductRepository.Find(p => !p.IsEnabled).Select(p => p.Url)
+                .ToImmutableSortedSet();
 
             await storedDepartments.ParallelForEachAsync(
                 async storedDepartment =>
@@ -64,6 +64,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         var serviceScopeServiceProvider = serviceScope.ServiceProvider;
                         var departmentRepository =
                             serviceScopeServiceProvider.GetService<IRepository<Department, int>>();
+                        var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
                         var departmentScrapper = serviceProvider.GetService<IEntityScrapper<Department>>();
 
                         // var storedDepartmentStore = storedDepartment.Store;

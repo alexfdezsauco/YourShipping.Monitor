@@ -11,6 +11,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.EntityFrameworkCore.Storage;
+    using Microsoft.Extensions.DependencyInjection;
 
     using Orc.EntityFrameworkCore;
 
@@ -33,26 +34,32 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public class ProductMonitorHostedService : TimedHostedServiceBase
     {
         public ProductMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider)
+            : base(serviceProvider, TimeSpan.FromSeconds(5))
         {
         }
 
         [Execute]
         public async Task Execute(
-            IRepository<User, int> userRepository,
-            IRepository<Product, int> productRepository,
-            IEntityScrapper<Product> productScrapper,
+            IRepository<Product, int> globalProductRepository,
+            IServiceProvider serviceProvider,
             IHubContext<MessagesHub> messageHubContext,
             ITelegramBotClient telegramBotClient = null)
         {
             Log.Information("Running {Source} Monitor.", AlertSource.Products);
-            
+
             var sourceChanged = false;
 
-            var storedProducts = productRepository.Find(product => product.IsEnabled).ToList();
+            var storedProducts = globalProductRepository.Find(product => product.IsEnabled).ToList();
+
             await storedProducts.ParallelForEachAsync(
                 async storedProduct =>
                     {
+                        var serviceScope = serviceProvider.CreateScope();
+                        var serviceScopeServiceProvider = serviceScope.ServiceProvider;
+                        var productRepository = serviceScopeServiceProvider.GetService<IRepository<Product, int>>();
+                        var productScrapper = serviceProvider.GetService<IEntityScrapper<Product>>();
+                        var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
+
                         var dateTime = DateTime.Now;
                         var product = await productScrapper.GetAsync(storedProduct.Url);
                         IDbContextTransaction transaction = null;
