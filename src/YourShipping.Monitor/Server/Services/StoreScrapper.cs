@@ -52,7 +52,7 @@
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        async () => await this.GetDirectAsync(url),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.Expiration), force);
+                       ExpirationPolicy.Duration(ScrappingConfiguration.StoreCacheExpiration), force);
         }
 
         private async Task<Store> GetDirectAsync(string url)

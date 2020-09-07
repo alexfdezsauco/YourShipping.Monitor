@@ -73,7 +73,7 @@
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        $"{url}/{store != null}/{department != null}",
                        async () => await this.GetDirectAsync(url, store, department, disabledProducts),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
+                       ExpirationPolicy.Duration(ScrappingConfiguration.ProductCacheExpiration),
                        force);
         }
 
@@ -94,17 +94,17 @@
             Log.Information("Scrapping Product from {Url}", url);
 
             var store = parentStore ?? await this.storeScrapper.GetAsync(url);
-            if (store == null)
+            if (store == null || !store.IsAvailable)
             {
                 return null;
             }
 
             var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, false, store);
+            if (department == null || !department.IsAvailable)
+            {
+                return null;
+            }
 
-            // if (department == null)
-            // {
-            // return null;
-            // }
             var storeName = store.Name;
             var departmentName = department?.Name;
             var departmentCategory = department?.Category;
@@ -123,6 +123,9 @@
             if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+
+                var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+
                 if (string.IsNullOrWhiteSpace(storeName))
                 {
                     var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
@@ -222,9 +225,19 @@
                                       };
 
                     // This can be done in other place?
-                    if (disabledProducts == null || !disabledProducts.Contains(url))
+                    if (!isUserLogged)
                     {
-                        await this.TryAddProductToShoppingCart(product, document);
+                        Log.Warning(
+                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
+                            product.Name,
+                            storeName);
+                    }
+                    else
+                    {
+                        if (disabledProducts == null || !disabledProducts.Contains(url))
+                        {
+                            await this.TryAddProductToShoppingCart(product, document);
+                        }
                     }
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();

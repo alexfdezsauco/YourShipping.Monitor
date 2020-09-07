@@ -22,6 +22,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private readonly object syncObj = new object();
 
+        private bool isRunning;
+
         private Timer timer;
 
         public TimedHostedServiceBase(IServiceProvider serviceProvider)
@@ -51,31 +53,55 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private void DoWork(CancellationToken cancellationToken)
         {
-            try
+            Monitor.Enter(this.syncObj);
+
+            if (!this.isRunning)
             {
-                Monitor.Enter(this.syncObj);
+                this.isRunning = true;
 
-                var executeMethod = this.GetType()
-                    .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                    .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+                Monitor.Exit(this.syncObj);
 
-                if (executeMethod != null)
+                try
                 {
-                    var parameters = this.ResolveParameters(executeMethod, cancellationToken);
-                    var result = executeMethod.Invoke(this, parameters);
-                    if (result is Task task)
+                    var executeMethod = this.GetType()
+                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+
+                    if (executeMethod != null)
                     {
-                        task.GetAwaiter().GetResult();
+                        var parameters = this.ResolveParameters(executeMethod, cancellationToken);
+
+                        var startTime = DateTime.Now;
+                        Log.Information("Executing hosted service '{Type}'", this.GetType());
+                        var result = executeMethod.Invoke(this, parameters);
+                        if (result is Task task)
+                        {
+                            task.GetAwaiter().GetResult();
+                        }
+
+                        var elapsedTime = DateTime.Now.Subtract(startTime);
+                        Log.Information("Executed hosted service '{Type}' in '{Time}'", this.GetType(), elapsedTime.ToString(@"hh\h\:mm\m\:ss\s"));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error executing hosted service '{Type}'", this.GetType());
+                }
+                finally
+                {
+                    lock (this.syncObj)
+                    {
+                        this.isRunning = false;
                     }
                 }
             }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error executing hosted service {Type}", this.GetType());
-            }
-            finally
+            else
             {
                 Monitor.Exit(this.syncObj);
+
+                // Log.Information(
+                //    "Skipped execution of hosted service '{Type}' because is already running",
+                //    this.GetType());
             }
         }
 
@@ -125,7 +151,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     o => this.DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
-                    TimeSpan.FromMinutes(0.05));
+                    TimeSpan.FromSeconds(5));
             }
 
             return Task.CompletedTask;

@@ -4,10 +4,12 @@
 
     internal class ScrappingConfiguration
     {
-        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(60);
+        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(25);
 
-        private static readonly Random Random = new Random();
+        public static TimeSpan DepartmentCacheExpiration => TimeSpan.FromSeconds(10);
 
-        public static TimeSpan Expiration => TimeSpan.FromMinutes(Random.Next(3, 6));
+        public static TimeSpan ProductCacheExpiration => TimeSpan.FromSeconds(10);
+
+        public static TimeSpan StoreCacheExpiration => TimeSpan.FromMinutes(30);
     }
 }

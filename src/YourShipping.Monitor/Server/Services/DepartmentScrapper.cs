@@ -78,7 +78,7 @@
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        $"{url}/{store != null}",
                        async () => await this.GetDirectAsync(url, store, disabledProducts),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.Expiration),
+                       ExpirationPolicy.Duration(ScrappingConfiguration.DepartmentCacheExpiration),
                        force);
         }
 
@@ -92,7 +92,7 @@
             Log.Information("Scrapping Department from {Url}", url);
 
             var store = parentStore ?? await this.storeScrapper.GetAsync(url);
-            if (store == null)
+            if (store == null || !store.IsAvailable)
             {
                 return null;
             }
@@ -229,9 +229,10 @@
 
                                     var product = await productScrapper.GetAsync(
                                                       productUrl,
-                                                      true, // Why was in false.
+                                                      !disabledProducts.Contains(productUrl), // Why was in false.
                                                       store,
-                                                      department, disabledProducts);
+                                                      department,
+                                                      disabledProducts);
 
                                     if (product != null && product.IsAvailable)
                                     {
