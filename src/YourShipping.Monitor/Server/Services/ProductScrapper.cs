@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Text.Json;
     using System.Text.RegularExpressions;
@@ -33,9 +32,7 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-
         private readonly IEntityScrapper<Department> departmentScrapper;
-
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
@@ -52,13 +49,10 @@
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
-           this.webPageHttpClient = webPageHttpClient;
+            this.webPageHttpClient = webPageHttpClient;
         }
 
-        public async Task<Product> GetAsync(
-            string url,
-            bool force = false,
-            params object[] parameters)
+        public async Task<Product> GetAsync(string url, bool force = false, params object[] parameters)
         {
             var store = parameters?.OfType<Store>().FirstOrDefault();
             var department = parameters?.OfType<Department>().FirstOrDefault();
@@ -225,18 +219,18 @@
                                       };
 
                     // This can be done in other place?
-                    if (!isUserLogged)
+                    if (disabledProducts == null || !disabledProducts.Contains(url))
                     {
-                        Log.Warning(
-                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
-                            product.Name,
-                            storeName);
-                    }
-                    else
-                    {
-                        if (disabledProducts == null || !disabledProducts.Contains(url))
+                        if (isUserLogged)
                         {
                             await this.TryAddProductToShoppingCart(product, document);
+                        }
+                        else
+                        {
+                            Log.Warning(
+                                "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
+                                product.Name,
+                                storeName);
                         }
                     }
 

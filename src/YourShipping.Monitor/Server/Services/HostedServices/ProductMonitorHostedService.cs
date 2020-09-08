@@ -1,6 +1,7 @@
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     using System;
+    using System.Collections.Immutable;
     using System.Data;
     using System.Linq;
     using System.Text;
@@ -50,7 +51,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             var sourceChanged = false;
 
             var storedProducts = globalProductRepository.Find(product => product.IsEnabled).ToList();
-
             await storedProducts.ParallelForEachAsync(
                 async storedProduct =>
                     {
@@ -61,7 +61,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
 
                         var dateTime = DateTime.Now;
-                        var product = await productScrapper.GetAsync(storedProduct.Url);
+                        var product = await productScrapper.GetAsync(storedProduct.Url, true);
                         IDbContextTransaction transaction = null;
                         Log.Information("Updating scrapped product '{url}'", storedProduct.Url);
                         if (product == null)

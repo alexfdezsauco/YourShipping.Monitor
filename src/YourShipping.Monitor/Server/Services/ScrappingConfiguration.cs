@@ -4,7 +4,7 @@
 
     internal class ScrappingConfiguration
     {
-        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(60);
+        public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(20);
 
         public static TimeSpan DepartmentCacheExpiration => TimeSpan.FromSeconds(10);
 

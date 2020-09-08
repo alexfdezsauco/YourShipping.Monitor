@@ -229,7 +229,7 @@
 
                                     var product = await productScrapper.GetAsync(
                                                       productUrl,
-                                                      !disabledProducts.Contains(productUrl), // Why was in false.
+                                                      disabledProducts == null || !disabledProducts.Contains(productUrl), // Why was in false.
                                                       store,
                                                       department,
                                                       disabledProducts);

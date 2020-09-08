@@ -66,7 +66,7 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Department> AddDepartmentAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsync("Departments", JsonContent.Create(new Uri(url)));
+            var responseMessage = await this.httpClient.PostAsJsonAsync("Departments", new Uri(url));
             var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
             if (department.HasChanged)
             {
@@ -78,7 +78,7 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Store> AddStoreAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsync("Stores", JsonContent.Create(new Uri(url)));
+            var responseMessage = await this.httpClient.PostAsJsonAsync("Stores", new Uri(url));
             var store = await responseMessage.Content.ReadFromJsonAsync<Store>();
             if (store.HasChanged)
             {
@@ -100,9 +100,9 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Department> FollowDepartmentAsync(string productUrl)
         {
-            var responseMessage = await this.httpClient.PostAsync(
+            var responseMessage = await this.httpClient.PostAsJsonAsync(
                                       "Departments",
-                                      JsonContent.Create(new Uri(productUrl)));
+                                      new Uri(productUrl));
             var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
             if (department.HasChanged)
             {
@@ -114,7 +114,7 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Product> FollowProductAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsync("Products", JsonContent.Create(new Uri(url)));
+            var responseMessage = await this.httpClient.PostAsJsonAsync("Products", new Uri(url));
             var product = await responseMessage.Content.ReadFromJsonAsync<Product>();
             if (product.HasChanged)
             {
