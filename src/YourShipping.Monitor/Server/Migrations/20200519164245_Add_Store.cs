@@ -17,7 +17,7 @@ namespace YourShipping.Monitor.Server.Migrations
                     CategoriesCount = table.Column<int>(nullable: false),
                     IsAvailable = table.Column<bool>(nullable: false),
                     Name = table.Column<string>(nullable: true),
-                    ProductsCount = table.Column<int>(nullable: false),
+                    // ProductsCount = table.Column<int>(nullable: false),
                     Read = table.Column<DateTime>(nullable: false),
                     Sha256 = table.Column<string>(nullable: true),
                     Updated = table.Column<DateTime>(nullable: false),

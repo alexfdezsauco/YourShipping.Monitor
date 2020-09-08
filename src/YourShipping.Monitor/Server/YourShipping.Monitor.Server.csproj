@@ -6,13 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Migrations\20200516074016_Initial.cs" />
-    <Compile Remove="Migrations\20200516074016_Initial.Designer.cs" />
-    <Compile Remove="Migrations\20200519163348_Add_Store.cs" />
-    <Compile Remove="Migrations\20200519163348_Add_Store.Designer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="your-shipping - Copy.db" />
     <None Remove="your-shipping.db" />
     <None Remove="your-shipping.db-shm" />
