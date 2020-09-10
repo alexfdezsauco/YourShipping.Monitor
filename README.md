@@ -17,9 +17,9 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
 ## Build the docker image
     
 - on Windows
-   
-    > cd %CLONE_DIR%
-    > powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
+      
+      > cd %CLONE_DIR%
+      > powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
     
 - on Linux/macOS you can try with Powershell Core 
     
@@ -28,9 +28,9 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
  
 ## Execute the container
 
-    > mkdir %APP_DIR%\data
-    > mkdir %APP_DIR%\logs
-    > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%\data:/app/data -v %APP_DIR%\logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
+    > mkdir %APP_DIR%/data
+    > mkdir %APP_DIR%/logs
+    > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
     
 ### Mount products in the shopping cart
 
