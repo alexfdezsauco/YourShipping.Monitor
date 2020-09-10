@@ -15,9 +15,17 @@ You're right, who am I kidding? The goal is buy ;).
 Follow this documentation to create your telegram bot https://core.telegram.org/bots. 
 
 ## Build the docker image
-
-    powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
-
+    
+- on Windows
+   
+    > cd %CLONE_DIR%
+    > powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
+    
+- on Linux/macOS you can try with Powershell Core 
+    
+    *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
+    *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
+ 
 ## Execute the container
 
     > mkdir %APP_DIR%\data
