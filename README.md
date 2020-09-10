@@ -14,7 +14,7 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
 
 ## Build the docker image
 
-    powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CHECK_OUT_DIR%\build.cake" -target "DockerBuild" -verbosity normal
+    powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
 
 ## Execute the container
 
