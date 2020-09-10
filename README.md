@@ -23,8 +23,8 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
     
 - on Linux/macOS you can try with Powershell Core 
     
-    *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
-    *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
+    - *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
+    - *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
  
 ## Execute the container
 
