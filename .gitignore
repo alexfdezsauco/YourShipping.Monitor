@@ -350,3 +350,4 @@ healthchecksdb
 /src/YourShipping.Monitor/Server/*.txt
 tools
 *.gz
+.vscode
