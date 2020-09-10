@@ -4,6 +4,8 @@ YourShipping (a.k.a. TuEnvio) has no public monitoring and notifications options
 
 The goal is "similar" to [camelcamelcamel](https://camelcamelcamel.com) but in this case the target is [TuEnvio](https://www.tuenvio.cu/).
 
+You're right, who am I kidding? The goal is buy ;).
+
 ![Departments Monitor](media/departments-page.png "Departments Monitor")
 
 ![Departments Monitor](media/products-page.png "Products Monitor")
