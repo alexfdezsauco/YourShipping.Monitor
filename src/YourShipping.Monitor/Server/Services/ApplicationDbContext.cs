@@ -19,7 +19,7 @@
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite(
-                "Filename=your-shipping.db",
+                "Filename=data/your-shipping.db",
                 options => { options.MigrationsAssembly(Assembly.GetExecutingAssembly().FullName); });
             base.OnConfiguring(optionsBuilder);
         }

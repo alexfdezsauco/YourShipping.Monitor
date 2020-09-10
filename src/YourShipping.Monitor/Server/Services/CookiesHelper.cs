@@ -10,7 +10,6 @@ namespace YourShipping.Monitor.Server.Services
     using System.IO;
     using System.Linq;
     using System.Net;
-    using System.Text.Encodings.Web;
     using System.Text.RegularExpressions;
 
     using Serilog;
@@ -20,12 +19,13 @@ namespace YourShipping.Monitor.Server.Services
         public static CookieCollection GetCollectiton()
         {
             var collection = new CookieCollection();
-            if (File.Exists("cookies.txt"))
+            var cookiesFile = "data/cookies.txt";
+            if (File.Exists(cookiesFile))
             {
                 var regex = new Regex(
                     @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
                     RegexOptions.IgnoreCase | RegexOptions.Multiline);
-                var readAllText = File.ReadAllLines("cookies.txt").Where(s => !s.TrimStart().StartsWith("#"));
+                var readAllText = File.ReadAllLines(cookiesFile).Where(s => !s.TrimStart().StartsWith("#"));
                 foreach (var line in readAllText)
                 {
                     var match = regex.Match(line);
@@ -41,12 +41,7 @@ namespace YourShipping.Monitor.Server.Services
                                 value = "username=&userPsw=";
                             }
 
-                            collection.Add(
-                                new Cookie(
-                                    name,
-                                    value,
-                                    match.Groups[3].Value,
-                                    match.Groups[1].Value));
+                            collection.Add(new Cookie(name, value, match.Groups[3].Value, match.Groups[1].Value));
                         }
                         catch (Exception e)
                         {

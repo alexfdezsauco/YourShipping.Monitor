@@ -348,3 +348,5 @@ healthchecksdb
 *.db-wal
 /src/YourShipping.Monitor/Server/cookies.txt
 /src/YourShipping.Monitor/Server/*.txt
+tools
+*.gz
