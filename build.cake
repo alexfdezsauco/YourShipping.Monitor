@@ -14,6 +14,8 @@ using System.Net.Sockets;
 // var adapter = NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == "Wi-Fi");
 // var properties = adapter.GetIPProperties();
 
+
+
 string localIpAddress;
 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
 {
@@ -22,9 +24,9 @@ using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
     localIpAddress = endPoint.Address.ToString();
 }
 
-var dockerRepositoryProxy = EnvironmentVariable("DOCKER_REPOSITORY_PROXY") ?? $"{localIpAddress}:8082";
+var dockerRepositoryProxy = EnvironmentVariable("DOCKER_REPOSITORY_PROXY") ?? $"mcr.microsoft.com";
 var dockerRepository = EnvironmentVariable("DOCKER_REPOSITORY") ?? string.Empty;
-var nugetRepositoryProxy = EnvironmentVariable("NUGET_REPOSITORY_PROXY") ?? $"http://{localIpAddress}:8081/repository/nuget-all/";
+var nugetRepositoryProxy = EnvironmentVariable("NUGET_REPOSITORY_PROXY") ?? $"https://api.nuget.org/v3/index.json";
 var DockerRepositoryPrefix = string.IsNullOrWhiteSpace(dockerRepository) ? string.Empty : dockerRepository + "/";
 
 Setup(context => {
