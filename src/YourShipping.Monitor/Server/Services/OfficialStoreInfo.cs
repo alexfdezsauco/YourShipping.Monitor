@@ -1,6 +1,6 @@
 namespace YourShipping.Monitor.Server.Services
 {
-    public class OficialStoreInfo
+    public class OfficialStoreInfo
     {
         public string Name { get; set; }
 
@@ -8,4 +8,5 @@ namespace YourShipping.Monitor.Server.Services
 
         public string Url { get; set; }
     }
+
 }

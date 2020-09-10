@@ -1,24 +1,29 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
-    using System.Text.Json;
     using System.Threading.Tasks;
 
     using AngleSharp;
     using AngleSharp.Dom;
+    using AngleSharp.Io;
+    using AngleSharp.Js;
 
     using Catel.Caching;
     using Catel.Caching.Policies;
 
+    using Newtonsoft.Json;
+
     using Serilog;
+    using Serilog.Core;
 
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
+
+    using JsonSerializer = System.Text.Json.JsonSerializer;
 
     public class StoreScrapper : IEntityScrapper<Store>
     {
@@ -28,22 +33,19 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
-        private readonly IHttpClientFactory clientFactory;
+        private readonly HttpClient httpClient;
 
-        private readonly HttpClient webPageHttpClient;
-
-        public StoreScrapper(IBrowsingContext browsingContext, ICacheStorage<string, Store> cacheStorage, IHttpClientFactory clientFactory, HttpClient webPageHttpClient)
+        public StoreScrapper(
+            IBrowsingContext browsingContext,
+            ICacheStorage<string, Store> cacheStorage,
+            HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
-            this.clientFactory = clientFactory;
-            this.webPageHttpClient = webPageHttpClient;
+            this.httpClient = httpClient;
         }
 
-        public async Task<Store> GetAsync(
-            string url,
-            bool force = false,
-            params object[] parameters)
+        public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
         {
             var uri = new Uri(url);
             url =
@@ -52,33 +54,29 @@
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        async () => await this.GetDirectAsync(url),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.StoreCacheExpiration), force);
+                       ExpirationPolicy.Duration(ScrappingConfiguration.StoreCacheExpiration),
+                       force);
         }
 
         private async Task<Store> GetDirectAsync(string url)
         {
             Log.Information("Scrapping Store from {Url}", url);
 
-            // var requestIdParam = "requestId=" + Guid.NewGuid();
-
-            var jsonHttpClient = this.clientFactory.CreateClient("json");
-            OficialStoreInfo[] storesToImport = null;
+            OfficialStoreInfo[] storesToImport = null;
             try
             {
-                // storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json?{requestIdParam}");
-                storesToImport = await jsonHttpClient.GetFromJsonAsync<OficialStoreInfo[]>($"https://www.tuenvio.cu/stores.json");
+                storesToImport = await this.httpClient.GetFromJsonAsync<OfficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
             }
 
-            //var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             var requestUri = url;
             string content = null;
             try
             {
-                content = await webPageHttpClient.GetStringAsync(requestUri);
+                content = await this.httpClient.GetStringAsync(requestUri);
             }
             catch (Exception e)
             {
@@ -153,7 +151,7 @@
                                     Province = storeToImport?.Province,
                                     Url = url,
                                     IsAvailable = isAvailable,
-                                    IsEnabled = true,
+                                    IsEnabled = true
                                 };
 
                 store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();

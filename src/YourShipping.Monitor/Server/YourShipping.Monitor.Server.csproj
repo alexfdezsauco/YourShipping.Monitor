@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-827" />
+    <PackageReference Include="AngleSharp.Js" Version="0.14.0" />
     <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.8" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />

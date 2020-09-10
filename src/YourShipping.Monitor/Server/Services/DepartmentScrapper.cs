@@ -32,9 +32,6 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
-        private readonly CookieContainer cookieContainer;
-
-        private readonly IHttpClientFactory httpClientFactory;
 
         private readonly IServiceProvider serviceProvider;
 
@@ -46,7 +43,6 @@
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             ICacheStorage<string, Department> cacheStorage,
-            IHttpClientFactory httpClientFactory,
             HttpClient webPageHttpClient,
             CookieContainer cookieContainer,
             IServiceProvider serviceProvider)
@@ -54,9 +50,7 @@
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
-            this.httpClientFactory = httpClientFactory;
             this.webPageHttpClient = webPageHttpClient;
-            this.cookieContainer = cookieContainer;
             this.serviceProvider = serviceProvider;
         }
 

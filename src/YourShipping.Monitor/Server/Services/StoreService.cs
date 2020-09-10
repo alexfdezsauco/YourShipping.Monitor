@@ -58,11 +58,11 @@
         public async Task ImportAsync()
         {
             var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
-            OficialStoreInfo[] storesToImport = null;
+            OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
-                    await httpClient.GetFromJsonAsync<OficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
             }
             catch (Exception e)
             {

@@ -99,7 +99,9 @@ namespace YourShipping.Monitor.Server
                 else
                 {
                     Log.Information("Telegram notification is enable.");
+                    
                     services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
+                    services.AddSingleton<ITelegramCommander, TelegramCommander>();
                 }
             }
             else
@@ -121,7 +123,8 @@ namespace YourShipping.Monitor.Server
                                           {
                                               AutomaticDecompression =
                                                   DecompressionMethods.GZip | DecompressionMethods.Deflate
-                                                                            | DecompressionMethods.Brotli
+                                                                            | DecompressionMethods.Brotli,
+                                              AllowAutoRedirect = true
                                           };
 
                         if (cookieContainer != null)
@@ -138,7 +141,8 @@ namespace YourShipping.Monitor.Server
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36 Edg/85.0.564.44");
+
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
                             "gzip, deflate, br");
@@ -148,20 +152,19 @@ namespace YourShipping.Monitor.Server
                         return httpClient;
                     });
 
-            services.AddHttpClient(
-                "json",
-                httpClient =>
-                    {
-                        httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
-                        httpClient.DefaultRequestHeaders.CacheControl =
-                            new CacheControlHeaderValue { NoCache = true };
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-                    });
+            //services.AddHttpClient(
+            //    "json",
+            //    (sp, httpClient) =>
+            //        {
+            //            httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
+            //            httpClient.DefaultRequestHeaders.CacheControl =
+            //                new CacheControlHeaderValue { NoCache = true };
+            //            httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+            //                "user-agent",
+            //                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+            //        });
 
             services.AddScoped<IStoreService, StoreService>();
-            services.AddSingleton<ITelegramCommander, TelegramCommander>();
 
             services.AddSingleton<ICacheStorage<string, Product>>(
                 provider => new CacheStorage<string, Product>(storeNullValues: true));

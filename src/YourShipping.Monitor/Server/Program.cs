@@ -24,7 +24,12 @@
                 Directory.CreateDirectory("data");
             }
 
-            Log.Logger = new LoggerConfiguration().WriteTo.File("log.txt", rollingInterval: RollingInterval.Day).WriteTo
+            if (!Directory.Exists("logs"))
+            {
+                Directory.CreateDirectory("logs");
+            }
+
+            Log.Logger = new LoggerConfiguration().WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day).WriteTo
                 .Console().CreateLogger();
 
             CreateHostBuilder(args).ConfigureAppConfiguration(
