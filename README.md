@@ -20,7 +20,9 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
 
 ## Execute the container
 
-    docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%\data:/app/data -v %APP_DIR%\logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
+    > mkdir %APP_DIR%\data
+    > mkdir %APP_DIR%\logs
+    > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%\data:/app/data -v %APP_DIR%\logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
     
 ### Mount products in the shopping cart
 
