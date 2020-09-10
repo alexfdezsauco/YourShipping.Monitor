@@ -351,3 +351,5 @@ healthchecksdb
 tools
 *.gz
 .vscode
+data
+logs
