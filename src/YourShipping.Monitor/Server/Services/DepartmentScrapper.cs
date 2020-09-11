@@ -16,6 +16,8 @@
     using Catel.Caching;
     using Catel.Caching.Policies;
 
+    using Dasync.Collections;
+
     using Microsoft.Extensions.DependencyInjection;
 
     using Serilog;
@@ -81,8 +83,6 @@
             Store parentStore,
             ImmutableSortedSet<string> disabledProducts)
         {
-            var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
-
             Log.Information("Scrapping Department from {Url}", url);
 
             var store = parentStore ?? await this.storeScrapper.GetAsync(url);
@@ -210,30 +210,35 @@
                                     string.Empty,
                                     RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-                                foreach (var productElement in productElements)
-                                {
-                                    var element = productElement.QuerySelector<IElement>("a");
-                                    var elementAttribute = element.Attributes["href"];
+                                await productElements.ParallelForEachAsync(
+                                    async productElement =>
+                                        {
+                                            var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
+                                            var element = productElement.QuerySelector<IElement>("a");
+                                            var elementAttribute = element.Attributes["href"];
 
-                                    var productUrl = Regex.Replace(
-                                        $"{baseUrl}/{elementAttribute.Value}",
-                                        @"(&?)(page=\d+(&?)|img=\d+(&?))",
-                                        string.Empty,
-                                        RegexOptions.IgnoreCase).Trim(' ');
+                                            var productUrl = Regex.Replace(
+                                                $"{baseUrl}/{elementAttribute.Value}",
+                                                @"(&?)(page=\d+(&?)|img=\d+(&?))",
+                                                string.Empty,
+                                                RegexOptions.IgnoreCase).Trim(' ');
 
-                                    var product = await productScrapper.GetAsync(
-                                                      productUrl,
-                                                      disabledProducts == null || !disabledProducts.Contains(productUrl), // Why was in false.
-                                                      store,
-                                                      department,
-                                                      disabledProducts);
+                                            var product = await productScrapper.GetAsync(
+                                                              productUrl,
+                                                              disabledProducts == null || !disabledProducts.Contains(productUrl), // Why was in false.
+                                                              store,
+                                                              department,
+                                                              disabledProducts);
 
-                                    if (product != null && product.IsAvailable)
-                                    {
-                                        department.Products.Add(product.Url, product);
-                                        productsCount++;
-                                    }
-                                }
+                                            if (product != null && product.IsAvailable)
+                                            {
+                                                lock (department)
+                                                {
+                                                    department.Products.Add(product.Url, product);
+                                                    productsCount++;
+                                                }
+                                            }
+                                        });
 
                                 department.ProductsCount = productsCount;
                                 department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
