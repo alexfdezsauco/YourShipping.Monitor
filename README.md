@@ -21,7 +21,7 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
       > cd %CLONE_DIR%
       > powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
     
-- on Linux/macOS you can try with Powershell Core 
+- on Linux / macOS you can try with Powershell Core 
     
     - *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
     - *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
@@ -38,5 +38,5 @@ In oder to mount products in the shopping cart the user must be authenticated. T
 
 You can export the `cookies.txt` by using theses extensions:
 
-- *Chrome/Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419
+- *Chrome / Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419 (Recommended)
 - *Microsoft Edge*: https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip
