@@ -23,8 +23,8 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
     
 - on Linux / macOS you can try with Powershell Core 
     
-    - *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
-    - *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
+    - [Installing PowerShell on Linux](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux)
+    - [Installing PowerShell on macOS](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos)
  
 ## Execute the container
 
@@ -38,5 +38,5 @@ In oder to mount products in the shopping cart the user must be authenticated. T
 
 You can export the `cookies.txt` by using theses extensions:
 
-- *Chrome / Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg (Recommended)
-- *Microsoft Edge*: https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip
+- *Chrome / Microsoft Edge*: [cookiestxt](https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg
+- *Microsoft Edge*: [get-cookiestxt](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip)
