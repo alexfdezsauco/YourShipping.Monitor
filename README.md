@@ -38,5 +38,5 @@ In oder to mount products in the shopping cart the user must be authenticated. T
 
 You can export the `cookies.txt` by using theses extensions:
 
-- *Chrome / Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419 (Recommended)
+- *Chrome / Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg (Recommended)
 - *Microsoft Edge*: https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip
