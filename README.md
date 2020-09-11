@@ -36,4 +36,7 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
 
 In oder to mount products in the shopping cart the user must be authenticated. This is an "incomplete" feature. So, you can create a pull request ;) or just save the `cookies.txt` file in the data directory.
 
-You can export the `cookies.txt` by using this extension https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419
+You can export the `cookies.txt` by using theses extensions:
+
+- *Chrome/Microsoft Edge*: https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419
+- *Microsoft Edge*: https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip
