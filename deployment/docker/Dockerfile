@@ -20,7 +20,7 @@ RUN dotnet restore --source $NUGET_REPOSITORY_PROXY
 COPY src/. .
 
 WORKDIR /build/src/YourShipping.Monitor/Server
-RUN dotnet publish -c Release -o ../../../output/Release/YourShipping.Monitor
+RUN dotnet publish -c Release -o ../../../output/Release/YourShipping.Monitor /p:ServerGarbageCollection=false
 
 WORKDIR /build
 
