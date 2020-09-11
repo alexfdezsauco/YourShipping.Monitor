@@ -12,7 +12,7 @@ You're right, who am I kidding? The goal is buy ;).
 
 ## Create your own telegram bot
 
-Follow this documentation to create your telegram bot https://core.telegram.org/bots. 
+Follow the [Bots: An introduction for developers](https://core.telegram.org/bots) tutorial to create your telegram bot and save your telegram bot token.  
 
 ## Build the docker image
     
