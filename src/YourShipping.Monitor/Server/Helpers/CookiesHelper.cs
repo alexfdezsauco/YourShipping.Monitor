@@ -75,11 +75,10 @@
                 }
             }
 
-            Log.Information("Initializing Anti-Scrapping Cookie...");
-
             await SemaphoreSlim.WaitAsync();
             if (AntiScrappingCookie == null)
             {
+                Log.Information("Initializing Anti-Scrapping Cookie...");
                 try
                 {
                     var httpClient = new HttpClient();
@@ -124,7 +123,7 @@
                                 }
                                 catch (Exception e)
                                 {
-                                    Log.Warning(e, "Error retrieving the anti-scrapping cookie");
+                                    Log.Warning(e, "Error retrieving the Anti-Scrapping cookie");
 
                                     await Task.Delay(100);
                                 }
@@ -136,7 +135,7 @@
                 }
                 catch (Exception e)
                 {
-                    Log.Warning(e, "Error evaluating the anti-scrapping cookie.");
+                    Log.Warning(e, "Error evaluating the Anti-Scrapping cookie.");
                 }
             }
 
