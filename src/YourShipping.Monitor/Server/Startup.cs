@@ -21,6 +21,7 @@ namespace YourShipping.Monitor.Server
 
     using Telegram.Bot;
 
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Hubs;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services;

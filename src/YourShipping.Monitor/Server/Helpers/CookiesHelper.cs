@@ -1,10 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CookiesHelper.cs" company="WildGums">
-//   Copyright (c) 2008 - 2020 WildGums. All rights reserved.
-// </copyright>
-// --------------------------------------------------------------------------------------------------------------------
-
-namespace YourShipping.Monitor.Server.Services
+﻿namespace YourShipping.Monitor.Server.Helpers
 {
     using System;
     using System.IO;
@@ -23,6 +17,8 @@ namespace YourShipping.Monitor.Server.Services
     using AngleSharp.Js;
 
     using Serilog;
+
+    using YourShipping.Monitor.Server.Services;
 
     internal static class CookiesHelper
     {
