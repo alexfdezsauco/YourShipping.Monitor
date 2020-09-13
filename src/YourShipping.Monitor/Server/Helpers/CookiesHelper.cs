@@ -124,7 +124,7 @@
                                 }
                                 catch (Exception e)
                                 {
-                                    Log.Warning(e, "Error retrieving the global cookie");
+                                    Log.Warning(e, "Error retrieving the anti-scrapping cookie");
 
                                     await Task.Delay(100);
                                 }
