@@ -83,6 +83,7 @@ namespace YourShipping.Monitor.Server
 
             services.AddSignalR();
 
+            // TODO: Change the ServiceLifetime. The usage of ServiceLifetime.Transient is because multiple threads operations are running in the same dbcontext.
             services.AddDbContext<DbContext, ApplicationDbContext>(ServiceLifetime.Transient);
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
@@ -99,7 +100,7 @@ namespace YourShipping.Monitor.Server
                 else
                 {
                     Log.Information("Telegram notification is enable.");
-                    
+
                     services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
                     services.AddSingleton<ITelegramCommander, TelegramCommander>();
                 }
@@ -130,7 +131,9 @@ namespace YourShipping.Monitor.Server
                         if (cookieContainer != null)
                         {
                             handler.CookieContainer = cookieContainer;
-                            var cookieCollection = CookiesHelper.GetCollectiton();
+
+                            // TODO: Review how to avoid the call to .GetAwaiter().GetResult()
+                            var cookieCollection = CookiesHelper.GetCollectitonAsync().GetAwaiter().GetResult();
                             if (cookieCollection.Count > 0)
                             {
                                 handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
@@ -141,29 +144,27 @@ namespace YourShipping.Monitor.Server
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36 Edg/85.0.564.44");
+                            ScrappingConfiguration.Agent);
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
                             "gzip, deflate, br");
-                        httpClient.DefaultRequestHeaders.CacheControl =
-                            new CacheControlHeaderValue { NoCache = true };
+                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
 
                         return httpClient;
                     });
 
-            //services.AddHttpClient(
-            //    "json",
-            //    (sp, httpClient) =>
-            //        {
-            //            httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
-            //            httpClient.DefaultRequestHeaders.CacheControl =
-            //                new CacheControlHeaderValue { NoCache = true };
-            //            httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-            //                "user-agent",
-            //                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-            //        });
-
+            // services.AddHttpClient(
+            // "json",
+            // (sp, httpClient) =>
+            // {
+            // httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
+            // httpClient.DefaultRequestHeaders.CacheControl =
+            // new CacheControlHeaderValue { NoCache = true };
+            // httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+            // "user-agent",
+            // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
+            // });
             services.AddScoped<IStoreService, StoreService>();
 
             services.AddSingleton<ICacheStorage<string, Product>>(

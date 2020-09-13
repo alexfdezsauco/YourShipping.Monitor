@@ -67,6 +67,9 @@
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
+
+                // TODO: Improve this.
+                CookiesHelper.InvalidateAntiScrappingCookie();
             }
 
             // TODO: Report the status as error.
