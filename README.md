@@ -12,7 +12,7 @@ You're right, who am I kidding? The goal is buy ;).
 
 ## Create your own telegram bot
 
-Follow this documentation to create your telegram bot https://core.telegram.org/bots. 
+Follow the [Bots: An introduction for developers](https://core.telegram.org/bots) tutorial to create your telegram bot and save your telegram bot token.  
 
 ## Build the docker image
     
@@ -21,10 +21,10 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
       > cd %CLONE_DIR%
       > powershell -ExecutionPolicy ByPass -File build.ps1 -script "%CLONE_DIR%\build.cake" -target "DockerBuild" -verbosity normal
     
-- on Linux/macOS you can try with Powershell Core 
+- on Linux / macOS you can try with Powershell Core 
     
-    - *Installing PowerShell on Linux*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux
-    - *Installing PowerShell on macOS*: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos
+    - [Installing PowerShell on Linux](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-linux)
+    - [Installing PowerShell on macOS](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-macos)
  
 ## Execute the container
 
@@ -36,4 +36,7 @@ Follow this documentation to create your telegram bot https://core.telegram.org/
 
 In oder to mount products in the shopping cart the user must be authenticated. This is an "incomplete" feature. So, you can create a pull request ;) or just save the `cookies.txt` file in the data directory.
 
-You can export the `cookies.txt` by using this extension https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg?hl=es-419
+You can export the `cookies.txt` by using theses extensions:
+
+- *Chrome / Microsoft Edge*: [cookiestxt](https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg)
+- *Microsoft Edge*: [get-cookiestxt](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip)
