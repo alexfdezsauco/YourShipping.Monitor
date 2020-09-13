@@ -40,7 +40,7 @@ namespace YourShipping.Monitor.Server
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ITelegramCommander telegramCommander)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -72,7 +72,11 @@ namespace YourShipping.Monitor.Server
                         endpoints.MapFallbackToFile("index.html");
                     });
 
-            telegramCommander.Start();
+            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
+            if (!string.IsNullOrWhiteSpace(token) && token != "%TELEGRAM_BOT_TOKEN%")
+            {
+                serviceProvider.GetService<ITelegramCommander>().Start();
+            }
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
