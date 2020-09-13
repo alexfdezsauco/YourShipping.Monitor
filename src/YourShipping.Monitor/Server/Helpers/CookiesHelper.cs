@@ -75,6 +75,8 @@
                 }
             }
 
+            Log.Information("Initializing Anti-Scrapping Cookie...");
+
             await SemaphoreSlim.WaitAsync();
             if (AntiScrappingCookie == null)
             {
@@ -153,6 +155,8 @@
 
         public static void InvalidateAntiScrappingCookie()
         {
+            Log.Information("Invalidating Anti-Scrapping Cookie...");
+
             SemaphoreSlim.Wait();
             AntiScrappingCookie = null;
             SemaphoreSlim.Release();
