@@ -60,7 +60,6 @@
             {
                 cookieCollection = this.LoadFromCookiesTxt();
                 var antiScrappingCookie = await this.ReadAntiScrappingCookie();
-
                 var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie?.Name);
                 if (cookie != null)
                 {
