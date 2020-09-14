@@ -20,6 +20,7 @@
 
     using YourShipping.Monitor.Server.Services;
 
+    // TODO: Improve this?
     internal static class CookiesHelper
     {
         private static readonly object _syncObj = new object();
@@ -42,10 +43,19 @@
 
         private static Cookie AntiScrappingCookie;
 
-        public static async Task<CookieCollection> GetCollectitonAsync()
-        {
-            var collection = new CookieCollection();
+        private static CookieCollection cookieCollection;
 
+        public static async Task<CookieCollection> GetCollectionAsync()
+        {
+            lock (_syncObj)
+            {
+                if (cookieCollection != null)
+                {
+                    return cookieCollection;
+                }
+            }
+
+            var collection = new CookieCollection();
             var cookiesFile = "data/cookies.txt";
             if (File.Exists(cookiesFile))
             {
@@ -159,6 +169,22 @@
             SemaphoreSlim.Wait();
             AntiScrappingCookie = null;
             SemaphoreSlim.Release();
+
+            lock (_syncObj)
+            {
+                cookieCollection = null;
+            }
+        }
+
+        public static void SyncCookies(CookieContainer cookieContainer)
+        {
+            if (cookieContainer != null)
+            {
+                lock (_syncObj)
+                {
+                    cookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+                }
+            }
         }
     }
 }

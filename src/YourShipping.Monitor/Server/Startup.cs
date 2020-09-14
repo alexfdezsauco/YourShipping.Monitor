@@ -138,7 +138,7 @@ namespace YourShipping.Monitor.Server
                             handler.CookieContainer = cookieContainer;
 
                             // TODO: Review how to avoid the call to .GetAwaiter().GetResult()
-                            var cookieCollection = CookiesHelper.GetCollectitonAsync().GetAwaiter().GetResult();
+                            var cookieCollection = CookiesHelper.GetCollectionAsync().GetAwaiter().GetResult();
                             if (cookieCollection.Count > 0)
                             {
                                 handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);

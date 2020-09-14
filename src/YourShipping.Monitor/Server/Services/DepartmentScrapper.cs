@@ -23,6 +23,7 @@
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -39,20 +40,20 @@
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
-        private readonly HttpClient webPageHttpClient;
+        private readonly HttpClient httpClient;
 
         public DepartmentScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             ICacheStorage<string, Department> cacheStorage,
-            HttpClient webPageHttpClient,
+            HttpClient httpClient,
             CookieContainer cookieContainer,
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
-            this.webPageHttpClient = webPageHttpClient;
+            this.httpClient = httpClient;
             this.serviceProvider = serviceProvider;
         }
 
@@ -112,8 +113,11 @@
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpResponseMessage =
-                            await this.webPageHttpClient.PostAsync(requestUri, formUrlEncodedContent);
+                            await this.httpClient.PostAsync(requestUri, formUrlEncodedContent);
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+                        var httpClientHandler = this.httpClient.GetHttpClientHandler();
+                        CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
                     }
                     catch (Exception e)
                     {

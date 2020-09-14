@@ -18,6 +18,7 @@
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -36,20 +37,20 @@
 
         private readonly IEntityScrapper<Store> storeScrapper;
 
-        private readonly HttpClient webPageHttpClient;
+        private readonly HttpClient httpClient;
 
         public ProductScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage,
-            HttpClient webPageHttpClient)
+            HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
-            this.webPageHttpClient = webPageHttpClient;
+            this.httpClient = httpClient;
         }
 
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parameters)
@@ -107,7 +108,10 @@
 
             try
             {
-                content = await this.webPageHttpClient.GetStringAsync(url);
+                content = await this.httpClient.GetStringAsync(url);
+
+                var httpClientHandler = this.httpClient.GetHttpClientHandler();
+                CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
             }
             catch (Exception e)
             {
@@ -315,13 +319,13 @@
                                              { "__ASYNCPOST", "true" }
                                          };
 
-                    var httpResponseMessage = await this.webPageHttpClient.PostAsync(
+                    var httpResponseMessage = await this.httpClient.PostAsync(
                                                   product.Url,
                                                   new FormUrlEncodedContent(parameters));
 
                     httpResponseMessage.EnsureSuccessStatusCode();
 
-                    var content = await this.webPageHttpClient.GetStringAsync(product.Url);
+                    var content = await this.httpClient.GetStringAsync(product.Url);
                     var responseDocument = await this.browsingContext.OpenAsync(req => req.Content(content));
                     if (IsInCart(product, responseDocument))
                     {
