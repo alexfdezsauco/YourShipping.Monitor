@@ -13,6 +13,8 @@
 
         public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(10);
 
+        private static readonly int AgentIndex = new Random().Next(1, Agents.Length);
+
         private static readonly Random Random = new Random();
 
         public static TimeSpan DepartmentCacheExpiration => TimeSpan.FromSeconds(10);
@@ -20,6 +22,11 @@
         public static TimeSpan ProductCacheExpiration => TimeSpan.FromSeconds(10);
 
         public static TimeSpan StoreCacheExpiration => TimeSpan.FromMinutes(30);
+
+        public static string GetAgent()
+        {
+            return Agents[AgentIndex];
+        }
 
         public static string RandomAgent()
         {

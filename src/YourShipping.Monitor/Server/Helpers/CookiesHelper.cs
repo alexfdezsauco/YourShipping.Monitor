@@ -86,7 +86,7 @@
 
                     httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                         "user-agent",
-                        ScrappingConfiguration.RandomAgent());
+                        ScrappingConfiguration.GetAgent());
 
                     var requester = new HttpClientRequester(httpClient);
                     var config = Configuration.Default.WithRequester(requester)
