@@ -18,14 +18,20 @@
 
     public class StoreService : IStoreService
     {
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
         private readonly IEntityScrapper<Store> entityScrapper;
 
         private readonly IRepository<Store, int> storesRepository;
 
-        public StoreService(IRepository<Store, int> storesRepository, IEntityScrapper<Store> entityScrapper)
+        public StoreService(
+            IRepository<Store, int> storesRepository,
+            IEntityScrapper<Store> entityScrapper,
+            ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.storesRepository = storesRepository;
             this.entityScrapper = entityScrapper;
+            this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
 
         public async Task<Shared.Store> AddAsync(Uri uri)
@@ -68,8 +74,7 @@
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                // TODO: Improve this.
-                CookiesHelper.InvalidateCookies();
+                this.cookiesSynchronizationService.InvalidateCookies();
             }
 
             // TODO: Report the status as error.

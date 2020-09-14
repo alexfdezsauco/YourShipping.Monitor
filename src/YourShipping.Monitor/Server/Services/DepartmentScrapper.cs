@@ -42,18 +42,21 @@
 
         private readonly HttpClient httpClient;
 
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
         public DepartmentScrapper(
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             ICacheStorage<string, Department> cacheStorage,
             HttpClient httpClient,
-            CookieContainer cookieContainer,
+            ICookiesSynchronizationService cookiesSynchronizationService,
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
             this.httpClient = httpClient;
+            this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.serviceProvider = serviceProvider;
         }
 
@@ -117,7 +120,7 @@
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
 
                         var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                        CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
+                        this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
                     }
                     catch (Exception e)
                     {

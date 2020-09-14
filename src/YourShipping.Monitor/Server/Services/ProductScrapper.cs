@@ -33,6 +33,8 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
         private readonly IEntityScrapper<Department> departmentScrapper;
 
         private readonly IEntityScrapper<Store> storeScrapper;
@@ -44,12 +46,14 @@
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage,
+            ICookiesSynchronizationService cookiesSynchronizationService,
             HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
+            this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.httpClient = httpClient;
         }
 
@@ -111,7 +115,7 @@
                 content = await this.httpClient.GetStringAsync(url);
 
                 var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
+                this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
             }
             catch (Exception e)
             {
@@ -236,7 +240,7 @@
                                 product.Name,
                                 storeName);
 
-                            CookiesHelper.InvalidateCookies();
+                            this.cookiesSynchronizationService.InvalidateCookies();
                         }
                     }
 

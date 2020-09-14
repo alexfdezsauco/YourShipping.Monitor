@@ -4,7 +4,6 @@
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Json;
-    using System.Reflection;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -35,15 +34,19 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
         private readonly HttpClient httpClient;
 
         public StoreScrapper(
             IBrowsingContext browsingContext,
             ICacheStorage<string, Store> cacheStorage,
+            ICookiesSynchronizationService cookiesSynchronizationService,
             HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
+            this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.httpClient = httpClient;
         }
 
@@ -70,13 +73,11 @@
                 storesToImport = await this.httpClient.GetFromJsonAsync<OfficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
 
                 var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
+                this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
             }
             catch (Exception e)
             {
-                // TODO: Improve this?
-                CookiesHelper.InvalidateCookies();
-
+                this.cookiesSynchronizationService.InvalidateCookies();
                 Log.Error(e, "Error requesting stores.json");
             }
 
@@ -87,7 +88,7 @@
                 content = await this.httpClient.GetStringAsync(requestUri);
 
                 var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                CookiesHelper.SyncCookies(httpClientHandler.CookieContainer);
+                this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
             }
             catch (Exception e)
             {
@@ -170,47 +171,6 @@
             }
 
             return null;
-        }
-    }
-
-    public static class HttpClientExtensions
-    {
-        private static readonly object syncObj = new object(); 
-        private static FieldInfo _fieldInfo;
-
-        static HttpClientExtensions()
-        {
-            lock (syncObj)
-            {
-                if (_fieldInfo == null)
-                {
-                    _fieldInfo = typeof(HttpMessageInvoker).GetField("_handler", BindingFlags.Instance | BindingFlags.NonPublic);
-                }
-            }
-        }
-
-        public static HttpClientHandler GetHttpClientHandler(this HttpClient httpClient)
-        {
-            var fieldInfo = GetFieldInfo();
-            if (fieldInfo != null)
-            {
-                return fieldInfo.GetValue(httpClient) as HttpClientHandler;
-            }
-
-            return null;
-        }
-
-        private static FieldInfo GetFieldInfo()
-        {
-            lock (syncObj)
-            {
-                if (_fieldInfo == null)
-                {
-                    _fieldInfo = typeof(HttpMessageInvoker).GetField("_handler", BindingFlags.Instance | BindingFlags.NonPublic);
-                }
-            }
-
-            return _fieldInfo;
         }
     }
 }

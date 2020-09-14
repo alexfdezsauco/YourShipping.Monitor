@@ -124,6 +124,7 @@ namespace YourShipping.Monitor.Server
                 sp =>
                     {
                         var cookieContainer = sp.GetService<CookieContainer>();
+                        var cookiesSynchronizationService = sp.GetService<ICookiesSynchronizationService>();
 
                         var handler = new HttpClientHandler
                                           {
@@ -136,9 +137,7 @@ namespace YourShipping.Monitor.Server
                         if (cookieContainer != null)
                         {
                             handler.CookieContainer = cookieContainer;
-
-                            // TODO: Review how to avoid the call to .GetAwaiter().GetResult()
-                            var cookieCollection = CookiesHelper.GetCollectionAsync().GetAwaiter().GetResult();
+                            var cookieCollection = cookiesSynchronizationService.GetCollection();
                             if (cookieCollection.Count > 0)
                             {
                                 handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
@@ -176,8 +175,9 @@ namespace YourShipping.Monitor.Server
                 provider => new CacheStorage<string, Product>(storeNullValues: true));
             services.AddSingleton<ICacheStorage<string, Department>>(
                 provider => new CacheStorage<string, Department>(storeNullValues: true));
-            services.AddSingleton<ICacheStorage<string, Store>>(
-                provider => new CacheStorage<string, Store>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Store>>(provider => new CacheStorage<string, Store>(storeNullValues: true));
+
+            services.AddSingleton<ICookiesSynchronizationService, CookiesSynchronizationService>();
 
             services.AddTransient<IEntityScrapper<Product>, ProductScrapper>();
             services.AddTransient<IEntityScrapper<Department>, DepartmentScrapper>();
