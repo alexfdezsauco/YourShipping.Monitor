@@ -149,7 +149,7 @@ namespace YourShipping.Monitor.Server
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
-                            ScrappingConfiguration.Agent);
+                            ScrappingConfiguration.RandomAgent());
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
