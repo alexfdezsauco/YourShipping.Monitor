@@ -235,6 +235,8 @@
                                 "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
                                 product.Name,
                                 storeName);
+
+                            CookiesHelper.InvalidateCookies();
                         }
                     }
 
