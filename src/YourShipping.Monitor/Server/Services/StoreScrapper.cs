@@ -75,7 +75,7 @@
             catch (Exception e)
             {
                 // TODO: Improve this?
-                CookiesHelper.InvalidateAntiScrappingCookie();
+                CookiesHelper.InvalidateCookies();
 
                 Log.Error(e, "Error requesting stores.json");
             }

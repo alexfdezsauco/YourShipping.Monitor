@@ -43,17 +43,21 @@
 
         private static Cookie AntiScrappingCookie;
 
-        private static CookieCollection cookieCollection;
+        private static CookieCollection CookieCollection;
 
+        // TODO: Review this method if something stop working.
         public static async Task<CookieCollection> GetCollectionAsync()
         {
-            lock (_syncObj)
+            await SemaphoreSlim.WaitAsync();
+
+            if (CookieCollection != null)
             {
-                if (cookieCollection != null)
-                {
-                    return cookieCollection;
-                }
+                SemaphoreSlim.Release();
+
+                return CookieCollection;
             }
+
+            SemaphoreSlim.Release();
 
             var collection = new CookieCollection();
             var cookiesFile = "data/cookies.txt";
@@ -149,9 +153,7 @@
                 }
             }
 
-            SemaphoreSlim.Release();
-
-            var cookie = collection.FirstOrDefault(c => c.Name == AntiScrappingCookie.Name);
+            var cookie = collection.FirstOrDefault(c => c.Name == AntiScrappingCookie?.Name);
             if (cookie != null)
             {
                 collection.Remove(cookie);
@@ -159,32 +161,29 @@
 
             collection.Add(AntiScrappingCookie);
 
+            SemaphoreSlim.Release();
+
             return collection;
         }
 
-        public static void InvalidateAntiScrappingCookie()
+        // TODO: Where this method should be called? 
+        public static void InvalidateCookies()
         {
-            Log.Information("Invalidating Anti-Scrapping Cookie...");
+            Log.Information("Invalidating Cookies...");
 
             SemaphoreSlim.Wait();
-            AntiScrappingCookie = null;
-            SemaphoreSlim.Release();
 
-            lock (_syncObj)
-            {
-                cookieCollection = null;
-            }
+            AntiScrappingCookie = null;
+            CookieCollection = null;
+
+            SemaphoreSlim.Release();
         }
 
         public static void SyncCookies(CookieContainer cookieContainer)
         {
-            if (cookieContainer != null)
-            {
-                lock (_syncObj)
-                {
-                    cookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
-                }
-            }
+            SemaphoreSlim.Wait();
+            CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+            SemaphoreSlim.Release();
         }
     }
 }
