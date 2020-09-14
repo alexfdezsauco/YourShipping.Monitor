@@ -41,6 +41,8 @@
 
         private CookieCollection CookieCollection;
 
+        public DateTime SetDateTime { get; private set; }
+
         public CookieCollection GetCollection()
         {
             return this.GetCollectionAsync().GetAwaiter().GetResult();
@@ -69,6 +71,7 @@
                 cookieCollection.Add(antiScrappingCookie);
 
                 this.CookieCollection = cookieCollection;
+                this.SetDateTime = DateTime.Now;
             }
 
             this.SemaphoreSlim.Release();
@@ -78,10 +81,9 @@
 
         void ICookiesSynchronizationService.InvalidateCookies()
         {
-            Log.Information("Invalidating Cookies...");
-
             this.SemaphoreSlim.Wait();
 
+            Log.Information("Invalidating Cookies...");
             this.CookieCollection = null;
 
             this.SemaphoreSlim.Release();
@@ -89,11 +91,18 @@
 
         void ICookiesSynchronizationService.SyncCookies(CookieContainer cookieContainer)
         {
-            Log.Information("Sync Cookies...");
-
             this.SemaphoreSlim.Wait();
 
-            this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+            if (this.CookieCollection != null)
+            {
+                var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
+                if (timeSpan.TotalSeconds > 30)
+                {
+                    Log.Information("Sync Cookies...");
+                    this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+                    this.SetDateTime = DateTime.Now;
+                }
+            }
 
             this.SemaphoreSlim.Release();
         }
