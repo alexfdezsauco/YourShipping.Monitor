@@ -59,14 +59,14 @@
             try
             {
                 var httpClient =
-                    await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoreJson);
+                    await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
                 storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoreJson);
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoresJsonUrl);
             }
             catch (Exception e)
             {
-                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoreJson);
+                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
 
                 Log.Error(e, "Error requesting stores.json");
             }

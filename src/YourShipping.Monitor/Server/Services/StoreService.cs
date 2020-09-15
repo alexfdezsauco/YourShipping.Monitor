@@ -63,19 +63,19 @@
         public async Task ImportAsync()
         {
             var httpClient =
-                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoreJson);
+                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
             OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoreJson);
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoresJsonUrl);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoreJson);
+                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
             }
 
             // TODO: Report the status as error.

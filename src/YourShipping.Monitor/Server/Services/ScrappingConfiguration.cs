@@ -21,9 +21,9 @@
 
         public static readonly TimeSpan StoreCacheExpiration = TimeSpan.FromMinutes(30);
 
-        public static readonly string StoreJson = "https://www.tuenvio.cu/stores.json";
+        public static readonly string StoresJsonUrl = "https://www.tuenvio.cu/stores.json";
 
-        private static readonly int AgentIndex = new Random().Next(1, Agents.Length);
+        private static readonly int AgentIndex = new Random().Next(0, Agents.Length);
 
         private static readonly Random Random = new Random();
 

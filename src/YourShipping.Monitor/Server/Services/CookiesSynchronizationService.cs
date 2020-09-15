@@ -80,9 +80,9 @@
             var httpClient = this.provider.GetService<HttpClient>();
 
             var clientHandler = httpClient.GetHttpClientHandler();
-            clientHandler.CookieContainer.Add(
-                ScrappingConfiguration.CookieCollectionUrl,
-                await this.GetCookieCollectionAsync(url));
+            var cookieCollection = await this.GetCookieCollectionAsync(url);
+
+            clientHandler.CookieContainer.Add(ScrappingConfiguration.CookieCollectionUrl, cookieCollection);
 
             return httpClient;
         }
@@ -91,13 +91,16 @@
         {
             var cookieCollection = this.LoadFromCookiesTxt();
             var antiScrappingCookie = await this.ReadAntiScrappingCookie();
-            var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie?.Name);
-            if (cookie != null)
+            if (antiScrappingCookie != null)
             {
-                cookieCollection.Remove(cookie);
-            }
+                var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie.Name);
+                if (cookie != null)
+                {
+                    cookieCollection.Remove(cookie);
+                }
 
-            cookieCollection.Add(antiScrappingCookie);
+                cookieCollection.Add(antiScrappingCookie);
+            }
 
             return cookieCollection;
         }
@@ -223,10 +226,11 @@
                     .WithDefaultLoader(new LoaderOptions { IsResourceLoadingEnabled = true }).WithJs();
 
                 var context = BrowsingContext.New(config);
-                var document = await context.OpenAsync("https://www.tuenvio.cu/stores.json").WaitUntilAvailable();
+                var document = await context.OpenAsync(ScrappingConfiguration.StoresJsonUrl).WaitUntilAvailable();
 
                 var content = document.Body.TextContent;
-                if (!string.IsNullOrWhiteSpace(content))
+                var match = Regex.Match(content, @"Server\sError\s+406");
+                if (!match.Success && !string.IsNullOrWhiteSpace(content))
                 {
                     var parametersMatch = this.RegexCall.Match(content);
                     if (parametersMatch.Success)
