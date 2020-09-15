@@ -129,7 +129,10 @@
 
                     if (!synchronized)
                     {
-                        Log.Information("Synchronizing cookie '{CookieName}' with value '{CookieValue}'.", cookie.Name, cookie.Value);
+                        Log.Information(
+                            "Synchronizing cookie '{CookieName}' with value '{CookieValue}'.",
+                            cookie.Name,
+                            cookie.Value);
 
                         storedCookieCollection.Add(cookie);
                     }
@@ -159,7 +162,11 @@
                                 value = "username=&userPsw=";
                             }
 
-                            cookieCollection.Add(new Cookie(name, value, match.Groups[3].Value, match.Groups[1].Value));
+                            if (cookieCollection[name] == null)
+                            {
+                                cookieCollection.Add(
+                                    new Cookie(name, value, match.Groups[3].Value, match.Groups[1].Value));
+                            }
                         }
                         catch (Exception e)
                         {
