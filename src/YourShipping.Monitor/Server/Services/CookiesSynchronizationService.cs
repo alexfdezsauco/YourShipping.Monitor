@@ -85,10 +85,14 @@
 
         public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
-            return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       async () => await this.GetCollectionAsync(),
-                       ExpirationPolicy.Duration(TimeSpan.FromMinutes(30)));
+            var collection = await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
+                                 url,
+                                 async () => await this.GetCollectionAsync(),
+                                 ExpirationPolicy.Duration(TimeSpan.FromMinutes(30)));
+            lock (collection)
+            {
+                return collection;
+            }
         }
 
         public void InvalidateCookies(string url)
@@ -104,23 +108,30 @@
 
             Log.Information("Synchronizing cookies ...");
 
-            foreach (Cookie cookie in cookieCollection)
+            lock (storedCookieCollection)
             {
-                var deleted = false;
-                for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
+                foreach (Cookie cookie in cookieCollection)
                 {
-                    var storedCookie = storedCookieCollection[i];
-                    if (storedCookie.Name == cookie.Name)
+                    var deleted = false;
+                    for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
                     {
-                        storedCookieCollection.Remove(storedCookie);
-                        deleted = true;
+                        var storedCookie = storedCookieCollection[i];
+                        if (storedCookie.Name == cookie.Name)
+                        {
+                            storedCookieCollection.Remove(storedCookie);
+                            deleted = true;
+                        }
                     }
-                }
 
-                if (deleted)
-                {
-                    Log.Information("Added new missing cookie '{CookieName}' with value '{CookieValue}'.", cookie.Name, cookie.Value);
-                    storedCookieCollection.Add(cookie);
+                    if (deleted)
+                    {
+                        Log.Debug(
+                            "Sync cookie '{CookieName}' with value '{CookieValue}'.",
+                            cookie.Name,
+                            cookie.Value);
+
+                        storedCookieCollection.Add(cookie);
+                    }
                 }
             }
         }
