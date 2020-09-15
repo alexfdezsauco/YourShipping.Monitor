@@ -35,8 +35,6 @@
 
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
-        private readonly HttpClient httpClient;
-
         private readonly IServiceProvider serviceProvider;
 
         private readonly IEntityScrapper<Store> storeScrapper;
@@ -45,14 +43,12 @@
             IBrowsingContext browsingContext,
             IEntityScrapper<Store> storeScrapper,
             ICacheStorage<string, Department> cacheStorage,
-            HttpClient httpClient,
             ICookiesSynchronizationService cookiesSynchronizationService,
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.cacheStorage = cacheStorage;
-            this.httpClient = httpClient;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.serviceProvider = serviceProvider;
         }
@@ -110,19 +106,14 @@
                     string content = null;
                     try
                     {
-                        var clientHandler = this.httpClient.GetHttpClientHandler();
-                        clientHandler.CookieContainer.Add(
-                            ScrappingConfiguration.CookieCollectionUrl,
-                            await this.cookiesSynchronizationService.GetCookieCollectionAsync(store.Url));
+                        var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await this.httpClient.PostAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage = await httpClient.PostAsync(requestUri, formUrlEncodedContent);
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
 
-                        await this.cookiesSynchronizationService.SyncCookiesAsync(
-                            store.Url,
-                            clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
+                        await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
                     }
                     catch (Exception e)
                     {

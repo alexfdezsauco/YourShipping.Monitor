@@ -17,8 +17,11 @@
 
     using Catel.Caching;
 
+    using Microsoft.Extensions.DependencyInjection;
+
     using Serilog;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Services;
 
     // TODO: Improve this?
@@ -26,6 +29,8 @@
     {
         private readonly CacheStorage<string, CookieCollection> cookieCollectionCacheStorage =
             new CacheStorage<string, CookieCollection>();
+
+        private readonly IServiceProvider provider;
 
         private readonly Regex RegexA = new Regex(@"a\s*=\s*(toNumbers[^)]+\))", RegexOptions.Compiled);
 
@@ -40,6 +45,11 @@
         private readonly Regex RegexCookiesTxt = new Regex(
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+
+        public CookiesSynchronizationService(IServiceProvider provider)
+        {
+            this.provider = provider;
+        }
 
         public CookiesSynchronizationService()
         {
@@ -63,6 +73,18 @@
                 };
 
             fileSystemWatcher.EnableRaisingEvents = true;
+        }
+
+        public async Task<HttpClient> CreateHttpClientAsync(string url)
+        {
+            var httpClient = this.provider.GetService<HttpClient>();
+
+            var clientHandler = httpClient.GetHttpClientHandler();
+            clientHandler.CookieContainer.Add(
+                ScrappingConfiguration.CookieCollectionUrl,
+                await this.GetCookieCollectionAsync(url));
+
+            return httpClient;
         }
 
         public async Task<CookieCollection> GetCollectionAsync()
@@ -91,9 +113,16 @@
 
         public void InvalidateCookies(string url)
         {
-            Log.Information("Invalidating Cookies...");
+            Log.Information("Invalidating Cookies for url '{Url}'...", url);
 
             this.cookieCollectionCacheStorage.Remove(url);
+        }
+
+        public async Task SyncCookiesAsync(HttpClient httpClient, string url)
+        {
+            var httpClientHandler = httpClient.GetHttpClientHandler();
+            var cookieContainer = httpClientHandler.CookieContainer;
+            await this.SyncCookiesAsync(url, cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
         }
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)

@@ -3,7 +3,6 @@
     using System;
     using System.Data;
     using System.Linq;
-    using System.Net.Http;
     using System.Net.Http.Json;
     using System.Threading.Tasks;
 
@@ -63,12 +62,14 @@
 
         public async Task ImportAsync()
         {
-            var httpClient = new HttpClient { Timeout = ScrappingConfiguration.HttpClientTimeout };
+            var httpClient =
+                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoreJson);
             OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
                     await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoreJson);
             }
             catch (Exception e)
             {

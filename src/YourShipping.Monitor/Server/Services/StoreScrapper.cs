@@ -2,7 +2,6 @@
 {
     using System;
     using System.Linq;
-    using System.Net.Http;
     using System.Net.Http.Json;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -29,18 +28,14 @@
 
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
-        private readonly HttpClient httpClient;
-
         public StoreScrapper(
             IBrowsingContext browsingContext,
             ICacheStorage<string, Store> cacheStorage,
-            ICookiesSynchronizationService cookiesSynchronizationService,
-            HttpClient httpClient)
+            ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
-            this.httpClient = httpClient;
         }
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
@@ -63,18 +58,11 @@
             OfficialStoreInfo[] storesToImport = null;
             try
             {
-                var clientHandler = this.httpClient.GetHttpClientHandler();
-                clientHandler.CookieContainer.Add(
-                    ScrappingConfiguration.CookieCollectionUrl,
-                    await this.cookiesSynchronizationService.GetCookieCollectionAsync(
-                        ScrappingConfiguration.StoreJson));
-
+                var httpClient =
+                    await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoreJson);
                 storesToImport =
-                    await this.httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
-
-                await this.cookiesSynchronizationService.SyncCookiesAsync(
-                    ScrappingConfiguration.StoreJson,
-                    clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoreJson);
             }
             catch (Exception e)
             {
@@ -87,16 +75,10 @@
             string content = null;
             try
             {
-                var clientHandler = this.httpClient.GetHttpClientHandler();
-                clientHandler.CookieContainer.Add(
-                    ScrappingConfiguration.CookieCollectionUrl,
-                    await this.cookiesSynchronizationService.GetCookieCollectionAsync(storeUrl));
+                var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
+                content = await httpClient.GetStringAsync(requestUri);
 
-                content = await this.httpClient.GetStringAsync(requestUri);
-
-                await this.cookiesSynchronizationService.SyncCookiesAsync(
-                    storeUrl,
-                    clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
             }
             catch (Exception e)
             {

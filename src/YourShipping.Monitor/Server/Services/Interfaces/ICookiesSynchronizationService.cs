@@ -1,14 +1,14 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
-    using System.Net;
+    using System.Net.Http;
     using System.Threading.Tasks;
 
     public interface ICookiesSynchronizationService
     {
-        Task<CookieCollection> GetCookieCollectionAsync(string url);
+        Task<HttpClient> CreateHttpClientAsync(string url);
 
         void InvalidateCookies(string url);
 
-        Task SyncCookiesAsync(string url, CookieCollection cookieCollection);
+        Task SyncCookiesAsync(HttpClient cookieCollection, string url);
     }
 }

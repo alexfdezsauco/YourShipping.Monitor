@@ -36,8 +36,6 @@
 
         private readonly IEntityScrapper<Department> departmentScrapper;
 
-        private readonly HttpClient httpClient;
-
         private readonly IEntityScrapper<Store> storeScrapper;
 
         public ProductScrapper(
@@ -45,15 +43,13 @@
             IEntityScrapper<Store> storeScrapper,
             IEntityScrapper<Department> departmentScrapper,
             ICacheStorage<string, Product> cacheStorage,
-            ICookiesSynchronizationService cookiesSynchronizationService,
-            HttpClient httpClient)
+            ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
             this.storeScrapper = storeScrapper;
             this.departmentScrapper = departmentScrapper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
-            this.httpClient = httpClient;
         }
 
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parameters)
@@ -97,6 +93,8 @@
                 return null;
             }
 
+            var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+
             var department = parentDepartment ?? await this.departmentScrapper.GetAsync(url, false, store);
             if (department == null || !department.IsAvailable)
             {
@@ -111,16 +109,8 @@
 
             try
             {
-                var clientHandler = this.httpClient.GetHttpClientHandler();
-                clientHandler.CookieContainer.Add(
-                    ScrappingConfiguration.CookieCollectionUrl,
-                    await this.cookiesSynchronizationService.GetCookieCollectionAsync(store.Url));
-
-                content = await this.httpClient.GetStringAsync(url);
-
-                await this.cookiesSynchronizationService.SyncCookiesAsync(
-                    store.Url,
-                    clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
+                content = await httpClient.GetStringAsync(url);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
             }
             catch (Exception e)
             {
@@ -234,7 +224,7 @@
                     // This can be done in other place?
                     if (isUserLogged && (disabledProducts == null || !disabledProducts.Contains(url)))
                     {
-                        await this.TryAddProductToShoppingCart(product, document);
+                        await this.TryAddProductToShoppingCart(httpClient, product, document);
                     }
 
                     if (!isUserLogged)
@@ -256,7 +246,7 @@
             return null;
         }
 
-        private async Task TryAddProductToShoppingCart(Product product, IDocument document)
+        private async Task TryAddProductToShoppingCart(HttpClient httpClient, Product product, IDocument document)
         {
             try
             {
@@ -328,13 +318,13 @@
                                              { "__ASYNCPOST", "true" }
                                          };
 
-                    var httpResponseMessage = await this.httpClient.PostAsync(
+                    var httpResponseMessage = await httpClient.PostAsync(
                                                   product.Url,
                                                   new FormUrlEncodedContent(parameters));
 
                     httpResponseMessage.EnsureSuccessStatusCode();
 
-                    var content = await this.httpClient.GetStringAsync(product.Url);
+                    var content = await httpClient.GetStringAsync(product.Url);
                     var responseDocument = await this.browsingContext.OpenAsync(req => req.Content(content));
                     if (IsInCart(product, responseDocument))
                     {
