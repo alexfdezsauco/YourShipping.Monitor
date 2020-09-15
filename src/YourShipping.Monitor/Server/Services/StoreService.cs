@@ -68,13 +68,13 @@
             try
             {
                 storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>("https://www.tuenvio.cu/stores.json");
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoreJson);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                this.cookiesSynchronizationService.InvalidateCookies();
+                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoreJson);
             }
 
             // TODO: Report the status as error.

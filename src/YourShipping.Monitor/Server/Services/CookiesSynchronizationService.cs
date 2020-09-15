@@ -7,7 +7,6 @@
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text.RegularExpressions;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -16,6 +15,9 @@
     using AngleSharp.Io.Network;
     using AngleSharp.Js;
 
+    using Catel.Caching;
+    using Catel.Caching.Policies;
+
     using Serilog;
 
     using YourShipping.Monitor.Server.Services;
@@ -23,6 +25,9 @@
     // TODO: Improve this?
     public class CookiesSynchronizationService : ICookiesSynchronizationService
     {
+        private readonly CacheStorage<string, CookieCollection> cookieCollectionCacheStorage =
+            new CacheStorage<string, CookieCollection>();
+
         private readonly Regex RegexA = new Regex(@"a\s*=\s*(toNumbers[^)]+\))", RegexOptions.Compiled);
 
         private readonly Regex RegexB = new Regex(@"b\s*=\s*(toNumbers[^)]+\))", RegexOptions.Compiled);
@@ -37,100 +42,99 @@
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
-        private readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1, 1);
-
-        private CookieCollection CookieCollection;
-
         public CookiesSynchronizationService()
         {
             var fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
                                         {
-                                            NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite
+                                            NotifyFilter =
+                                                NotifyFilters.CreationTime | NotifyFilters.LastWrite
+                                                                           | NotifyFilters.Size | NotifyFilters.FileName
                                         };
-
 
             fileSystemWatcher.Changed += (sender, args) =>
                 {
                     Log.Information("Cookies file changed");
 
-                    this.InvalidateCookies();
+                    this.cookieCollectionCacheStorage.Clear();
                 };
 
             fileSystemWatcher.Created += (sender, args) =>
                 {
                     Log.Information("Cookies file created");
 
-                    this.InvalidateCookies();
+                    this.cookieCollectionCacheStorage.Clear();
                 };
 
             fileSystemWatcher.EnableRaisingEvents = true;
         }
 
-        public DateTime SetDateTime { get; private set; }
-
-        public CookieCollection GetCollection()
-        {
-            return this.GetCollectionAsync().GetAwaiter().GetResult();
-        }
-
         public async Task<CookieCollection> GetCollectionAsync()
         {
-            CookieCollection cookieCollection;
-
-            await this.SemaphoreSlim.WaitAsync();
-
-            if (this.CookieCollection != null)
+            var cookieCollection = this.LoadFromCookiesTxt();
+            var antiScrappingCookie = await this.ReadAntiScrappingCookie();
+            var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie?.Name);
+            if (cookie != null)
             {
-                cookieCollection = this.CookieCollection;
-            }
-            else
-            {
-                cookieCollection = this.LoadFromCookiesTxt();
-                var antiScrappingCookie = await this.ReadAntiScrappingCookie();
-                var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie?.Name);
-                if (cookie != null)
-                {
-                    cookieCollection.Remove(cookie);
-                }
-
-                cookieCollection.Add(antiScrappingCookie);
-
-                this.CookieCollection = cookieCollection;
-                this.SetDateTime = DateTime.Now;
+                cookieCollection.Remove(cookie);
             }
 
-            this.SemaphoreSlim.Release();
+            cookieCollection.Add(antiScrappingCookie);
 
             return cookieCollection;
         }
 
-        public void InvalidateCookies()
+        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
-            this.SemaphoreSlim.Wait();
-
-            Log.Information("Invalidating Cookies...");
-            this.CookieCollection = null;
-
-            this.SemaphoreSlim.Release();
+            return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       async () => await this.GetCollectionAsync(),
+                       ExpirationPolicy.Duration(TimeSpan.FromMinutes(30)));
         }
 
-        public void SyncCookies(CookieContainer cookieContainer)
+        public void InvalidateCookies(string url)
         {
-            this.SemaphoreSlim.Wait();
+            Log.Information("Invalidating Cookies...");
 
-            if (this.CookieCollection != null)
+            this.cookieCollectionCacheStorage.Remove(url);
+        }
+
+        public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
+        {
+            var storedCookieCollection = await this.GetCookieCollectionAsync(url);
+
+            Log.Information("Synchronizing cookies ...");
+
+            foreach (Cookie cookie in cookieCollection)
             {
-                var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
-                if (timeSpan.TotalSeconds > 30)
+                var storedCookie = storedCookieCollection.FirstOrDefault(c => c.Name == cookie.Name);
+                if (storedCookie != null)
                 {
-                    Log.Information("Sync Cookies...");
-                    this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+                    if (storedCookie.Value != cookie.Value)
+                    {
+                        Log.Information(
+                            "Cookie value '{CookieName}' changed from '{OldValue}' to '{NewValue}'.",
+                            storedCookie.Name,
+                            storedCookie.Value,
+                            cookie.Value);
+                        storedCookie.Value = cookie.Value;
+                    }
 
-                    this.SetDateTime = DateTime.Now;
+                    if (storedCookie.Expires != cookie.Expires)
+                    {
+                        Log.Information(
+                            "Cookie expires '{CookieName}' changed from '{OldExpires}' to '{NewExpires}'.",
+                            storedCookie.Name,
+                            storedCookie.Expires,
+                            cookie.Expires);
+                        storedCookie.Expires = cookie.Expires;
+                    }
+                }
+                else
+                {
+                    Log.Information("Added new missing cookie value '{CookieName}'.", cookie.Name);
+                    storedCookieCollection.Add(cookie);
                 }
             }
-
-            this.SemaphoreSlim.Release();
         }
 
         private CookieCollection LoadFromCookiesTxt()
@@ -221,6 +225,11 @@
                                 await Task.Delay(100);
                             }
                         }
+
+                        Log.Information(
+                            "Read cookie '{CookieName}' with value '{CookieValue}'",
+                            cookieName,
+                            cookieValue);
 
                         antiScrappingCookie = new Cookie(cookieName, cookieValue, "/", "www.tuenvio.cu");
                     }

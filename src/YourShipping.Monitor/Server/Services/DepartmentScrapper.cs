@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Text.Json;
     using System.Text.RegularExpressions;
@@ -23,7 +22,6 @@
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
-    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -35,14 +33,13 @@
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
+        private readonly HttpClient httpClient;
 
         private readonly IServiceProvider serviceProvider;
 
         private readonly IEntityScrapper<Store> storeScrapper;
-
-        private readonly HttpClient httpClient;
-
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
         public DepartmentScrapper(
             IBrowsingContext browsingContext,
@@ -113,14 +110,19 @@
                     string content = null;
                     try
                     {
+                        var clientHandler = this.httpClient.GetHttpClientHandler();
+                        clientHandler.CookieContainer.Add(
+                            ScrappingConfiguration.CookieCollectionUrl,
+                            await this.cookiesSynchronizationService.GetCookieCollectionAsync(store.Url));
+
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage =
-                            await this.httpClient.PostAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage = await this.httpClient.PostAsync(requestUri, formUrlEncodedContent);
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
 
-                        var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                        this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
+                        await this.cookiesSynchronizationService.SyncCookiesAsync(
+                            store.Url,
+                            clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
                     }
                     catch (Exception e)
                     {
@@ -203,8 +205,6 @@
                                                  };
                             }
 
-                       
-
                             if (department != null)
                             {
                                 var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix")
@@ -224,7 +224,8 @@
                                 await productElements.ParallelForEachAsync(
                                     async productElement =>
                                         {
-                                            var productScrapper = this.serviceProvider.GetService<IEntityScrapper<Product>>();
+                                            var productScrapper =
+                                                this.serviceProvider.GetService<IEntityScrapper<Product>>();
                                             var element = productElement.QuerySelector<IElement>("a");
                                             var elementAttribute = element.Attributes["href"];
 
@@ -236,7 +237,9 @@
 
                                             var product = await productScrapper.GetAsync(
                                                               productUrl,
-                                                              disabledProducts == null || !disabledProducts.Contains(productUrl), // Why was in false.
+                                                              disabledProducts == null
+                                                              || !disabledProducts.Contains(
+                                                                  productUrl), // Why was in false.
                                                               store,
                                                               department,
                                                               disabledProducts);
@@ -258,7 +261,7 @@
 
                         if (!isUserLogged)
                         {
-                            this.cookiesSynchronizationService.InvalidateCookies();
+                            this.cookiesSynchronizationService.InvalidateCookies(store.Url);
                         }
                     }
 

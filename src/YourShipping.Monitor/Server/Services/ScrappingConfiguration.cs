@@ -11,17 +11,21 @@
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0"
             };
 
+        public static readonly Uri CookieCollectionUrl = new Uri("https://www.tuenvio.cu");
+
+        public static readonly TimeSpan DepartmentCacheExpiration = TimeSpan.FromSeconds(10);
+
         public static readonly TimeSpan HttpClientTimeout = TimeSpan.FromSeconds(20);
+
+        public static readonly TimeSpan ProductCacheExpiration = TimeSpan.FromSeconds(10);
+
+        public static readonly TimeSpan StoreCacheExpiration = TimeSpan.FromMinutes(30);
+
+        public static readonly string StoreJson = "https://www.tuenvio.cu/stores.json";
 
         private static readonly int AgentIndex = new Random().Next(1, Agents.Length);
 
         private static readonly Random Random = new Random();
-
-        public static TimeSpan DepartmentCacheExpiration => TimeSpan.FromSeconds(10);
-
-        public static TimeSpan ProductCacheExpiration => TimeSpan.FromSeconds(10);
-
-        public static TimeSpan StoreCacheExpiration => TimeSpan.FromMinutes(30);
 
         public static string GetAgent()
         {

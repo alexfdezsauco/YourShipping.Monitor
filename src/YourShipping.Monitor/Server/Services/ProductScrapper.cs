@@ -18,7 +18,6 @@
     using Serilog;
 
     using YourShipping.Monitor.Server.Extensions;
-    using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -37,9 +36,9 @@
 
         private readonly IEntityScrapper<Department> departmentScrapper;
 
-        private readonly IEntityScrapper<Store> storeScrapper;
-
         private readonly HttpClient httpClient;
+
+        private readonly IEntityScrapper<Store> storeScrapper;
 
         public ProductScrapper(
             IBrowsingContext browsingContext,
@@ -112,10 +111,16 @@
 
             try
             {
+                var clientHandler = this.httpClient.GetHttpClientHandler();
+                clientHandler.CookieContainer.Add(
+                    ScrappingConfiguration.CookieCollectionUrl,
+                    await this.cookiesSynchronizationService.GetCookieCollectionAsync(store.Url));
+
                 content = await this.httpClient.GetStringAsync(url);
 
-                var httpClientHandler = this.httpClient.GetHttpClientHandler();
-                this.cookiesSynchronizationService.SyncCookies(httpClientHandler.CookieContainer);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(
+                    store.Url,
+                    clientHandler.CookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
             }
             catch (Exception e)
             {
@@ -239,7 +244,7 @@
                             product.Name,
                             storeName);
 
-                        this.cookiesSynchronizationService.InvalidateCookies();
+                        this.cookiesSynchronizationService.InvalidateCookies(store.Url);
                     }
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
