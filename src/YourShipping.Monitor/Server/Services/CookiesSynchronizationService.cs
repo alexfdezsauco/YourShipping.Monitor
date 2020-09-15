@@ -126,9 +126,10 @@
                 if (!synchronized)
                 {
                     Log.Information(
-                        "Synchronizing cookie '{CookieName}' with value '{CookieValue}'.",
+                        "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for site '{Url}'.",
                         cookie.Name,
-                        cookie.Value);
+                        cookie.Value,
+                        url);
 
                     storedCookieCollection.Add(cookie);
                 }
