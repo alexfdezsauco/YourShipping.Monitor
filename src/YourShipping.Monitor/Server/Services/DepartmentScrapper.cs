@@ -252,6 +252,8 @@
 
                         if (!isUserLogged)
                         {
+                            Log.Warning("There is no a session open for store '{Store}' with url '{Url}'. Will be invalidated.",
+                                storeName, store.Url);
                             this.cookiesSynchronizationService.InvalidateCookies(store.Url);
                         }
                     }
