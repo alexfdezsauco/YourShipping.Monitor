@@ -106,32 +106,20 @@
 
             foreach (Cookie cookie in cookieCollection)
             {
-                var storedCookie = storedCookieCollection.FirstOrDefault(c => c.Name == cookie.Name);
-                if (storedCookie != null)
+                var deleted = false;
+                for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
                 {
-                    if (storedCookie.Value != cookie.Value)
+                    var storedCookie = storedCookieCollection[i];
+                    if (storedCookie.Name == cookie.Name)
                     {
-                        Log.Information(
-                            "Cookie value '{CookieName}' changed from '{OldValue}' to '{NewValue}'.",
-                            storedCookie.Name,
-                            storedCookie.Value,
-                            cookie.Value);
-                        storedCookie.Value = cookie.Value;
-                    }
-
-                    if (storedCookie.Expires != cookie.Expires)
-                    {
-                        Log.Information(
-                            "Cookie expires '{CookieName}' changed from '{OldExpires}' to '{NewExpires}'.",
-                            storedCookie.Name,
-                            storedCookie.Expires,
-                            cookie.Expires);
-                        storedCookie.Expires = cookie.Expires;
+                        storedCookieCollection.Remove(storedCookie);
+                        deleted = true;
                     }
                 }
-                else
+
+                if (deleted)
                 {
-                    Log.Information("Added new missing cookie value '{CookieName}'.", cookie.Name);
+                    Log.Information("Added new missing cookie '{CookieName}' with value '{CookieValue}'.", cookie.Name, cookie.Value);
                     storedCookieCollection.Add(cookie);
                 }
             }
