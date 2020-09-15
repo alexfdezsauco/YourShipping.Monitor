@@ -131,6 +131,8 @@
                     {
                         var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
+                        var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+
                         if (string.IsNullOrWhiteSpace(storeName))
                         {
                             var footerElement =
@@ -201,6 +203,8 @@
                                                  };
                             }
 
+                       
+
                             if (department != null)
                             {
                                 var productElements = mainPanelElement.QuerySelectorAll<IElement>("li.span3.clearfix")
@@ -250,6 +254,11 @@
                                 department.ProductsCount = productsCount;
                                 department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
                             }
+                        }
+
+                        if (!isUserLogged)
+                        {
+                            this.cookiesSynchronizationService.InvalidateCookies();
                         }
                     }
 

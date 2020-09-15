@@ -227,21 +227,19 @@
                                       };
 
                     // This can be done in other place?
-                    if (disabledProducts == null || !disabledProducts.Contains(url))
+                    if (isUserLogged && (disabledProducts == null || !disabledProducts.Contains(url)))
                     {
-                        if (isUserLogged)
-                        {
-                            await this.TryAddProductToShoppingCart(product, document);
-                        }
-                        else
-                        {
-                            Log.Warning(
-                                "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
-                                product.Name,
-                                storeName);
+                        await this.TryAddProductToShoppingCart(product, document);
+                    }
 
-                            this.cookiesSynchronizationService.InvalidateCookies();
-                        }
+                    if (!isUserLogged)
+                    {
+                        Log.Warning(
+                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}'",
+                            product.Name,
+                            storeName);
+
+                        this.cookiesSynchronizationService.InvalidateCookies();
                     }
 
                     product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();

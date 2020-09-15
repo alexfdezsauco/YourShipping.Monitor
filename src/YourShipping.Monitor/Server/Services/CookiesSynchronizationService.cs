@@ -41,6 +41,31 @@
 
         private CookieCollection CookieCollection;
 
+        public CookiesSynchronizationService()
+        {
+            var fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
+                                        {
+                                            NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite
+                                        };
+
+
+            fileSystemWatcher.Changed += (sender, args) =>
+                {
+                    Log.Information("Cookies file changed");
+
+                    this.InvalidateCookies();
+                };
+
+            fileSystemWatcher.Created += (sender, args) =>
+                {
+                    Log.Information("Cookies file created");
+
+                    this.InvalidateCookies();
+                };
+
+            fileSystemWatcher.EnableRaisingEvents = true;
+        }
+
         public DateTime SetDateTime { get; private set; }
 
         public CookieCollection GetCollection()
@@ -79,7 +104,7 @@
             return cookieCollection;
         }
 
-        void ICookiesSynchronizationService.InvalidateCookies()
+        public void InvalidateCookies()
         {
             this.SemaphoreSlim.Wait();
 
@@ -89,22 +114,23 @@
             this.SemaphoreSlim.Release();
         }
 
-        void ICookiesSynchronizationService.SyncCookies(CookieContainer cookieContainer)
+        public void SyncCookies(CookieContainer cookieContainer)
         {
-            this.SemaphoreSlim.Wait();
+            //this.SemaphoreSlim.Wait();
 
-            if (this.CookieCollection != null)
-            {
-                var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
-                if (timeSpan.TotalSeconds > 30)
-                {
-                    Log.Information("Sync Cookies...");
-                    this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
-                    this.SetDateTime = DateTime.Now;
-                }
-            }
+            //if (this.CookieCollection != null)
+            //{
+            //    var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
+            //    if (timeSpan.TotalSeconds > 30)
+            //    {
+            //        Log.Information("Sync Cookies...");
+            //        this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
 
-            this.SemaphoreSlim.Release();
+            //        this.SetDateTime = DateTime.Now;
+            //    }
+            //}
+
+            //this.SemaphoreSlim.Release();
         }
 
         private CookieCollection LoadFromCookiesTxt()
