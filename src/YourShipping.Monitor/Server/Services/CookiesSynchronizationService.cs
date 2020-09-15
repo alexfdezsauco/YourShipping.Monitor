@@ -87,10 +87,8 @@
                                  url,
                                  async () => await this.GetCollectionAsync(),
                                  ExpirationPolicy.Duration(TimeSpan.FromMinutes(30)));
-            lock (collection)
-            {
-                return collection;
-            }
+
+            return collection;
         }
 
         public void InvalidateCookies(string url)
@@ -106,36 +104,33 @@
 
             Log.Information("Synchronizing cookies ...");
 
-            lock (storedCookieCollection)
+            foreach (Cookie cookie in cookieCollection)
             {
-                foreach (Cookie cookie in cookieCollection)
+                var synchronized = false;
+                for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
                 {
-                    var synchronized = false;
-                    for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
+                    var storedCookie = storedCookieCollection[i];
+                    if (storedCookie.Name == cookie.Name)
                     {
-                        var storedCookie = storedCookieCollection[i];
-                        if (storedCookie.Name == cookie.Name)
+                        if (storedCookie.Value != cookie.Value)
                         {
-                            if (storedCookie.Value != cookie.Value)
-                            {
-                                storedCookieCollection.Remove(storedCookie);
-                            }
-                            else
-                            {
-                                synchronized = true;
-                            }
+                            storedCookieCollection.Remove(storedCookie);
+                        }
+                        else
+                        {
+                            synchronized = true;
                         }
                     }
+                }
 
-                    if (!synchronized)
-                    {
-                        Log.Information(
-                            "Synchronizing cookie '{CookieName}' with value '{CookieValue}'.",
-                            cookie.Name,
-                            cookie.Value);
+                if (!synchronized)
+                {
+                    Log.Information(
+                        "Synchronizing cookie '{CookieName}' with value '{CookieValue}'.",
+                        cookie.Name,
+                        cookie.Value);
 
-                        storedCookieCollection.Add(cookie);
-                    }
+                    storedCookieCollection.Add(cookie);
                 }
             }
         }
