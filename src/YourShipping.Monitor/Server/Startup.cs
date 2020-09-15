@@ -144,7 +144,13 @@ namespace YourShipping.Monitor.Server
                             }
                         }
 
-                        var httpClient = new HttpClient(handler) { Timeout = ScrappingConfiguration.HttpClientTimeout };
+                        var httpTimeoutInSeconds = this.Configuration.GetSection("Http")?["TimeoutInSeconds"];
+                        var httpClient = new HttpClient(handler)
+                                             {
+                                                 Timeout = int.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
+                                                               ? TimeSpan.FromSeconds(timeoutInSeconds)
+                                                               : ScrappingConfiguration.HttpClientTimeout
+                                             };
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
@@ -175,7 +181,8 @@ namespace YourShipping.Monitor.Server
                 provider => new CacheStorage<string, Product>(storeNullValues: true));
             services.AddSingleton<ICacheStorage<string, Department>>(
                 provider => new CacheStorage<string, Department>(storeNullValues: true));
-            services.AddSingleton<ICacheStorage<string, Store>>(provider => new CacheStorage<string, Store>(storeNullValues: true));
+            services.AddSingleton<ICacheStorage<string, Store>>(
+                provider => new CacheStorage<string, Store>(storeNullValues: true));
 
             services.AddSingleton<ICookiesSynchronizationService, CookiesSynchronizationService>();
 

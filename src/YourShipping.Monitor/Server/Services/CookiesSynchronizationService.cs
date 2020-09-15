@@ -116,21 +116,21 @@
 
         public void SyncCookies(CookieContainer cookieContainer)
         {
-            //this.SemaphoreSlim.Wait();
+            this.SemaphoreSlim.Wait();
 
-            //if (this.CookieCollection != null)
-            //{
-            //    var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
-            //    if (timeSpan.TotalSeconds > 30)
-            //    {
-            //        Log.Information("Sync Cookies...");
-            //        this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+            if (this.CookieCollection != null)
+            {
+                var timeSpan = DateTime.Now.Subtract(this.SetDateTime);
+                if (timeSpan.TotalSeconds > 30)
+                {
+                    Log.Information("Sync Cookies...");
+                    this.CookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
 
-            //        this.SetDateTime = DateTime.Now;
-            //    }
-            //}
+                    this.SetDateTime = DateTime.Now;
+                }
+            }
 
-            //this.SemaphoreSlim.Release();
+            this.SemaphoreSlim.Release();
         }
 
         private CookieCollection LoadFromCookiesTxt()
