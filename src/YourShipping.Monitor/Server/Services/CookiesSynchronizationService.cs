@@ -100,40 +100,40 @@
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
-            var storedCookieCollection = await this.GetCookieCollectionAsync(url);
+            //var storedCookieCollection = await this.GetCookieCollectionAsync(url);
 
-            Log.Information("Synchronizing cookies ...");
+            //Log.Information("Synchronizing cookies ...");
 
-            foreach (Cookie cookie in cookieCollection)
-            {
-                var synchronized = false;
-                for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
-                {
-                    var storedCookie = storedCookieCollection[i];
-                    if (storedCookie.Name == cookie.Name)
-                    {
-                        if (storedCookie.Value != cookie.Value)
-                        {
-                            storedCookieCollection.Remove(storedCookie);
-                        }
-                        else
-                        {
-                            synchronized = true;
-                        }
-                    }
-                }
+            //foreach (Cookie cookie in cookieCollection)
+            //{
+            //    var synchronized = false;
+            //    for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
+            //    {
+            //        var storedCookie = storedCookieCollection[i];
+            //        if (storedCookie.Name == cookie.Name)
+            //        {
+            //            if (storedCookie.Value != cookie.Value)
+            //            {
+            //                storedCookieCollection.Remove(storedCookie);
+            //            }
+            //            else
+            //            {
+            //                synchronized = true;
+            //            }
+            //        }
+            //    }
 
-                if (!synchronized)
-                {
-                    Log.Information(
-                        "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for site '{Url}'.",
-                        cookie.Name,
-                        cookie.Value,
-                        url);
+            //    if (!synchronized)
+            //    {
+            //        Log.Information(
+            //            "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for site '{Url}'.",
+            //            cookie.Name,
+            //            cookie.Value,
+            //            url);
 
-                    storedCookieCollection.Add(cookie);
-                }
-            }
+            //        storedCookieCollection.Add(cookie);
+            //    }
+            //}
         }
 
         private CookieCollection LoadFromCookiesTxt()
