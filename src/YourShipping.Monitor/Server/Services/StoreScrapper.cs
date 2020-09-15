@@ -58,13 +58,21 @@
             OfficialStoreInfo[] storesToImport = null;
             try
             {
-                var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
-                storesToImport = await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoresJsonUrl);
+                var httpClient =
+                    await this.cookiesSynchronizationService.CreateHttpClientAsync(
+                        ScrappingConfiguration.StoresJsonUrl);
+                storesToImport =
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(
+                    httpClient,
+                    ScrappingConfiguration.StoresJsonUrl);
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error requesting '{Url}'. Cookies will be invalidated.", ScrappingConfiguration.StoresJsonUrl);
+                Log.Error(
+                    e,
+                    "Error requesting '{Url}'. Cookies will be invalidated.",
+                    ScrappingConfiguration.StoresJsonUrl);
                 this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
             }
 
@@ -92,62 +100,74 @@
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
-                var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
-
-                if (string.IsNullOrWhiteSpace(storeName))
+                var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
+                                == "503";
+                if (isBlocked)
                 {
-                    var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
-                    var uriParts = storeUrl.Split('/');
-                    if (uriParts.Length > 3)
-                    {
-                        storeName = storeUrl.Split('/')[3];
-                    }
+                    // TODO: Slow down approach?
+                    Log.Error("The  request to store '{Url}' was blocked", storeUrl);
+                }
+                else
+                {
+                    var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
 
-                    if (footerElement != null)
+                    if (string.IsNullOrWhiteSpace(storeName))
                     {
-                        var footerElementTextParts = footerElement.TextContent.Split('•');
-                        if (footerElementTextParts.Length > 0)
+                        var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                        var uriParts = storeUrl.Split('/');
+                        if (uriParts.Length > 3)
                         {
-                            storeName = footerElementTextParts[^1].Trim();
-                            if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                                && storeName.Length > StorePrefix.Length)
+                            storeName = storeUrl.Split('/')[3];
+                        }
+
+                        if (footerElement != null)
+                        {
+                            var footerElementTextParts = footerElement.TextContent.Split('•');
+                            if (footerElementTextParts.Length > 0)
                             {
-                                storeName = storeName.Substring(StorePrefix.Length - 1);
+                                storeName = footerElementTextParts[^1].Trim();
+                                if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                                    && storeName.Length > StorePrefix.Length)
+                                {
+                                    storeName = storeName.Substring(StorePrefix.Length - 1);
+                                }
                             }
                         }
                     }
-                }
 
-                var mainNavElement = document.QuerySelector<IElement>("#mainContainer > header > div.mainNav");
-                if (mainNavElement != null)
-                {
-                    isAvailable = true;
-                    var elements = mainNavElement.QuerySelectorAll<IElement>("div > div > ul > li").ToList();
-                    foreach (var element in elements)
+                    var mainNavElement = document.QuerySelector<IElement>("#mainContainer > header > div.mainNav");
+                    if (mainNavElement != null)
                     {
-                        if (!element.InnerHtml.Contains("<i class=\"icon-home\"></i>"))
+                        isAvailable = true;
+                        var elements = mainNavElement.QuerySelectorAll<IElement>("div > div > ul > li").ToList();
+                        foreach (var element in elements)
                         {
-                            categoriesCount++;
-                            var querySelector = element.QuerySelector<IElement>("a");
-                            if (querySelector != null)
+                            if (!element.InnerHtml.Contains("<i class=\"icon-home\"></i>"))
                             {
-                                querySelector.QuerySelector("i")?.Remove();
-                                var name = querySelector.TextContent;
-                            }
+                                categoriesCount++;
+                                var querySelector = element.QuerySelector<IElement>("a");
+                                if (querySelector != null)
+                                {
+                                    querySelector.QuerySelector("i")?.Remove();
+                                    var name = querySelector.TextContent;
+                                }
 
-                            var departmentsElementSelector =
-                                element.QuerySelectorAll<IElement>("div > ul > li").ToList();
-                            departmentsCount += departmentsElementSelector.Count;
+                                var departmentsElementSelector =
+                                    element.QuerySelectorAll<IElement>("div > ul > li").ToList();
+                                departmentsCount += departmentsElementSelector.Count;
+                            }
                         }
                     }
-                }
 
-                if (!isUserLogged)
-                {
-                    Log.Warning("There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
-                        storeName, storeUrl);
+                    if (!isUserLogged)
+                    {
+                        Log.Warning(
+                            "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
+                            storeName,
+                            storeUrl);
 
-                    this.cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                        this.cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                    }
                 }
             }
 

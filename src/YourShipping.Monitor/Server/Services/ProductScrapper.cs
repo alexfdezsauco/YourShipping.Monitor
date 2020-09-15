@@ -121,125 +121,136 @@
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
-                var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
-
-                if (string.IsNullOrWhiteSpace(storeName))
+                var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
+                                == "503";
+                if (isBlocked)
                 {
-                    var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
-                    var uriParts = url.Split('/');
-                    if (uriParts.Length > 3)
-                    {
-                        storeName = url.Split('/')[3];
-                    }
+                    // TODO: Slow down approach?
+                    Log.Error("The request to product '{Url}' was blocked", url);
+                }
+                else
+                {
+                    var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
 
-                    if (footerElement != null)
+                    if (string.IsNullOrWhiteSpace(storeName))
                     {
-                        var footerElementTextParts = footerElement.TextContent.Split('•');
-                        if (footerElementTextParts.Length > 0)
+                        var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                        var uriParts = url.Split('/');
+                        if (uriParts.Length > 3)
                         {
-                            storeName = footerElementTextParts[^1].Trim();
-                            if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                                && storeName.Length > StorePrefix.Length)
+                            storeName = url.Split('/')[3];
+                        }
+
+                        if (footerElement != null)
+                        {
+                            var footerElementTextParts = footerElement.TextContent.Split('•');
+                            if (footerElementTextParts.Length > 0)
                             {
-                                storeName = storeName.Substring(StorePrefix.Length - 1);
+                                storeName = footerElementTextParts[^1].Trim();
+                                if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                                    && storeName.Length > StorePrefix.Length)
+                                {
+                                    storeName = storeName.Substring(StorePrefix.Length - 1);
+                                }
                             }
                         }
                     }
-                }
 
-                var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
-                if (mainPanelElement != null)
-                {
-                    var errorElement = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_lblError");
-                    if (errorElement != null)
+                    var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
+                    if (mainPanelElement != null)
                     {
-                        return null;
-                    }
-
-                    var missingProductElement = mainPanelElement.QuerySelector<IElement>(
-                        "#ctl00_cphPage_formProduct_ctl00_productError_missingProduct");
-
-                    IElement productPriceElement;
-                    IElement productNameElement;
-                    var isAvailable = missingProductElement == null;
-                    if (!isAvailable)
-                    {
-                        productNameElement = mainPanelElement.QuerySelector<IElement>(
-                            "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(1) > td.DescriptionValue > span");
-                        productPriceElement = mainPanelElement.QuerySelector<IElement>(
-                            "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(2) > td.PrecioProdList");
-                    }
-                    else
-                    {
-                        productNameElement = mainPanelElement.QuerySelector<IElement>(
-                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span5 > div.product-title > h4");
-
-                        productPriceElement = mainPanelElement.QuerySelector<IElement>(
-                            "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
-
-                        if (productPriceElement == null)
+                        var errorElement = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_lblError");
+                        if (errorElement != null)
                         {
-                            productPriceElement = mainPanelElement.QuerySelector<IElement>(
-                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+                            return null;
                         }
+
+                        var missingProductElement = mainPanelElement.QuerySelector<IElement>(
+                            "#ctl00_cphPage_formProduct_ctl00_productError_missingProduct");
+
+                        IElement productPriceElement;
+                        IElement productNameElement;
+                        var isAvailable = missingProductElement == null;
+                        if (!isAvailable)
+                        {
+                            productNameElement = mainPanelElement.QuerySelector<IElement>(
+                                "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(1) > td.DescriptionValue > span");
+                            productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                                "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(2) > td.PrecioProdList");
+                        }
+                        else
+                        {
+                            productNameElement = mainPanelElement.QuerySelector<IElement>(
+                                "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span5 > div.product-title > h4");
+
+                            productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                                "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+
+                            if (productPriceElement == null)
+                            {
+                                productPriceElement = mainPanelElement.QuerySelector<IElement>(
+                                    "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-price > span");
+                            }
+                        }
+
+                        var name = productNameElement?.TextContent.Trim();
+                        if (string.IsNullOrWhiteSpace(name))
+                        {
+                            name = mainPanelElement.QuerySelector<IElement>(
+                                    "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
+                                ?.TextContent.Trim();
+                        }
+
+                        if (string.IsNullOrWhiteSpace(name))
+                        {
+                            name = mainPanelElement.QuerySelector<IElement>(
+                                    "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
+                                ?.TextContent.Trim();
+                        }
+
+                        float price = 0;
+                        string currency = null;
+                        var priceParts = productPriceElement?.TextContent.Trim().Split(' ');
+                        if (priceParts != null && priceParts.Length > 0)
+                        {
+                            price = float.Parse(priceParts[0].Trim(' ', '$'));
+                            currency = priceParts[^1];
+                        }
+
+                        var product = new Product
+                                          {
+                                              Name = name,
+                                              Price = price,
+                                              Currency = currency,
+                                              Url = url,
+                                              Store = storeName,
+                                              Department = departmentName,
+                                              DepartmentCategory = departmentCategory,
+                                              IsAvailable = isAvailable,
+                                              IsEnabled = true
+                                          };
+
+                        // This can be done in other place?
+                        if (isUserLogged && (disabledProducts == null || !disabledProducts.Contains(url)))
+                        {
+                            await this.TryAddProductToShoppingCart(httpClient, product, document);
+                        }
+
+                        if (!isUserLogged)
+                        {
+                            Log.Warning(
+                                "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Cookies will be invalidated.",
+                                product.Name,
+                                storeName,
+                                store.Url);
+
+                            this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                        }
+
+                        product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
+
+                        return product;
                     }
-
-                    var name = productNameElement?.TextContent.Trim();
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        name = mainPanelElement.QuerySelector<IElement>(
-                                "#ctl00_cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
-                            ?.TextContent.Trim();
-                    }
-
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        name = mainPanelElement.QuerySelector<IElement>(
-                                "#cphPage_UpdatePanel1 > div > div.product-details.clearfix > div.span4 > div.product-set > div.product-info > dl > dd:nth-child(4)")
-                            ?.TextContent.Trim();
-                    }
-
-                    float price = 0;
-                    string currency = null;
-                    var priceParts = productPriceElement?.TextContent.Trim().Split(' ');
-                    if (priceParts != null && priceParts.Length > 0)
-                    {
-                        price = float.Parse(priceParts[0].Trim(' ', '$'));
-                        currency = priceParts[^1];
-                    }
-
-                    var product = new Product
-                                      {
-                                          Name = name,
-                                          Price = price,
-                                          Currency = currency,
-                                          Url = url,
-                                          Store = storeName,
-                                          Department = departmentName,
-                                          DepartmentCategory = departmentCategory,
-                                          IsAvailable = isAvailable,
-                                          IsEnabled = true
-                                      };
-
-                    // This can be done in other place?
-                    if (isUserLogged && (disabledProducts == null || !disabledProducts.Contains(url)))
-                    {
-                        await this.TryAddProductToShoppingCart(httpClient, product, document);
-                    }
-
-                    if (!isUserLogged)
-                    {
-                        Log.Warning(
-                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Cookies will be invalidated.",
-                            product.Name,
-                            storeName, store.Url);
-
-                        this.cookiesSynchronizationService.InvalidateCookies(store.Url);
-                    }
-
-                    product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
-
-                    return product;
                 }
             }
 
