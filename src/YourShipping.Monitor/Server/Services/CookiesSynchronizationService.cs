@@ -46,9 +46,7 @@
         {
             var fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
                                         {
-                                            NotifyFilter =
-                                                NotifyFilters.CreationTime | NotifyFilters.LastWrite
-                                                                           | NotifyFilters.Size | NotifyFilters.FileName
+                                            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
                                         };
 
             fileSystemWatcher.Changed += (sender, args) =>
@@ -112,23 +110,26 @@
             {
                 foreach (Cookie cookie in cookieCollection)
                 {
-                    var deleted = false;
+                    var synchronized = false;
                     for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
                     {
                         var storedCookie = storedCookieCollection[i];
                         if (storedCookie.Name == cookie.Name)
                         {
-                            storedCookieCollection.Remove(storedCookie);
-                            deleted = true;
+                            if (storedCookie.Value != cookie.Value)
+                            {
+                                storedCookieCollection.Remove(storedCookie);
+                            }
+                            else
+                            {
+                                synchronized = true;
+                            }
                         }
                     }
 
-                    if (deleted)
+                    if (!synchronized)
                     {
-                        Log.Debug(
-                            "Sync cookie '{CookieName}' with value '{CookieValue}'.",
-                            cookie.Name,
-                            cookie.Value);
+                        Log.Information("Synchronizing cookie '{CookieName}' with value '{CookieValue}'.", cookie.Name, cookie.Value);
 
                         storedCookieCollection.Add(cookie);
                     }
