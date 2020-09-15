@@ -58,17 +58,14 @@
             OfficialStoreInfo[] storesToImport = null;
             try
             {
-                var httpClient =
-                    await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
-                storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
+                var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
+                storesToImport = await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
                 await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoresJsonUrl);
             }
             catch (Exception e)
             {
+                Log.Error(e, "Error requesting '{Url}'. Cookies will be invalidated.", ScrappingConfiguration.StoresJsonUrl);
                 this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
-
-                Log.Error(e, "Error requesting stores.json");
             }
 
             var requestUri = storeUrl;
@@ -77,7 +74,6 @@
             {
                 var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
                 content = await httpClient.GetStringAsync(requestUri);
-
                 await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
             }
             catch (Exception e)
@@ -148,7 +144,7 @@
 
                 if (!isUserLogged)
                 {
-                    Log.Warning("There is no a session open for store '{Store}' with url '{Url}'. Will be invalidated.",
+                    Log.Warning("There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
                         storeName, storeUrl);
 
                     this.cookiesSynchronizationService.InvalidateCookies(storeUrl);

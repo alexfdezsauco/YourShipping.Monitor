@@ -230,7 +230,7 @@
                     if (!isUserLogged)
                     {
                         Log.Warning(
-                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Will be invalidated.",
+                            "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Cookies will be invalidated.",
                             product.Name,
                             storeName, store.Url);
 
