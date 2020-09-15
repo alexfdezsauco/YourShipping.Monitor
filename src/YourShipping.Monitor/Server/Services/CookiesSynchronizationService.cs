@@ -16,7 +16,6 @@
     using AngleSharp.Js;
 
     using Catel.Caching;
-    using Catel.Caching.Policies;
 
     using Serilog;
 
@@ -83,12 +82,9 @@
 
         public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
-            var collection = await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
-                                 url,
-                                 async () => await this.GetCollectionAsync(),
-                                 ExpirationPolicy.Duration(TimeSpan.FromMinutes(30)));
-
-            return collection;
+            return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       async () => await this.GetCollectionAsync());
         }
 
         public void InvalidateCookies(string url)
@@ -100,40 +96,40 @@
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
-            //var storedCookieCollection = await this.GetCookieCollectionAsync(url);
+            var storedCookieCollection = await this.GetCookieCollectionAsync(url);
 
-            //Log.Information("Synchronizing cookies ...");
+            Log.Information("Synchronizing cookies ...");
 
-            //foreach (Cookie cookie in cookieCollection)
-            //{
-            //    var synchronized = false;
-            //    for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
-            //    {
-            //        var storedCookie = storedCookieCollection[i];
-            //        if (storedCookie.Name == cookie.Name)
-            //        {
-            //            if (storedCookie.Value != cookie.Value)
-            //            {
-            //                storedCookieCollection.Remove(storedCookie);
-            //            }
-            //            else
-            //            {
-            //                synchronized = true;
-            //            }
-            //        }
-            //    }
+            foreach (Cookie cookie in cookieCollection)
+            {
+                var synchronized = false;
+                for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
+                {
+                    var storedCookie = storedCookieCollection[i];
+                    if (storedCookie.Name == cookie.Name)
+                    {
+                        if (storedCookie.Value != cookie.Value)
+                        {
+                            storedCookieCollection.Remove(storedCookie);
+                        }
+                        else
+                        {
+                            synchronized = true;
+                        }
+                    }
+                }
 
-            //    if (!synchronized)
-            //    {
-            //        Log.Information(
-            //            "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for site '{Url}'.",
-            //            cookie.Name,
-            //            cookie.Value,
-            //            url);
+                if (!synchronized)
+                {
+                    Log.Information(
+                        "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for site '{Url}'.",
+                        cookie.Name,
+                        cookie.Value,
+                        url);
 
-            //        storedCookieCollection.Add(cookie);
-            //    }
-            //}
+                    storedCookieCollection.Add(cookie);
+                }
+            }
         }
 
         private CookieCollection LoadFromCookiesTxt()
@@ -158,7 +154,7 @@
                                 value = "username=&userPsw=";
                             }
 
-                            if (cookieCollection[name] == null)
+                            if (name != "SRVNAME")
                             {
                                 cookieCollection.Add(
                                     new Cookie(name, value, match.Groups[3].Value, match.Groups[1].Value));
