@@ -7,6 +7,7 @@
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
@@ -20,6 +21,8 @@
     using Catel.Collections;
 
     using Microsoft.Extensions.DependencyInjection;
+
+    using Newtonsoft.Json;
 
     using Serilog;
 
@@ -55,7 +58,9 @@
             this.provider = provider;
             this.fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
                                          {
-                                             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName
+                                             NotifyFilter =
+                                                 NotifyFilters.LastWrite | NotifyFilters.CreationTime
+                                                                         | NotifyFilters.FileName
                                          };
 
             this.fileSystemWatcher.Changed += (sender, args) =>
@@ -90,10 +95,26 @@
         public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
             var cookieCollection = new CookieCollection();
-            
+
             var storedCookieCollection = await this.GetCookiesCollectionFromCache(url);
             lock (storedCookieCollection)
             {
+                try
+                {
+                    var parts = new Url(url).Path.Split('/');
+                    if (parts.Length > 1)
+                    {
+                        var cookiesFilePath = $"data/{parts[0]}.json";
+                        Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
+                        var serializeObject = JsonConvert.SerializeObject(storedCookieCollection);
+                        File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error serializing cookies.");
+                }
+
                 cookieCollection.AddRange(storedCookieCollection.Values);
             }
 
@@ -116,6 +137,21 @@
         public void InvalidateCookies(string url)
         {
             Log.Information("Invalidating Cookies for url '{Url}'...", url);
+
+            var parts = new Url(url).Path.Split('/');
+            try
+            {
+                if (parts.Length > 1)
+                {
+                    var cookieFilePath = $"data/{parts[0]}.json";
+                    Log.Information("Deleting cookies file for {Path}.", cookieFilePath);
+                    File.Delete(cookieFilePath);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning(e, "Error deleting cookies file for {Url}", url);
+            }
 
             this.cookieCollectionCacheStorage.Remove(url);
         }
@@ -173,7 +209,30 @@
         {
             return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
                        url,
-                       async () => await this.GetCookiesCollectionAsync());
+                       async () =>
+                           {
+                               var parts = new Url(url).Path.Split('/');
+                               try
+                               {
+                                   if (parts.Length > 1)
+                                   {
+                                       var cookieFilePath = $"data/{parts[0]}.json";
+                                       if (File.Exists(cookieFilePath))
+                                       {
+                                           Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
+                                           var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
+                                           return JsonConvert
+                                               .DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                       }
+                                   }
+                               }
+                               catch (Exception e)
+                               {
+                                   Log.Warning(e, "Error deserializing cookies");
+                               }
+
+                               return await this.GetCookiesCollectionAsync();
+                           });
         }
 
         private async Task<Dictionary<string, Cookie>> LoadFromCookiesTxt()
@@ -223,7 +282,7 @@
             Log.Information("Initializing Anti-Scrapping Cookie...");
             try
             {
-                var httpClient = new HttpClient();
+                var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
                 httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
 
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation(

@@ -125,7 +125,6 @@ namespace YourShipping.Monitor.Server
                 sp =>
                     {
                         var cookieContainer = sp.GetService<CookieContainer>();
-                        var cookiesSynchronizationService = sp.GetService<ICookiesSynchronizationService>();
 
                         var handler = new HttpClientHandler
                                           {
@@ -141,17 +140,8 @@ namespace YourShipping.Monitor.Server
                         if (cookieContainer != null)
                         {
                             handler.CookieContainer = cookieContainer;
-
-                            /*
-                                                        var cookieCollection = cookiesSynchronizationService.GetCollection();
-                                                        if (cookieCollection.Count > 0)
-                                                        {
-                                                            handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
-                                                        }
-                                                        */
                         }
 
-                        // handler = SetServicePointOptions(handler);
                         var httpTimeoutInSeconds = this.Configuration.GetSection("Http")?["TimeoutInSeconds"];
                         var httpClient = new HttpClient(handler)
                                              {
