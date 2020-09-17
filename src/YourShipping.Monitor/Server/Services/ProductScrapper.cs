@@ -109,7 +109,7 @@
 
             try
             {
-                content = await httpClient.GetStringAsync(url);
+                content = await httpClient.GetStringAsync(url + $"&requestId={Guid.NewGuid()}");
                 await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
             }
             catch (Exception e)

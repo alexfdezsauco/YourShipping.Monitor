@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using System.Net;
 
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -19,6 +20,8 @@
 
         public static void Main(string[] args)
         {
+            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
             if (!Directory.Exists("data"))
             {
                 Directory.CreateDirectory("data");

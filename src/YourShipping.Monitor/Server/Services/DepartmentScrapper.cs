@@ -110,7 +110,7 @@
 
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await httpClient.PostAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage = await httpClient.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
 
                         await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);

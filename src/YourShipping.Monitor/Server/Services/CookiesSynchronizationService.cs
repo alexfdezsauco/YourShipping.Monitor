@@ -1,6 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Helpers
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -16,6 +17,7 @@
     using AngleSharp.Js;
 
     using Catel.Caching;
+    using Catel.Collections;
 
     using Microsoft.Extensions.DependencyInjection;
 
@@ -27,8 +29,10 @@
     // TODO: Improve this?
     public class CookiesSynchronizationService : ICookiesSynchronizationService
     {
-        private readonly CacheStorage<string, CookieCollection> cookieCollectionCacheStorage =
-            new CacheStorage<string, CookieCollection>();
+        private readonly CacheStorage<string, Dictionary<string, Cookie>> cookieCollectionCacheStorage =
+            new CacheStorage<string, Dictionary<string, Cookie>>();
+
+        private readonly FileSystemWatcher fileSystemWatcher;
 
         private readonly IServiceProvider provider;
 
@@ -49,30 +53,26 @@
         public CookiesSynchronizationService(IServiceProvider provider)
         {
             this.provider = provider;
-        }
+            this.fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
+                                         {
+                                             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName
+                                         };
 
-        public CookiesSynchronizationService()
-        {
-            var fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
-                                        {
-                                            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
-                                        };
-
-            fileSystemWatcher.Changed += (sender, args) =>
+            this.fileSystemWatcher.Changed += (sender, args) =>
                 {
                     Log.Information("Cookies file changed");
 
                     this.cookieCollectionCacheStorage.Clear();
                 };
 
-            fileSystemWatcher.Created += (sender, args) =>
+            this.fileSystemWatcher.Created += (sender, args) =>
                 {
                     Log.Information("Cookies file created");
 
                     this.cookieCollectionCacheStorage.Clear();
                 };
 
-            fileSystemWatcher.EnableRaisingEvents = true;
+            this.fileSystemWatcher.EnableRaisingEvents = true;
         }
 
         public async Task<HttpClient> CreateHttpClientAsync(string url)
@@ -87,29 +87,22 @@
             return httpClient;
         }
 
-        public async Task<CookieCollection> GetCollectionAsync()
+        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
-            var cookieCollection = this.LoadFromCookiesTxt();
-            var antiScrappingCookie = await this.ReadAntiScrappingCookie();
-            if (antiScrappingCookie != null)
-            {
-                var cookie = cookieCollection.FirstOrDefault(c => c.Name == antiScrappingCookie.Name);
-                if (cookie != null)
-                {
-                    cookieCollection.Remove(cookie);
-                }
-
-                cookieCollection.Add(antiScrappingCookie);
-            }
-
+            var cookieCollection = new CookieCollection();
+            cookieCollection.AddRange((await this.GetCookiesCollectionFromCache(url)).Values);
             return cookieCollection;
         }
 
-        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
+        public async Task<Dictionary<string, Cookie>> GetCookiesCollectionAsync()
         {
-            var cookieCollection = await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
-                                       url,
-                                       async () => await this.GetCollectionAsync());
+            var cookieCollection = await this.LoadFromCookiesTxt();
+            var antiScrappingCookie = await this.ReadAntiScrappingCookie();
+            if (antiScrappingCookie != null)
+            {
+                cookieCollection.Remove(antiScrappingCookie.Name);
+                cookieCollection.Add(antiScrappingCookie.Name, antiScrappingCookie);
+            }
 
             return cookieCollection;
         }
@@ -125,37 +118,38 @@
         {
             var httpClientHandler = httpClient.GetHttpClientHandler();
             var cookieContainer = httpClientHandler.CookieContainer;
-            await this.SyncCookiesAsync(url, cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl));
+            var cookieCollection = cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
+            if (cookieCollection[".ASPXANONYMOUS"] != null)
+            {
+                Log.Warning("Session expires. Cookies will be invalidated.");
+                this.InvalidateCookies(url);
+            }
+            else
+            {
+                await this.SyncCookiesAsync(url, cookieCollection);
+            }
         }
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
-            var storedCookieCollection = await this.GetCookieCollectionAsync(url);
-
+            var storedCookieCollection = await this.GetCookiesCollectionFromCache(url);
             lock (storedCookieCollection)
             {
                 Log.Information("Synchronizing cookies for url '{Url}'...", url);
 
                 foreach (Cookie cookie in cookieCollection)
                 {
-                    var synchronized = false;
-                    for (var i = storedCookieCollection.Count - 1; i >= 0; i--)
+                    if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
                     {
-                        var storedCookie = storedCookieCollection[i];
-                        if (storedCookie.Name == cookie.Name)
-                        {
-                            if (storedCookie.Value != cookie.Value)
-                            {
-                                storedCookieCollection.Remove(storedCookie);
-                            }
-                            else
-                            {
-                                synchronized = true;
-                            }
-                        }
-                    }
+                        Log.Information(
+                            "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                            cookie.Name,
+                            cookie.Value,
+                            url);
 
-                    if (!synchronized)
+                        storedCookieCollection.Add(cookie.Name, cookie);
+                    }
+                    else if (storedCookie.Value != cookie.Value)
                     {
                         Log.Information(
                             "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
@@ -163,19 +157,27 @@
                             cookie.Value,
                             url);
 
-                        storedCookieCollection.Add(cookie);
+                        storedCookie.Value = cookie.Value;
                     }
                 }
             }
         }
 
-        private CookieCollection LoadFromCookiesTxt()
+        private async Task<Dictionary<string, Cookie>> GetCookiesCollectionFromCache(string url)
         {
-            var cookieCollection = new CookieCollection();
+            return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       async () => await this.GetCookiesCollectionAsync());
+        }
+
+        private async Task<Dictionary<string, Cookie>> LoadFromCookiesTxt()
+        {
+            var cookieCollection = new Dictionary<string, Cookie>();
             var cookiesFile = "data/cookies.txt";
             if (File.Exists(cookiesFile))
             {
-                var readAllText = File.ReadAllLines(cookiesFile).Where(s => !s.TrimStart().StartsWith("#"));
+                var readAllText =
+                    (await File.ReadAllLinesAsync(cookiesFile)).Where(s => !s.TrimStart().StartsWith("#"));
                 foreach (var line in readAllText)
                 {
                     var match = this.RegexCookiesTxt.Match(line);
@@ -194,6 +196,7 @@
                             if (name != "SRVNAME")
                             {
                                 cookieCollection.Add(
+                                    name,
                                     new Cookie(name, value, match.Groups[3].Value, match.Groups[1].Value));
                             }
                         }

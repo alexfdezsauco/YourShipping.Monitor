@@ -4,6 +4,7 @@ namespace YourShipping.Monitor.Server
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Security.Authentication;
 
     using AngleSharp;
 
@@ -131,21 +132,26 @@ namespace YourShipping.Monitor.Server
                                               AutomaticDecompression =
                                                   DecompressionMethods.GZip | DecompressionMethods.Deflate
                                                                             | DecompressionMethods.Brotli,
-                                              AllowAutoRedirect = true
+                                              AllowAutoRedirect = true,
+                                              SslProtocols =
+                                                  SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
+                                                  | SslProtocols.Tls13
                                           };
 
                         if (cookieContainer != null)
                         {
                             handler.CookieContainer = cookieContainer;
+
                             /*
-                            var cookieCollection = cookiesSynchronizationService.GetCollection();
-                            if (cookieCollection.Count > 0)
-                            {
-                                handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
-                            }
-                            */
+                                                        var cookieCollection = cookiesSynchronizationService.GetCollection();
+                                                        if (cookieCollection.Count > 0)
+                                                        {
+                                                            handler.CookieContainer.Add(new Uri("https://www.tuenvio.cu"), cookieCollection);
+                                                        }
+                                                        */
                         }
 
+                        // handler = SetServicePointOptions(handler);
                         var httpTimeoutInSeconds = this.Configuration.GetSection("Http")?["TimeoutInSeconds"];
                         var httpClient = new HttpClient(handler)
                                              {
@@ -157,7 +163,18 @@ namespace YourShipping.Monitor.Server
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
                             ScrappingConfiguration.GetAgent());
+                        var random = new Random();
 
+                        /*
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "X-Forwarded-For",
+                            $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}"); 
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "X-Real-IP",
+                            $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}");
+                        */
+
+                        // httpClient.DefaultRequestHeaders.Host = $"192.168.43.{random.Next(1, 255)}";
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "accept-encoding",
                             "gzip, deflate, br");
@@ -202,6 +219,29 @@ namespace YourShipping.Monitor.Server
             services.AddHostedService<StoreMonitorHostedService>();
 
             // services.AddHostedService<SyncUsersFromTelegramHostedService>();
+        }
+
+        // HttpClientHandler SetServicePointOptions(HttpClientHandler handler)
+        // {
+        // var field = handler.GetType().GetField("_startRequest", BindingFlags.NonPublic | BindingFlags.Instance); // Fieldname has a _ due to being private
+        // var startRequest = (Action<object>)field.GetValue(handler);
+
+        // Action<object> newStartRequest = obj =>
+        // {
+        // var webReqField = obj.GetType().GetField("webRequest", BindingFlags.NonPublic | BindingFlags.Instance);
+        // var webRequest = webReqField.GetValue(obj) as HttpWebRequest;
+        // webRequest.ServicePoint.BindIPEndPointDelegate = new BindIPEndPoint(BindIPEndPointCallback);
+
+        // startRequest(obj); //call original action
+        // };
+
+        // field.SetValue(handler, newStartRequest); //replace original 'startRequest' with the one above
+
+        // return handler;
+        // }
+        private IPEndPoint BindIPEndPointCallback(ServicePoint servicepoint, IPEndPoint remoteendpoint, int retrycount)
+        {
+            return new IPEndPoint(IPAddress.Parse("172.17.96.1"), 80);
         }
     }
 }

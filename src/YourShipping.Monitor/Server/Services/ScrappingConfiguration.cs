@@ -29,12 +29,7 @@
 
         public static string GetAgent()
         {
-            return Agents[AgentIndex];
-        }
-
-        public static string RandomAgent()
-        {
-            return Agents[Random.Next(0, Agents.Length)];
+            return Agents[0];
         }
     }
 }
