@@ -6,13 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="your-shipping - Copy.db" />
-    <None Remove="your-shipping.db" />
-    <None Remove="your-shipping.db-shm" />
-    <None Remove="your-shipping.db-wal" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-827" />
     <PackageReference Include="AngleSharp.Io" Version="0.14.0" />
     <PackageReference Include="AngleSharp.Js" Version="0.14.0" />
