@@ -96,25 +96,9 @@
         {
             var cookieCollection = new CookieCollection();
 
-            var storedCookieCollection = await this.GetCookiesCollectionFromCache(url);
+            var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
             lock (storedCookieCollection)
             {
-                try
-                {
-                    var parts = new Url(url).Path.Split('/');
-                    if (parts.Length > 1)
-                    {
-                        var cookiesFilePath = $"data/{parts[0]}.json";
-                        Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
-                        var serializeObject = JsonConvert.SerializeObject(storedCookieCollection);
-                        File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Warning(e, "Error serializing cookies.");
-                }
-
                 cookieCollection.AddRange(storedCookieCollection.Values);
             }
 
@@ -156,6 +140,34 @@
             this.cookieCollectionCacheStorage.Remove(url);
         }
 
+        public async Task SerializeAsync()
+        {
+            Log.Information("Serializing cookies...");
+            var urls = this.cookieCollectionCacheStorage.Keys.ToList();
+            foreach (var url in urls)
+            {
+                var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
+                lock (storedCookieCollection)
+                {
+                    try
+                    {
+                        var parts = new Url(url).Path.Split('/');
+                        if (parts.Length > 1)
+                        {
+                            var cookiesFilePath = $"data/{parts[0]}.json";
+                            Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
+                            var serializeObject = JsonConvert.SerializeObject(storedCookieCollection);
+                            File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error serializing cookies.");
+                    }
+                }
+            }
+        }
+
         public async Task SyncCookiesAsync(HttpClient httpClient, string url)
         {
             var httpClientHandler = httpClient.GetHttpClientHandler();
@@ -174,7 +186,7 @@
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
-            var storedCookieCollection = await this.GetCookiesCollectionFromCache(url);
+            var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
             lock (storedCookieCollection)
             {
                 Log.Information("Synchronizing cookies for url '{Url}'...", url);
@@ -205,7 +217,7 @@
             }
         }
 
-        private async Task<Dictionary<string, Cookie>> GetCookiesCollectionFromCache(string url)
+        private async Task<Dictionary<string, Cookie>> GetCookiesCollectionFromCacheAsync(string url)
         {
             return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
                        url,

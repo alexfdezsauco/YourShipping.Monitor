@@ -207,6 +207,7 @@ namespace YourShipping.Monitor.Server
             services.AddHostedService<DepartmentMonitorHostedService>();
             services.AddHostedService<ProductMonitorHostedService>();
             services.AddHostedService<StoreMonitorHostedService>();
+            services.AddHostedService<CookieSerializationHostedService>();
 
             // services.AddHostedService<SyncUsersFromTelegramHostedService>();
         }

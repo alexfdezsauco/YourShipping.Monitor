@@ -10,5 +10,7 @@
         void InvalidateCookies(string url);
 
         Task SyncCookiesAsync(HttpClient cookieCollection, string url);
+
+        Task SerializeAsync();
     }
 }
