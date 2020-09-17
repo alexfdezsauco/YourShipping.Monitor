@@ -90,7 +90,13 @@
         public async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
             var cookieCollection = new CookieCollection();
-            cookieCollection.AddRange((await this.GetCookiesCollectionFromCache(url)).Values);
+            
+            var storedCookieCollection = await this.GetCookiesCollectionFromCache(url);
+            lock (storedCookieCollection)
+            {
+                cookieCollection.AddRange(storedCookieCollection.Values);
+            }
+
             return cookieCollection;
         }
 
