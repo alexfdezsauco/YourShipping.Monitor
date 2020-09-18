@@ -2,7 +2,6 @@
 {
     using System;
     using System.Linq;
-    using System.Net.Http.Json;
     using System.Text.Json;
     using System.Threading.Tasks;
 
@@ -26,15 +25,19 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
+        private readonly IOfficialStoreInfoService officialStoreInfoService;
+
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
         public StoreScrapper(
             IBrowsingContext browsingContext,
             ICacheStorage<string, Store> cacheStorage,
+            IOfficialStoreInfoService officialStoreInfoService,
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
+            this.officialStoreInfoService = officialStoreInfoService;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
 
@@ -55,26 +58,8 @@
         {
             Log.Information("Scrapping Store from {Url}", storeUrl);
 
-            OfficialStoreInfo[] storesToImport = null;
-            try
-            {
-                var httpClient =
-                    await this.cookiesSynchronizationService.CreateHttpClientAsync(
-                        ScrappingConfiguration.StoresJsonUrl);
-                storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(
-                    httpClient,
-                    ScrappingConfiguration.StoresJsonUrl);
-            }
-            catch (Exception e)
-            {
-                Log.Error(
-                    e,
-                    "Error requesting '{Url}'. Cookies will be invalidated.",
-                    ScrappingConfiguration.StoresJsonUrl);
-                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
-            }
+            OfficialStoreInfo[] storesToImport = await this.officialStoreInfoService.GetAsync(); ;
+           
 
             var requestUri = storeUrl;
             string content = null;

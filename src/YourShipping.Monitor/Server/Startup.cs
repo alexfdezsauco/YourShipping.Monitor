@@ -132,9 +132,9 @@ namespace YourShipping.Monitor.Server
                                                   DecompressionMethods.GZip | DecompressionMethods.Deflate
                                                                             | DecompressionMethods.Brotli,
                                               AllowAutoRedirect = true,
-                                              SslProtocols =
-                                                  SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
-                                                  | SslProtocols.Tls13
+                                              //SslProtocols =
+                                              //    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
+                                              //    | SslProtocols.Tls13
                                           };
 
                         if (cookieContainer != null)
@@ -194,6 +194,7 @@ namespace YourShipping.Monitor.Server
                 provider => new CacheStorage<string, Store>(storeNullValues: true));
 
             services.AddSingleton<ICookiesSynchronizationService, CookiesSynchronizationService>();
+            services.AddSingleton<IOfficialStoreInfoService, OfficialStoreInfoService>();
 
             services.AddTransient<IEntityScrapper<Product>, ProductScrapper>();
             services.AddTransient<IEntityScrapper<Department>, DepartmentScrapper>();

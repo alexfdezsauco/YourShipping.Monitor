@@ -20,6 +20,8 @@
     using Catel.Caching;
     using Catel.Collections;
 
+    using FastDeepCloner;
+
     using Microsoft.Extensions.DependencyInjection;
 
     using Newtonsoft.Json;
@@ -108,6 +110,7 @@
         public async Task<Dictionary<string, Cookie>> GetCookiesCollectionAsync()
         {
             var cookieCollection = await this.LoadFromCookiesTxt();
+
             var antiScrappingCookie = await this.ReadAntiScrappingCookie();
             if (antiScrappingCookie != null)
             {
@@ -156,7 +159,9 @@
                         {
                             var cookiesFilePath = $"data/{parts[0]}.json";
                             Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
-                            var serializeObject = JsonConvert.SerializeObject(storedCookieCollection);
+                            var serializeObject = JsonConvert.SerializeObject(
+                                storedCookieCollection,
+                                Formatting.Indented);
                             File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
                         }
                     }
@@ -233,8 +238,8 @@
                                        {
                                            Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
                                            var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
-                                           return JsonConvert
-                                               .DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                           var cookies = JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                           return cookies;
                                        }
                                    }
                                }

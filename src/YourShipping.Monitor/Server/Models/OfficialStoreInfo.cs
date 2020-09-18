@@ -1,4 +1,4 @@
-namespace YourShipping.Monitor.Server.Services
+namespace YourShipping.Monitor.Server.Models
 {
     public class OfficialStoreInfo
     {
