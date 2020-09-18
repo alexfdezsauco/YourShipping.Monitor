@@ -89,18 +89,19 @@
             }
 
             var storeName = store?.Name;
-
-            // var requestIdParam = "requestId=" + Guid.NewGuid();
-            // var requestUri = url.Contains('?') ? url + $"&{requestIdParam}" : url + $"?{requestIdParam}";
             Department department = null;
             var currencies = new[] { "CUP", "CUC" };
             var i = 0;
-            while (i < currencies.Length && (department == null || department.ProductsCount == 0))
+            var isStoredClosed = false;
+
+            while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
                 var requestUris = new[] { url, url + "&page=0" };
+
                 var j = 0;
-                while (j < requestUris.Length && (department == null || department.ProductsCount == 0))
+                while (!isStoredClosed && j < requestUris.Length
+                                       && (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
@@ -110,17 +111,26 @@
 
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await httpClient.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
-                        content = await httpResponseMessage.Content.ReadAsStringAsync();
+                        var httpResponseMessage = await httpClient.PostAsync(requestUri, formUrlEncodedContent);
 
-                        await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                        isStoredClosed =
+                            httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+                        if (!isStoredClosed)
+                        {
+                            content = await httpResponseMessage.Content.ReadAsStringAsync();
+                            await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                        }
                     }
                     catch (Exception e)
                     {
                         Log.Error(e, "Error requesting Department '{url}'", url);
                     }
 
-                    if (!string.IsNullOrEmpty(content))
+                    if (isStoredClosed)
+                    {
+                        Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, store.Url);
+                    }
+                    else if (!string.IsNullOrEmpty(content))
                     {
                         var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 

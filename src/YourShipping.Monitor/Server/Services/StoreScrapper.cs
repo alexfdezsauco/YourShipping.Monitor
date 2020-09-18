@@ -25,9 +25,9 @@
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
-        private readonly IOfficialStoreInfoService officialStoreInfoService;
-
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+
+        private readonly IOfficialStoreInfoService officialStoreInfoService;
 
         public StoreScrapper(
             IBrowsingContext browsingContext,
@@ -58,16 +58,21 @@
         {
             Log.Information("Scrapping Store from {Url}", storeUrl);
 
-            OfficialStoreInfo[] storesToImport = await this.officialStoreInfoService.GetAsync(); ;
-           
+            var storesToImport = await this.officialStoreInfoService.GetAsync();
 
+            var isStoredClosed = true;
             var requestUri = storeUrl;
             string content = null;
             try
             {
                 var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
-                content = await httpClient.GetStringAsync(requestUri + $"&requestId={Guid.NewGuid()}");
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                var httpResponseMessage = await httpClient.GetAsync(requestUri);
+                isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+                if (!isStoredClosed)
+                {
+                    content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                }
             }
             catch (Exception e)
             {
@@ -77,11 +82,16 @@
             var storeToImport =
                 storesToImport?.FirstOrDefault(s => $"{s.Url.Trim()}/Products?depPid=0" == storeUrl.Trim());
             var storeName = storeToImport?.Name;
+
             var isAvailable = false;
             var categoriesCount = 0;
             var departmentsCount = 0;
 
-            if (!string.IsNullOrWhiteSpace(content))
+            if (isStoredClosed)
+            {
+                Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, storeUrl);
+            }
+            else if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 

@@ -105,19 +105,29 @@
             var departmentName = department?.Name;
             var departmentCategory = department?.Category;
 
+            var isStoredClosed = true;
             string content = null;
-
             try
             {
-                content = await httpClient.GetStringAsync(url + $"&requestId={Guid.NewGuid()}");
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                var httpResponseMessage = await httpClient.GetAsync(url);
+                isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+
+                if (!isStoredClosed)
+                {
+                    content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                }
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting Department '{url}'", url);
             }
 
-            if (!string.IsNullOrWhiteSpace(content))
+            if (isStoredClosed)
+            {
+                Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, store.Url);
+            }
+            else if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
