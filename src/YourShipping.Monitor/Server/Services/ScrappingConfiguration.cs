@@ -29,7 +29,7 @@
 
         public static string GetAgent()
         {
-            return Agents[AgentIndex];
+            return Agents[0];
         }
     }
 }

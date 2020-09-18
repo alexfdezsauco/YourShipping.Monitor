@@ -20,8 +20,6 @@
     using Catel.Caching;
     using Catel.Collections;
 
-    using FastDeepCloner;
-
     using Microsoft.Extensions.DependencyInjection;
 
     using Newtonsoft.Json;
@@ -208,7 +206,7 @@
 
                         storedCookieCollection.Add(cookie.Name, cookie);
                     }
-                    else if (storedCookie.Value != cookie.Value)
+                    else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
                     {
                         Log.Information(
                             "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
@@ -216,7 +214,7 @@
                             cookie.Value,
                             url);
 
-                        storedCookie.Value = cookie.Value;
+                        storedCookieCollection[cookie.Name] = cookie;
                     }
                 }
             }
@@ -238,7 +236,8 @@
                                        {
                                            Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
                                            var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
-                                           var cookies = JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                           var cookies =
+                                               JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
                                            return cookies;
                                        }
                                    }
