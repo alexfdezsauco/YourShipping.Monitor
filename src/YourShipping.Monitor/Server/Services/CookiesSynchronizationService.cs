@@ -303,7 +303,7 @@
 
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                     "user-agent",
-                    ScrappingConfiguration.GetAgent());
+                    ScrappingConfiguration.GetSupportedAgent());
 
                 var requester = new HttpClientRequester(httpClient);
                 var config = Configuration.Default.WithRequester(requester)

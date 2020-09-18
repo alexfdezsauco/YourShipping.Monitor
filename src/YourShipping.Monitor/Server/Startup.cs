@@ -152,7 +152,7 @@ namespace YourShipping.Monitor.Server
 
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                             "user-agent",
-                            ScrappingConfiguration.GetAgent());
+                            ScrappingConfiguration.GetSupportedAgent());
                         var random = new Random();
 
                         /*
