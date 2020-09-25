@@ -3,7 +3,9 @@ ARG DOTNET_SDK_VERSION=${DOTNET_SDK_VERSION:-3.1}
 ARG DOTNET_ASP_NETCORE_RUNTIME_VERSION=${DOTNET_ASP_NETCORE_RUNTIME_VERSION:-3.1}
 ARG DOCKER_REPOSITORY_PROXY=${DOCKER_REPOSITORY_PROXY:-mcr.microsoft.com}
 
-FROM $DOCKER_REPOSITORY_PROXY/dotnet/core/sdk:$DOTNET_SDK_VERSION AS build
+# FROM $DOCKER_REPOSITORY_PROXY/dotnet/core/sdk:$DOTNET_SDK_VERSION AS build
+
+FROM mcr.microsoft.com/dotnet/core/sdk@sha256:4805a0ec2e1acae2be9554679acca0ec368aaf50cabdd028c0aa3cb8ff34a751 AS build
 
 ARG NUGET_REPOSITORY_PROXY=${NUGET_REPOSITORY_PROXY:-https://www.nuget.org/api/v2/}
 # ENV NUGET_REPOSITORY_PROXY
@@ -24,13 +26,29 @@ RUN dotnet publish -c Release -o ../../../output/Release/YourShipping.Monitor /p
 
 WORKDIR /build
 
-FROM $DOCKER_REPOSITORY_PROXY/dotnet/core/aspnet:$DOTNET_ASP_NETCORE_RUNTIME_VERSION
+# FROM $DOCKER_REPOSITORY_PROXY/dotnet/core/aspnet:$DOTNET_ASP_NETCORE_RUNTIME_VERSION
+FROM mcr.microsoft.com/dotnet/core/aspnet@sha256:07d9cfc7442360e2827b638e78d15e24f6b1c108ffa68d9ba29f3ab699b41edf
+
 ENV ASPNETCORE_URLS=http://0.0.0.0:80
 
+VOLUME  /app/captchas
 VOLUME  /app/data
 VOLUME  /app/logs
 
 WORKDIR /app
+RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
+RUN apt -y update && apt -y install libleptonica-dev
+
+# RUN mkdir -p /app/x64
+# RUN cp /usr/lib/x86_64-linux-gnu/liblept.so /app/x64/liblept1753.so
+# RUN apt install -y libc6-dev  libgdiplus  libx11-dev
+
+RUN apt install -y libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
+ADD deployment/lib/x64 /app/x64
+
+# RUN apt install -y libtesseract-dev
+# RUN cp /usr/lib/x86_64-linux-gnu/libtesseract.so /app/x64/libtesseract3052.so
+
 COPY --from=build /build/output/Release/YourShipping.Monitor .
 
 RUN rm appsettings.json
