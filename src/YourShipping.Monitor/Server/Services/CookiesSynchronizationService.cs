@@ -344,9 +344,10 @@ namespace YourShipping.Monitor.Server.Helpers
             if (captcha != null)
             {
                 var grayCaptcha = captcha.ConvertRGBToGray();
-                var binarizedCaptcha = grayCaptcha.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
+                var binarizedCaptcha = grayCaptcha.BinarizeSauvolaTiled(10, 0.75f, 1, 2);
 
                 var engine = new TesseractEngine(Path.GetFullPath("tessdata"), "eng", EngineMode.Default);
+                engine.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");
                 var page = engine.Process(binarizedCaptcha, PageSegMode.SparseText);
 
                 captchaText = page.GetText();
