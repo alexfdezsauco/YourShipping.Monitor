@@ -13,6 +13,7 @@ using AngleSharp.Dom;
 using AngleSharp.Io;
 using AngleSharp.Io.Network;
 using AngleSharp.Js;
+using Catel;
 using Catel.Caching;
 using Catel.Collections;
 using Microsoft.Extensions.DependencyInjection;
@@ -148,7 +149,7 @@ namespace YourShipping.Monitor.Server.Helpers
             var httpClientHandler = httpClient.GetHttpClientHandler();
             var cookieContainer = httpClientHandler.CookieContainer;
             var cookieCollection = cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
-            if (cookieCollection[".ASPXANONYMOUS"] != null)
+            if (cookieCollection[".ASPXANONYMOUS"] != null || cookieCollection[])
             {
                 Log.Warning("Session expires. Cookies will be invalidated.");
                 InvalidateCookies(url);
@@ -191,8 +192,8 @@ namespace YourShipping.Monitor.Server.Helpers
                 {
                     cookieCollection = await LoginAsync(antiScrappingCookie, url, username, password);
                 }
-                
-                if(cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
+
+                if (cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
                 {
                     cookieCollection = await LoadFromCookiesTxtAsync(antiScrappingCookie);
                 }
@@ -212,7 +213,7 @@ namespace YourShipping.Monitor.Server.Helpers
 
             var cookieContainer = new CookieContainer();
 
-            string captchaFilePath;
+            string captchaFilePath = null;
             var captchaText = string.Empty;
 
             var isAuthenticated = false;
@@ -221,6 +222,7 @@ namespace YourShipping.Monitor.Server.Helpers
             do
             {
                 attempts++;
+
                 var httpMessageHandler = new HttpClientHandler
                 {
                     CookieContainer = cookieContainer
@@ -232,14 +234,142 @@ namespace YourShipping.Monitor.Server.Helpers
                     Timeout = ScrappingConfiguration.HttpClientTimeout
                 };
                 httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                    "user-agent", ScrappingConfiguration.SupportedAgents);
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent",
+                    ScrappingConfiguration.SupportedAgents);
 
-                var signinPageContent = await httpClient.GetStringAsync(signInUrl);
+                var signinPageContent = string.Empty;
+                try
+                {
+                    signinPageContent = await httpClient.GetStringAsync(signInUrl);
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error retrieving sign in page with url '{Url}'", signInUrl);
+                }
+
+                Dictionary<string, string> signInParameters = null;
+                try
+                {
+                    signInParameters = await BuildSignInParametersAsync(username, password, signinPageContent);
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error building sign in parameters for '{Url}'", signInUrl);
+                }
+
+                if (signInParameters != null)
+                {
+                    captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
+                    if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath))
+                    {
+                        captchaText = GetCaptchaText(captchaFilePath);
+                        if (!string.IsNullOrWhiteSpace(captchaText))
+                        {
+                            signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
+                            try
+                            {
+                                await httpClient.PostAsync(
+                                    signInUrl,
+                                    new FormUrlEncodedContent(signInParameters));
+                                httpHandlerCookieCollection =
+                                    cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
+                                isAuthenticated =
+                                    !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Warning(e, "Error authenticating in '{Url}'", signInUrl);
+                            }
+                        }
+                    }
+
+                    try
+                    {
+                        if (!isAuthenticated)
+                        {
+                            File.Delete(captchaFilePath);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error deleting captcha file '{FilePath}'", captchaFilePath);
+                    }
+                }
+            } while (attempts < 5 && !isAuthenticated);
+
+            if (isAuthenticated)
+            {
+                try
+                {
+                    File.Move(captchaFilePath, $"captchas/{captchaText}.jpg", true);
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error moving captcha file {FilePath}", captchaFilePath);
+                }
+            }
+
+            var cookiesCollection = new Dictionary<string, Cookie>();
+
+            if (httpHandlerCookieCollection != null)
+            {
+                foreach (Cookie cookie in httpHandlerCookieCollection)
+                {
+                    if (!string.IsNullOrWhiteSpace(cookie.Value))
+                    {
+                        cookiesCollection[cookie.Name] = cookie;
+                    }
+                }
+            }
+
+            cookiesCollection[antiScrappingCookie.Name] = antiScrappingCookie;
+
+            return cookiesCollection;
+        }
+
+        private static string GetCaptchaText(string captchaFilePath)
+        {
+            string captchaText = null;
+            Pix captcha = null;
+            try
+            {
+                captcha = Pix.LoadFromFile(captchaFilePath);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error loading captcha file");
+            }
+
+            if (captcha != null)
+            {
+                var convertRgbToGray = captcha.ConvertRGBToGray();
+                var sauvolaCaptcha = convertRgbToGray.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
+
+                var fullPath = Path.GetFullPath("tessdata");
+                var tesseractEngine = new TesseractEngine(fullPath, "eng", EngineMode.Default);
+
+                var page = tesseractEngine.Process(sauvolaCaptcha, PageSegMode.SparseText);
+                captchaText = page.GetText();
+                captchaText = Regex.Replace(captchaText, @"\s+", "");
+            }
+
+            return captchaText;
+        }
+
+        private static async Task<Dictionary<string, string>> BuildSignInParametersAsync(string username,
+            string password,
+            string signinPageContent)
+        {
+            Argument.IsNotNullOrWhitespace(() => username);
+            Argument.IsNotNullOrWhitespace(() => password);
+            Argument.IsNotNullOrWhitespace(() => signinPageContent);
+
+            Dictionary<string, string> parameters = null;
+            try
+            {
                 var browsingContext = BrowsingContext.New(Configuration.Default);
                 var signinPageDocument = await browsingContext.OpenAsync(req => req.Content(signinPageContent));
-
-                var parameters = new Dictionary<string, string>
+                parameters = new Dictionary<string, string>
                 {
                     {
                         "__EVENTTARGET",
@@ -268,10 +398,22 @@ namespace YourShipping.Monitor.Server.Helpers
                     {"ctl00$cphPage$Login$Password", password},
                     {"ctl00$cphPage$Login$LoginButton", "Entrar"}
                 };
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error building sign in parameters");
+            }
 
+            return parameters;
+        }
 
-                var stream = await httpClient.GetStreamAsync(captchaUrl);
+        private static async Task<string> DownloadCaptchaAsync(HttpClient httpClient, string captchaUrl)
+        {
+            string captchaFilePath;
+            try
+            {
                 byte[] bytes;
+                var stream = await httpClient.GetStreamAsync(captchaUrl);
                 await using (var memoryStream = new MemoryStream())
                 {
                     await stream.CopyToAsync(memoryStream);
@@ -285,83 +427,14 @@ namespace YourShipping.Monitor.Server.Helpers
 
                 var newGuid = Guid.NewGuid();
                 captchaFilePath = $"captchas/{newGuid}.jpg";
-
                 File.WriteAllBytes(captchaFilePath, bytes);
-                Pix captcha = null;
-                try
-                {
-                    captcha = Pix.LoadFromFile(captchaFilePath);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, "Error loading captcha file");
-                }
-
-                if (captcha != null)
-                {
-                    var convertRgbToGray = captcha.ConvertRGBToGray();
-                    var sauvolaCaptcha = convertRgbToGray.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
-
-                    var fullPath = Path.GetFullPath("tessdata");
-                    var tesseractEngine =
-                        new TesseractEngine(fullPath, "eng", EngineMode.Default);
-
-                    var page = tesseractEngine.Process(sauvolaCaptcha, PageSegMode.SparseText);
-                    captchaText = page.GetText();
-                    captchaText = Regex.Replace(captchaText, @"\s+", "");
-                    parameters.Add("ctl00$cphPage$Login$capcha", captchaText);
-
-                    await httpClient.PostAsync(
-                        signInUrl,
-                        new FormUrlEncodedContent(parameters));
-
-                    httpHandlerCookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
-                    isAuthenticated = httpHandlerCookieCollection.FirstOrDefault(cookie =>
-                                          cookie.Name == "ShopMSAuth" && !string.IsNullOrWhiteSpace(cookie.Value)) !=
-                                      null;
-                    try
-                    {
-                        if (!isAuthenticated)
-                        {
-                            File.Delete(captchaFilePath);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e, "Error deleting captcha file {FilePath}", captchaFilePath);
-                    }
-                }
-            } while (attempts < 5 && !isAuthenticated);
-
-            if (isAuthenticated)
+            }
+            catch (Exception e)
             {
-                try
-                {
-                    File.Move(captchaFilePath, $"captchas/{captchaText}.jpg", true);
-                }
-                catch (Exception e)
-                {
-                    Log.Warning(e, "Error moving captcha file {FilePath}", captchaFilePath);
-                }
+                Log.Warning(e, "Error retrieving captcha with url '{Url}'", captchaUrl);
             }
 
-
-            var cookiesCollection = new Dictionary<string, Cookie>();
-
-            if (httpHandlerCookieCollection != null)
-            {
-                foreach (Cookie cookie in httpHandlerCookieCollection)
-                {
-                    if (!string.IsNullOrWhiteSpace(cookie.Value))
-                    {
-                        cookiesCollection[cookie.Name] = cookie;
-                    }
-                }
-            }
-
-            cookiesCollection[antiScrappingCookie.Name] = antiScrappingCookie;
-
-            return cookiesCollection;
+            return captchaFilePath;
         }
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
