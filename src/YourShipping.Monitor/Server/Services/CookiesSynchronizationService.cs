@@ -149,9 +149,10 @@ namespace YourShipping.Monitor.Server.Helpers
             var httpClientHandler = httpClient.GetHttpClientHandler();
             var cookieContainer = httpClientHandler.CookieContainer;
             var cookieCollection = cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
-            if (cookieCollection[".ASPXANONYMOUS"] != null || cookieCollection[])
+            if (!string.IsNullOrWhiteSpace(cookieCollection[".ASPXANONYMOUS"]?.Value))
             {
                 Log.Warning("Session expires. Cookies will be invalidated.");
+
                 InvalidateCookies(url);
             }
             else
@@ -160,7 +161,7 @@ namespace YourShipping.Monitor.Server.Helpers
             }
         }
 
-        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
+        private async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
             var cookieCollection = new CookieCollection();
 
@@ -227,7 +228,7 @@ namespace YourShipping.Monitor.Server.Helpers
                 {
                     CookieContainer = cookieContainer
                 };
-                cookieContainer.Add(new Uri("https://www.tuenvio.cu"), antiScrappingCookie);
+                cookieContainer.Add(ScrappingConfiguration.CookieCollectionUrl, antiScrappingCookie);
 
                 var httpClient = new HttpClient(httpMessageHandler)
                 {
@@ -342,13 +343,12 @@ namespace YourShipping.Monitor.Server.Helpers
 
             if (captcha != null)
             {
-                var convertRgbToGray = captcha.ConvertRGBToGray();
-                var sauvolaCaptcha = convertRgbToGray.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
+                var grayCaptcha = captcha.ConvertRGBToGray();
+                var binarizedCaptcha = grayCaptcha.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
 
-                var fullPath = Path.GetFullPath("tessdata");
-                var tesseractEngine = new TesseractEngine(fullPath, "eng", EngineMode.Default);
+                var engine = new TesseractEngine(Path.GetFullPath("tessdata"), "eng", EngineMode.Default);
+                var page = engine.Process(binarizedCaptcha, PageSegMode.SparseText);
 
-                var page = tesseractEngine.Process(sauvolaCaptcha, PageSegMode.SparseText);
                 captchaText = page.GetText();
                 captchaText = Regex.Replace(captchaText, @"\s+", "");
             }
@@ -409,7 +409,7 @@ namespace YourShipping.Monitor.Server.Helpers
 
         private static async Task<string> DownloadCaptchaAsync(HttpClient httpClient, string captchaUrl)
         {
-            string captchaFilePath;
+            string captchaFilePath = null;
             try
             {
                 byte[] bytes;

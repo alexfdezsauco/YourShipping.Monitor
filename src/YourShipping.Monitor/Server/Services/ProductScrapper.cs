@@ -280,9 +280,8 @@
                         product.Name,
                         product.Store);
                 }
-                else
+                else if(product.IsAvailable)
                 {
-                    // TODO: Check if the product is already in the cart.
                     Log.Information(
                         "Trying to add the product '{ProductName}' to the cart on the store '{StoreName}'",
                         product.Name,
