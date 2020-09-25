@@ -120,12 +120,12 @@
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error requesting Department '{url}'", url);
+                Log.Error(e, "Error requesting Department '{Url}'", url);
             }
 
             if (isStoredClosed)
             {
-                Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, store.Url);
+                Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
             }
             else if (!string.IsNullOrWhiteSpace(content))
             {

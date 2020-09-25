@@ -89,7 +89,7 @@
 
             if (isStoredClosed)
             {
-                Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, storeUrl);
+                Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, storeUrl);
             }
             else if (!string.IsNullOrWhiteSpace(content))
             {

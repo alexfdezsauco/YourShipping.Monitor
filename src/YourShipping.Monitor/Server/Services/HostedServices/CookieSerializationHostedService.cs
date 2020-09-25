@@ -8,7 +8,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public sealed class CookieSerializationHostedService : TimedHostedServiceBase
     {
         public CookieSerializationHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromSeconds(30))
+            : base(serviceProvider, TimeSpan.FromSeconds(60))
         {
         }
 

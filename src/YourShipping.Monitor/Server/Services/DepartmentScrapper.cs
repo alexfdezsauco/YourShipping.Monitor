@@ -90,14 +90,14 @@
 
             var storeName = store?.Name;
             Department department = null;
-            var currencies = new[] { "CUP", "CUC" };
+            var currencies = new[] { "CUP" , "CUC" };
             var i = 0;
             var isStoredClosed = false;
 
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] { url, url + "&page=0" };
+                var requestUris = new[] { url /*, url + "&page=0"*/ };
 
                 var j = 0;
                 while (!isStoredClosed && j < requestUris.Length
@@ -113,8 +113,7 @@
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpResponseMessage = await httpClient.PostAsync(requestUri, formUrlEncodedContent);
 
-                        isStoredClosed =
-                            httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+                        isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
                         if (!isStoredClosed)
                         {
                             content = await httpResponseMessage.Content.ReadAsStringAsync();
@@ -128,7 +127,7 @@
 
                     if (isStoredClosed)
                     {
-                        Log.Warning("Store '{Name}' with '{Url}' is closed", storeName, store.Url);
+                        Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
                     }
                     else if (!string.IsNullOrEmpty(content))
                     {

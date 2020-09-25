@@ -1,37 +1,35 @@
-﻿namespace YourShipping.Monitor.Server.Helpers
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Io;
+using AngleSharp.Io.Network;
+using AngleSharp.Js;
+using Catel.Caching;
+using Catel.Collections;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Serilog;
+using Tesseract;
+using YourShipping.Monitor.Server.Extensions;
+using YourShipping.Monitor.Server.Services;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+
+namespace YourShipping.Monitor.Server.Helpers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Net;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
-    using AngleSharp;
-    using AngleSharp.Dom;
-    using AngleSharp.Io;
-    using AngleSharp.Io.Network;
-    using AngleSharp.Js;
-
-    using Catel.Caching;
-    using Catel.Collections;
-
-    using Microsoft.Extensions.DependencyInjection;
-
-    using Newtonsoft.Json;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Extensions;
-    using YourShipping.Monitor.Server.Services;
-
     // TODO: Improve this?
     public class CookiesSynchronizationService : ICookiesSynchronizationService
     {
+        private readonly IConfiguration _configuration;
+
         private readonly CacheStorage<string, Dictionary<string, Cookie>> cookieCollectionCacheStorage =
             new CacheStorage<string, Dictionary<string, Cookie>>();
 
@@ -53,70 +51,44 @@
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public CookiesSynchronizationService(IServiceProvider provider)
+        public CookiesSynchronizationService(IServiceProvider provider, IConfiguration configuration)
         {
             this.provider = provider;
-            this.fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
-                                         {
-                                             NotifyFilter =
-                                                 NotifyFilters.LastWrite | NotifyFilters.CreationTime
-                                                                         | NotifyFilters.FileName
-                                         };
+            _configuration = configuration;
+            fileSystemWatcher = new FileSystemWatcher("data", "cookies.txt")
+            {
+                NotifyFilter =
+                    NotifyFilters.LastWrite | NotifyFilters.CreationTime
+                                            | NotifyFilters.FileName
+            };
 
-            this.fileSystemWatcher.Changed += (sender, args) =>
-                {
-                    Log.Information("Cookies file changed");
+            fileSystemWatcher.Changed += (sender, args) =>
+            {
+                Log.Information("Cookies file changed");
 
-                    this.cookieCollectionCacheStorage.Clear();
-                };
+                cookieCollectionCacheStorage.Clear();
+            };
 
-            this.fileSystemWatcher.Created += (sender, args) =>
-                {
-                    Log.Information("Cookies file created");
+            fileSystemWatcher.Created += (sender, args) =>
+            {
+                Log.Information("Cookies file created");
 
-                    this.cookieCollectionCacheStorage.Clear();
-                };
+                cookieCollectionCacheStorage.Clear();
+            };
 
-            this.fileSystemWatcher.EnableRaisingEvents = true;
+            fileSystemWatcher.EnableRaisingEvents = true;
         }
 
         public async Task<HttpClient> CreateHttpClientAsync(string url)
         {
-            var httpClient = this.provider.GetService<HttpClient>();
+            var httpClient = provider.GetService<HttpClient>();
 
             var clientHandler = httpClient.GetHttpClientHandler();
-            var cookieCollection = await this.GetCookieCollectionAsync(url);
+            var cookieCollection = await GetCookieCollectionAsync(url);
 
             clientHandler.CookieContainer.Add(ScrappingConfiguration.CookieCollectionUrl, cookieCollection);
 
             return httpClient;
-        }
-
-        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
-        {
-            var cookieCollection = new CookieCollection();
-
-            var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
-            lock (storedCookieCollection)
-            {
-                cookieCollection.AddRange(storedCookieCollection.Values);
-            }
-
-            return cookieCollection;
-        }
-
-        public async Task<Dictionary<string, Cookie>> GetCookiesCollectionAsync()
-        {
-            var cookieCollection = await this.LoadFromCookiesTxt();
-
-            var antiScrappingCookie = await this.ReadAntiScrappingCookie();
-            if (antiScrappingCookie != null)
-            {
-                cookieCollection.Remove(antiScrappingCookie.Name);
-                cookieCollection.Add(antiScrappingCookie.Name, antiScrappingCookie);
-            }
-
-            return cookieCollection;
         }
 
         public void InvalidateCookies(string url)
@@ -138,16 +110,16 @@
                 Log.Warning(e, "Error deleting cookies file for {Url}", url);
             }
 
-            this.cookieCollectionCacheStorage.Remove(url);
+            cookieCollectionCacheStorage.Remove(url);
         }
 
         public async Task SerializeAsync()
         {
             Log.Information("Serializing cookies...");
-            var urls = this.cookieCollectionCacheStorage.Keys.ToList();
+            var urls = cookieCollectionCacheStorage.Keys.ToList();
             foreach (var url in urls)
             {
-                var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
+                var storedCookieCollection = await GetCookiesCollectionFromCacheAsync(url);
                 lock (storedCookieCollection)
                 {
                     try
@@ -179,17 +151,222 @@
             if (cookieCollection[".ASPXANONYMOUS"] != null)
             {
                 Log.Warning("Session expires. Cookies will be invalidated.");
-                this.InvalidateCookies(url);
+                InvalidateCookies(url);
             }
             else
             {
-                await this.SyncCookiesAsync(url, cookieCollection);
+                await SyncCookiesAsync(url, cookieCollection);
             }
+        }
+
+        public async Task<CookieCollection> GetCookieCollectionAsync(string url)
+        {
+            var cookieCollection = new CookieCollection();
+
+            var storedCookieCollection = await GetCookiesCollectionFromCacheAsync(url);
+            lock (storedCookieCollection)
+            {
+                cookieCollection.AddRange(storedCookieCollection.Values);
+            }
+
+            return cookieCollection;
+        }
+
+        public async Task<Dictionary<string, Cookie>> GetCookiesCollectionAsync(string url)
+        {
+            Dictionary<string, Cookie> cookieCollection = null;
+
+            var antiScrappingCookie = await ReadAntiScrappingCookieAsync();
+
+            if (url.EndsWith("stores.json"))
+            {
+                cookieCollection = new Dictionary<string, Cookie> {{antiScrappingCookie.Name, antiScrappingCookie}};
+            }
+            else
+            {
+                var credentialsConfigurationSection = _configuration.GetSection("Credentials");
+                var username = credentialsConfigurationSection?["Username"];
+                var password = credentialsConfigurationSection?["Password"];
+                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                {
+                    cookieCollection = await LoginAsync(antiScrappingCookie, url, username, password);
+                }
+                
+                if(cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
+                {
+                    cookieCollection = await LoadFromCookiesTxtAsync(antiScrappingCookie);
+                }
+            }
+
+            return cookieCollection;
+        }
+
+        private async Task<Dictionary<string, Cookie>> LoginAsync(Cookie antiScrappingCookie,
+            string url,
+            string username, string password)
+        {
+            var signInUrl
+                = url.Replace("/Products?depPid=0", "/signin.aspx");
+            var captchaUrl
+                = url.Replace("/Products?depPid=0", "/captcha.ashx");
+
+            var cookieContainer = new CookieContainer();
+
+            string captchaFilePath;
+            var captchaText = string.Empty;
+
+            var isAuthenticated = false;
+            var attempts = 0;
+            CookieCollection httpHandlerCookieCollection = null;
+            do
+            {
+                attempts++;
+                var httpMessageHandler = new HttpClientHandler
+                {
+                    CookieContainer = cookieContainer
+                };
+                cookieContainer.Add(new Uri("https://www.tuenvio.cu"), antiScrappingCookie);
+
+                var httpClient = new HttpClient(httpMessageHandler)
+                {
+                    Timeout = ScrappingConfiguration.HttpClientTimeout
+                };
+                httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "user-agent", ScrappingConfiguration.SupportedAgents);
+
+                var signinPageContent = await httpClient.GetStringAsync(signInUrl);
+                var browsingContext = BrowsingContext.New(Configuration.Default);
+                var signinPageDocument = await browsingContext.OpenAsync(req => req.Content(signinPageContent));
+
+                var parameters = new Dictionary<string, string>
+                {
+                    {
+                        "__EVENTTARGET",
+                        string.Empty
+                    },
+                    {"__EVENTARGUMENT", string.Empty},
+                    {"__LASTFOCUS", string.Empty},
+                    {
+                        "PageLoadedHiddenTxtBox", "Set"
+                    },
+                    {
+                        "__VIEWSTATE",
+                        signinPageDocument.QuerySelector<IElement>("#__VIEWSTATE")?.Attributes["value"]
+                            ?.Value
+                    },
+                    {
+                        "__EVENTVALIDATION",
+                        signinPageDocument.QuerySelector<IElement>("#__EVENTVALIDATION")
+                            ?.Attributes["value"]?.Value
+                    },
+                    {"ctl00$taxes$listCountries", "54"},
+                    {"Language", "es-MX"},
+                    {"CurrentLanguage", "es-MX"},
+                    {"Currency", string.Empty},
+                    {"ctl00$cphPage$Login$UserName", username},
+                    {"ctl00$cphPage$Login$Password", password},
+                    {"ctl00$cphPage$Login$LoginButton", "Entrar"}
+                };
+
+
+                var stream = await httpClient.GetStreamAsync(captchaUrl);
+                byte[] bytes;
+                await using (var memoryStream = new MemoryStream())
+                {
+                    await stream.CopyToAsync(memoryStream);
+                    bytes = memoryStream.ToArray();
+                }
+
+                if (!Directory.Exists("captchas"))
+                {
+                    Directory.CreateDirectory("captchas");
+                }
+
+                var newGuid = Guid.NewGuid();
+                captchaFilePath = $"captchas/{newGuid}.jpg";
+
+                File.WriteAllBytes(captchaFilePath, bytes);
+                Pix captcha = null;
+                try
+                {
+                    captcha = Pix.LoadFromFile(captchaFilePath);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error loading captcha file");
+                }
+
+                if (captcha != null)
+                {
+                    var convertRgbToGray = captcha.ConvertRGBToGray();
+                    var sauvolaCaptcha = convertRgbToGray.BinarizeSauvolaTiled(10, 0.75f, 1, 5);
+
+                    var fullPath = Path.GetFullPath("tessdata");
+                    var tesseractEngine =
+                        new TesseractEngine(fullPath, "eng", EngineMode.Default);
+
+                    var page = tesseractEngine.Process(sauvolaCaptcha, PageSegMode.SparseText);
+                    captchaText = page.GetText();
+                    captchaText = Regex.Replace(captchaText, @"\s+", "");
+                    parameters.Add("ctl00$cphPage$Login$capcha", captchaText);
+
+                    await httpClient.PostAsync(
+                        signInUrl,
+                        new FormUrlEncodedContent(parameters));
+
+                    httpHandlerCookieCollection = cookieContainer.GetCookies(new Uri("https://www.tuenvio.cu"));
+                    isAuthenticated = httpHandlerCookieCollection.FirstOrDefault(cookie =>
+                                          cookie.Name == "ShopMSAuth" && !string.IsNullOrWhiteSpace(cookie.Value)) !=
+                                      null;
+                    try
+                    {
+                        if (!isAuthenticated)
+                        {
+                            File.Delete(captchaFilePath);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error deleting captcha file {FilePath}", captchaFilePath);
+                    }
+                }
+            } while (attempts < 5 && !isAuthenticated);
+
+            if (isAuthenticated)
+            {
+                try
+                {
+                    File.Move(captchaFilePath, $"captchas/{captchaText}.jpg", true);
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error moving captcha file {FilePath}", captchaFilePath);
+                }
+            }
+
+
+            var cookiesCollection = new Dictionary<string, Cookie>();
+
+            if (httpHandlerCookieCollection != null)
+            {
+                foreach (Cookie cookie in httpHandlerCookieCollection)
+                {
+                    if (!string.IsNullOrWhiteSpace(cookie.Value))
+                    {
+                        cookiesCollection[cookie.Name] = cookie;
+                    }
+                }
+            }
+
+            cookiesCollection[antiScrappingCookie.Name] = antiScrappingCookie;
+
+            return cookiesCollection;
         }
 
         public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
-            var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
+            var storedCookieCollection = await GetCookiesCollectionFromCacheAsync(url);
             lock (storedCookieCollection)
             {
                 Log.Information("Synchronizing cookies for url '{Url}'...", url);
@@ -222,36 +399,36 @@
 
         private async Task<Dictionary<string, Cookie>> GetCookiesCollectionFromCacheAsync(string url)
         {
-            return await this.cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       async () =>
-                           {
-                               var parts = new Url(url).Path.Split('/');
-                               try
-                               {
-                                   if (parts.Length > 1)
-                                   {
-                                       var cookieFilePath = $"data/{parts[0]}.json";
-                                       if (File.Exists(cookieFilePath))
-                                       {
-                                           Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
-                                           var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
-                                           var cookies =
-                                               JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
-                                           return cookies;
-                                       }
-                                   }
-                               }
-                               catch (Exception e)
-                               {
-                                   Log.Warning(e, "Error deserializing cookies");
-                               }
+            return await cookieCollectionCacheStorage.GetFromCacheOrFetchAsync(
+                url,
+                async () =>
+                {
+                    var parts = new Url(url).Path.Split('/');
+                    try
+                    {
+                        if (parts.Length > 1)
+                        {
+                            var cookieFilePath = $"data/{parts[0]}.json";
+                            if (File.Exists(cookieFilePath))
+                            {
+                                Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
+                                var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
+                                var cookies =
+                                    JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                return cookies;
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error deserializing cookies");
+                    }
 
-                               return await this.GetCookiesCollectionAsync();
-                           });
+                    return await GetCookiesCollectionAsync(url);
+                });
         }
 
-        private async Task<Dictionary<string, Cookie>> LoadFromCookiesTxt()
+        private async Task<Dictionary<string, Cookie>> LoadFromCookiesTxtAsync(Cookie antiScrappingCookie)
         {
             var cookieCollection = new Dictionary<string, Cookie>();
             var cookiesFile = "data/cookies.txt";
@@ -261,7 +438,7 @@
                     (await File.ReadAllLinesAsync(cookiesFile)).Where(s => !s.TrimStart().StartsWith("#"));
                 foreach (var line in readAllText)
                 {
-                    var match = this.RegexCookiesTxt.Match(line);
+                    var match = RegexCookiesTxt.Match(line);
                     if (match.Success)
                     {
                         try
@@ -289,17 +466,23 @@
                 }
             }
 
+            if (antiScrappingCookie != null)
+            {
+                cookieCollection.Remove(antiScrappingCookie.Name);
+                cookieCollection.Add(antiScrappingCookie.Name, antiScrappingCookie);
+            }
+
             return cookieCollection;
         }
 
-        private async Task<Cookie> ReadAntiScrappingCookie()
+        private async Task<Cookie> ReadAntiScrappingCookieAsync()
         {
             Cookie antiScrappingCookie = null;
             Log.Information("Initializing Anti-Scrapping Cookie...");
             try
             {
-                var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-                httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
+                var httpClient = new HttpClient {Timeout = TimeSpan.FromSeconds(60)};
+                httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
 
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                     "user-agent",
@@ -307,7 +490,7 @@
 
                 var requester = new HttpClientRequester(httpClient);
                 var config = Configuration.Default.WithRequester(requester)
-                    .WithDefaultLoader(new LoaderOptions { IsResourceLoadingEnabled = true }).WithJs();
+                    .WithDefaultLoader(new LoaderOptions {IsResourceLoadingEnabled = true}).WithJs();
 
                 var context = BrowsingContext.New(config);
                 var document = await context.OpenAsync(ScrappingConfiguration.StoresJsonUrl).WaitUntilAvailable();
@@ -316,14 +499,14 @@
                 var match = Regex.Match(content, @"Server\sError\s+406");
                 if (!match.Success && !string.IsNullOrWhiteSpace(content))
                 {
-                    var parametersMatch = this.RegexCall.Match(content);
+                    var parametersMatch = RegexCall.Match(content);
                     if (parametersMatch.Success)
                     {
                         var cookieName = parametersMatch.Groups[1].Value.Trim();
 
-                        var toNumbersACall = this.RegexA.Match(content).Groups[1].Value;
-                        var toNumbersBCall = this.RegexB.Match(content).Groups[1].Value;
-                        var toNumbersCCall = this.RegexC.Match(content).Groups[1].Value;
+                        var toNumbersACall = RegexA.Match(content).Groups[1].Value;
+                        var toNumbersBCall = RegexB.Match(content).Groups[1].Value;
+                        var toNumbersCCall = RegexC.Match(content).Groups[1].Value;
 
                         var parameters = parametersMatch.Groups[2].Value;
                         parameters = parameters.Replace("a", "%A%").Replace("b", "%B%").Replace("c", "%C%");
