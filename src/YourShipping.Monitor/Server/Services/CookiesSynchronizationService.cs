@@ -189,9 +189,14 @@ namespace YourShipping.Monitor.Server.Helpers
                 var credentialsConfigurationSection = _configuration.GetSection("Credentials");
                 var username = credentialsConfigurationSection?["Username"];
                 var password = credentialsConfigurationSection?["Password"];
-                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%" &&
+                    !string.IsNullOrWhiteSpace(password))
                 {
                     cookieCollection = await LoginAsync(antiScrappingCookie, url, username, password);
+                }
+                else
+                {
+                    Log.Warning("Credentials were not specified in the configuration file.");
                 }
 
                 if (cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
@@ -207,6 +212,8 @@ namespace YourShipping.Monitor.Server.Helpers
             string url,
             string username, string password)
         {
+            Log.Information("Authenticating in TuEnvio as {username}", username);
+
             var signInUrl
                 = url.Replace("/Products?depPid=0", "/signin.aspx");
             var captchaUrl
