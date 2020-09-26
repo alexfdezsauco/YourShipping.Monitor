@@ -1,5 +1,6 @@
 #addin "Cake.Docker"
 #addin "Cake.FileHelpers"
+#tool "nuget:?package=GitVersion.CommandLine&version=5.3.7"
 
 #load "config.cake"
 
@@ -30,7 +31,7 @@ var nugetRepositoryProxy = EnvironmentVariable("NUGET_REPOSITORY_PROXY") ?? $"ht
 var DockerRepositoryPrefix = string.IsNullOrWhiteSpace(dockerRepository) ? string.Empty : dockerRepository + "/";
 
 Setup(context => {
-    context.Tools.RegisterFile("./tools/GitVersion.CommandLine/tools/GitVersion.exe");
+    context.Tools.RegisterFile("./tools/GitVersion.CommandLine.5.3.7/tools/GitVersion.exe");
 });
 
 Task("UpdateVersion")
@@ -156,7 +157,27 @@ Task("Build")
                           .Append($"/p:Version={NuGetVersionV2}")
                           .Append($"/p:PackageVersion={NuGetVersionV2}")
                   });
-  });  
+  }); 
+
+Task("Publish")
+  .IsDependentOn("Build")
+  .Does(() => 
+  {
+      DotNetCorePublish(
+                  "src/YourShipping.Monitor/Server/YourShipping.Monitor.Server.csproj",
+                  new DotNetCorePublishSettings
+		  {
+		     Configuration = buildConfiguration,
+		     OutputDirectory = "./output/YourShipping.Monitor.Server",
+                     ArgumentCustomization = args => args
+                          .Append($"/p:Version={NuGetVersionV2}")
+                          .Append($"/p:PackageVersion={NuGetVersionV2}")
+
+		  });
+
+        CopyFile("deployment/lib/x64/liblept1753.so", "output/YourShipping.Monitor.Server/x64/liblept1753.so");
+        CopyFile("deployment/lib/x64/libtesseract3052.so", "output/YourShipping.Monitor.Server/x64/libtesseract3052.so");
+  });   
 
 Task("DockerBuild")
   .IsDependentOn("UpdateVersion")
