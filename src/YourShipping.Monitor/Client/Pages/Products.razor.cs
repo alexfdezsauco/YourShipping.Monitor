@@ -136,15 +136,6 @@
             return string.Empty;
         }
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
-        {
-            await base.OnAfterRenderAsync(firstRender);
-            if (this.IsLoading)
-            {
-                this.Products = await this.ApplicationState.GetProductsFromCacheOrFetchAsync();
-            }
-        }
-
         protected override async Task OnInitializedAsync()
         {
             this.ApplicationState.SourceChanged += async (sender, args) =>

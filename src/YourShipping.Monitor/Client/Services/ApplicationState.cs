@@ -1,42 +1,41 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.JSInterop;
+using Serilog;
+using YourShipping.Monitor.Client.Services.Interfaces;
+using YourShipping.Monitor.Shared;
+
 namespace YourShipping.Monitor.Client.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Net.Http.Json;
-    using System.Text.Json;
-    using System.Threading.Tasks;
-
-    using Microsoft.AspNetCore.Components;
-    using Microsoft.AspNetCore.Http.Connections;
-    using Microsoft.AspNetCore.SignalR.Client;
-    using Microsoft.JSInterop;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Client.Services.Interfaces;
-    using YourShipping.Monitor.Shared;
-
     public class ApplicationState : IApplicationState
     {
         private readonly SortedSet<AlertSource> alertSources = new SortedSet<AlertSource>();
 
         private readonly HubConnection connection;
 
-        private readonly List<Department> departments = new List<Department>();
+        private readonly Dictionary<int, Department> departments = new Dictionary<int,Department>();
 
-        private readonly Dictionary<int, List<Department>> departmentsOfStores = new Dictionary<int, List<Department>>();
+        private readonly Dictionary<int, List<Department>>
+            departmentsOfStores = new Dictionary<int, List<Department>>();
 
         private readonly HttpClient httpClient;
 
         private readonly IJSRuntime jsRuntime;
 
-        private readonly List<Product> products = new List<Product>();
+        private readonly Dictionary<int, Product> products = new Dictionary<int, Product>();
 
         private readonly Dictionary<int, List<Product>> productsOfDepartments = new Dictionary<int, List<Product>>();
 
-        private readonly List<Store> stores = new List<Store>();
+        private readonly Dictionary<int, Store> stores = new Dictionary<int, Store>();
 
         public ApplicationState(
             HubConnectionBuilder hubConnectionBuilder,
@@ -46,31 +45,31 @@ namespace YourShipping.Monitor.Client.Services
         {
             this.jsRuntime = jsRuntime;
             this.httpClient = httpClient;
-            this.connection = hubConnectionBuilder.WithUrl(
+            connection = hubConnectionBuilder.WithUrl(
                 $"{navigationManager.BaseUri.TrimEnd('/')}/hubs/messages",
                 opt => { opt.Transports = HttpTransportType.WebSockets; }).WithAutomaticReconnect().Build();
 
-            this.connection.On<AlertSource>(ClientMethods.SourceChanged, this.OnSourceChanged);
-            this.connection.On<AlertSource, string>(
+            connection.On<AlertSource>(ClientMethods.SourceChanged, OnSourceChanged);
+            connection.On<AlertSource, string>(
                 ClientMethods.EntityChanged,
                 async (source, s) =>
-                    {
-                        await this.jsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor (*)");
-                        this.OnEntityStateChanged(source, s);
-                    });
+                {
+                    await this.jsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor (*)");
+                    OnEntityStateChanged(source, s);
+                });
 
-            Task.Run(() => this.connection.StartAsync());
+            Task.Run(() => connection.StartAsync());
         }
 
         public event EventHandler SourceChanged;
 
         public async Task<Department> AddDepartmentAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsJsonAsync("Departments", new Uri(url));
+            var responseMessage = await httpClient.PostAsJsonAsync("Departments", new Uri(url));
             var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
             if (department.HasChanged)
             {
-                this.departments?.Add(department);
+                departments[department.Id] = department;
             }
 
             return department;
@@ -78,11 +77,11 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Store> AddStoreAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsJsonAsync("Stores", new Uri(url));
+            var responseMessage = await httpClient.PostAsJsonAsync("Stores", new Uri(url));
             var store = await responseMessage.Content.ReadFromJsonAsync<Store>();
             if (store.HasChanged)
             {
-                this.stores?.Add(store);
+                stores[store.Id] = store;
             }
 
             return store;
@@ -90,23 +89,23 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task DisableProductAsync(int productId)
         {
-            await this.httpClient.PutAsync($"Products/Disable/{productId}", null);
+            await httpClient.PutAsync($"Products/Disable/{productId}", null);
         }
 
         public async Task EnableProductAsync(int productId)
         {
-            await this.httpClient.PutAsync($"Products/Enable/{productId}", null);
+            await httpClient.PutAsync($"Products/Enable/{productId}", null);
         }
 
         public async Task<Department> FollowDepartmentAsync(string productUrl)
         {
-            var responseMessage = await this.httpClient.PostAsJsonAsync(
-                                      "Departments",
-                                      new Uri(productUrl));
+            var responseMessage = await httpClient.PostAsJsonAsync(
+                "Departments",
+                new Uri(productUrl));
             var department = await responseMessage.Content.ReadFromJsonAsync<Department>();
             if (department.HasChanged)
             {
-                this.departments?.Add(department);
+                departments[department.Id]= department;
             }
 
             return department;
@@ -114,11 +113,11 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<Product> FollowProductAsync(string url)
         {
-            var responseMessage = await this.httpClient.PostAsJsonAsync("Products", new Uri(url));
+            var responseMessage = await httpClient.PostAsJsonAsync("Products", new Uri(url));
             var product = await responseMessage.Content.ReadFromJsonAsync<Product>();
             if (product.HasChanged)
             {
-                this.products?.Add(product);
+                products[product.Id] = product;
             }
 
             return product;
@@ -126,108 +125,120 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task<List<Department>> GetDepartmentsFromCacheOrFetchAsync()
         {
-            if (this.departments.Count == 0)
+            if (departments.Count == 0)
             {
-                this.departments.AddRange(await this.httpClient.GetFromJsonAsync<Department[]>("Departments"));
+                var receivedDepartments = await httpClient.GetFromJsonAsync<Department[]>("Departments");
+                foreach (var department in receivedDepartments)
+                {
+                    departments[department.Id] = department;
+                }
             }
 
-            return this.departments;
+            return departments.Values.ToList();
         }
 
         public async Task<List<Department>> GetDepartmentsOfStoreFromCacheOrFetchAsync(int id)
         {
-            if (!this.departmentsOfStores.ContainsKey(id))
+            if (!departmentsOfStores.ContainsKey(id))
             {
-                this.departmentsOfStores[id] =
-                    (await this.httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}")).ToList();
+                departmentsOfStores[id] =
+                    (await httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}")).ToList();
             }
-            else if (this.departmentsOfStores[id].Count == 0)
+            else if (departmentsOfStores[id].Count == 0)
             {
-                this.departmentsOfStores[id].AddRange(
-                    await this.httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}"));
+                departmentsOfStores[id].AddRange(
+                    await httpClient.GetFromJsonAsync<Department[]>($"Stores/GetDepartments/{id}"));
             }
 
-            return this.departmentsOfStores[id];
+            return departmentsOfStores[id];
         }
 
         public async Task<List<Product>> GetProductsFromCacheOrFetchAsync()
         {
-            if (this.products.Count == 0)
+            if (products.Count == 0)
             {
-                this.products.AddRange(await this.httpClient.GetFromJsonAsync<Product[]>("Products"));
+                var receivedProducts = await httpClient.GetFromJsonAsync<Product[]>("Products");
+                foreach (var product in receivedProducts)
+                {
+                    products[product.Id] = product;
+                }
             }
 
-            return this.products;
+            return products.Values.ToList();
         }
 
         public async Task<List<Product>> GetProductsOfDepartmentFromCacheOrFetchAsync(int id)
         {
-            if (!this.productsOfDepartments.ContainsKey(id))
+            if (!productsOfDepartments.ContainsKey(id))
             {
-                this.productsOfDepartments[id] =
-                    (await this.httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}")).ToList();
+                productsOfDepartments[id] =
+                    (await httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}")).ToList();
             }
-            else if (this.productsOfDepartments[id].Count == 0)
+            else if (productsOfDepartments[id].Count == 0)
             {
-                this.productsOfDepartments[id].AddRange(
-                    await this.httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}"));
+                productsOfDepartments[id].AddRange(
+                    await httpClient.GetFromJsonAsync<Product[]>($"Departments/GetProducts/{id}"));
             }
 
-            return this.productsOfDepartments[id];
+            return productsOfDepartments[id];
         }
 
         public async Task<List<Store>> GetStoresFromCacheOrFetchAsync()
         {
-            if (this.stores.Count == 0)
+            if (stores.Count == 0)
             {
-                this.stores.AddRange(await this.httpClient.GetFromJsonAsync<Store[]>("Stores"));
+                var retrievedStores = await httpClient.GetFromJsonAsync<Store[]>("Stores");
+                foreach (var store in retrievedStores)
+                {
+                    stores[store.Id] = store;
+                }
             }
 
-            return this.stores;
+            return stores.Values.ToList();
         }
 
         public bool HasAlertsFrom(AlertSource alertSource)
         {
-            return this.alertSources.Contains(alertSource);
+            return alertSources.Contains(alertSource);
         }
 
         public async Task ImportStoresAsync()
         {
-            await this.httpClient.PostAsync("HostedService/StartImportStores", null);
+            await httpClient.PostAsync("HostedService/StartImportStores", null);
         }
 
         public void InvalidateDepartmentsCache()
         {
-            this.departments?.Clear();
+            departments?.Clear();
         }
 
         public void InvalidateDepartmentsOfStoreCache(int storeId)
         {
-            this.departmentsOfStores.TryGetValue(storeId, out var departmentsOfStore);
+            departmentsOfStores.TryGetValue(storeId, out var departmentsOfStore);
             departmentsOfStore?.Clear();
         }
 
         public void InvalidateProductsCache()
         {
-            this.products?.Clear();
+            products?.Clear();
         }
 
         public void InvalidateProductsOfDepartmentCache(int departmentId)
         {
-            this.productsOfDepartments.TryGetValue(departmentId, out var productsOfDepartment);
+            productsOfDepartments.TryGetValue(departmentId, out var productsOfDepartment);
             productsOfDepartment?.Clear();
         }
 
         public void InvalidateStoresCache()
         {
-            this.stores?.Clear();
+            stores?.Clear();
         }
 
         public bool RemoveAlertsFrom(AlertSource alertSource)
         {
-            if (this.alertSources.Remove(alertSource))
+            if (alertSources.Remove(alertSource))
             {
-                this.OnStateChanged();
+                OnStateChanged();
                 return true;
             }
 
@@ -239,7 +250,7 @@ namespace YourShipping.Monitor.Client.Services
             try
             {
                 var searchResults =
-                    await this.httpClient.GetFromJsonAsync<Product[]>($"Stores/Search?keywords={keywords}");
+                    await httpClient.GetFromJsonAsync<Product[]>($"Stores/Search?keywords={keywords}");
                 return searchResults?.ToList();
             }
             catch (Exception e)
@@ -252,22 +263,22 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task TurnOffScanAsync(Store store)
         {
-            await this.httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
+            await httpClient.PostAsync($"Stores/TurnOffScan/{store.Id}", null);
         }
 
         public async Task TurnOnScanAsync(Store store)
         {
-            await this.httpClient.PostAsync($"Stores/TurnOnScan/{store.Id}", null);
+            await httpClient.PostAsync($"Stores/TurnOnScan/{store.Id}", null);
         }
 
         public async Task UnFollowDepartmentAsync(Department department)
         {
-            await this.httpClient.DeleteAsync($"Departments/{department.Id}");
+            await httpClient.DeleteAsync($"Departments/{department.Id}");
         }
 
         public async Task UnFollowProductAsync(Product product)
         {
-            await this.httpClient.DeleteAsync($"Products/{product.Id}");
+            await httpClient.DeleteAsync($"Products/{product.Id}");
 
             // if (this.products.Remove(product))
             // {
@@ -294,7 +305,7 @@ namespace YourShipping.Monitor.Client.Services
 
         public async Task UnFollowStoreAsync(Store store)
         {
-            await this.httpClient.DeleteAsync($"Stores/{store.Id}");
+            await httpClient.DeleteAsync($"Stores/{store.Id}");
         }
 
         protected virtual void OnEntityStateChanged(AlertSource alertSource, string serializedEntity)
@@ -302,81 +313,74 @@ namespace YourShipping.Monitor.Client.Services
             switch (alertSource)
             {
                 case AlertSource.Products:
+                {
+                    var receivedProduct = JsonSerializer.Deserialize<Product>(serializedEntity);
+                    if (products.TryGetValue(receivedProduct.Id, out var storedProduct))
                     {
-                        var receivedProduct = JsonSerializer.Deserialize<Product>(serializedEntity);
-                        var storedProduct = this.products.FirstOrDefault(product => product.Url == receivedProduct.Url);
-                        if (storedProduct != null)
-                        {
-                            storedProduct.Url = receivedProduct.Url;
-                            storedProduct.IsAvailable = receivedProduct.IsAvailable;
-                            storedProduct.Department = receivedProduct.Department;
-                            storedProduct.Currency = receivedProduct.Currency;
-                            storedProduct.Store = receivedProduct.Store;
-                            storedProduct.IsStored = receivedProduct.IsStored;
-                            storedProduct.Name = receivedProduct.Name;
-                            storedProduct.HasChanged = receivedProduct.HasChanged;
-                        }
-
-                        break;
+                        storedProduct.Url = receivedProduct.Url;
+                        storedProduct.IsAvailable = receivedProduct.IsAvailable;
+                        storedProduct.Department = receivedProduct.Department;
+                        storedProduct.Currency = receivedProduct.Currency;
+                        storedProduct.Store = receivedProduct.Store;
+                        storedProduct.IsStored = receivedProduct.IsStored;
+                        storedProduct.Name = receivedProduct.Name;
+                        storedProduct.HasChanged = receivedProduct.HasChanged;
                     }
+
+                    break;
+                }
 
                 case AlertSource.Departments:
+                {
+                    var receivedDepartment = JsonSerializer.Deserialize<Department>(serializedEntity);
+                    if (departments.TryGetValue(receivedDepartment.Id, out var storedDepartment))
                     {
-                        var receivedDepartment = JsonSerializer.Deserialize<Department>(serializedEntity);
-                        Console.WriteLine(receivedDepartment);
-                        var storedDepartment =
-                            this.departments.FirstOrDefault(department => department.Url == receivedDepartment.Url);
-                        if (storedDepartment != null)
-                        {
-                            storedDepartment.Url = receivedDepartment.Url;
-                            storedDepartment.Name = receivedDepartment.Name;
-                            storedDepartment.Category = receivedDepartment.Category;
-                            storedDepartment.ProductsCount = receivedDepartment.ProductsCount;
-                            storedDepartment.Store = receivedDepartment.Store;
-                            storedDepartment.IsAvailable = receivedDepartment.IsAvailable;
-                            storedDepartment.IsStored = receivedDepartment.IsStored;
-                            storedDepartment.HasChanged = receivedDepartment.HasChanged;
-
-                            Console.WriteLine($"Stored Department Changed: {storedDepartment.HasChanged}");
-                        }
-
-                        break;
+                        storedDepartment.Url = receivedDepartment.Url;
+                        storedDepartment.Name = receivedDepartment.Name;
+                        storedDepartment.Category = receivedDepartment.Category;
+                        storedDepartment.ProductsCount = receivedDepartment.ProductsCount;
+                        storedDepartment.Store = receivedDepartment.Store;
+                        storedDepartment.IsAvailable = receivedDepartment.IsAvailable;
+                        storedDepartment.IsStored = receivedDepartment.IsStored;
+                        storedDepartment.HasChanged = receivedDepartment.HasChanged;
                     }
+
+                    break;
+                }
 
                 case AlertSource.Stores:
+                {
+                    var receivedStore = JsonSerializer.Deserialize<Store>(serializedEntity);
+                    if (stores.TryGetValue(receivedStore.Id, out var storedStore))
                     {
-                        var receivedStore = JsonSerializer.Deserialize<Store>(serializedEntity);
-                        var storedDepartment = this.stores.FirstOrDefault(store => store.Url == receivedStore.Url);
-                        if (storedDepartment != null)
-                        {
-                            storedDepartment.Url = receivedStore.Url;
-                            storedDepartment.Name = receivedStore.Name;
-                            storedDepartment.Province = receivedStore.Province;
-                            storedDepartment.DepartmentsCount = receivedStore.DepartmentsCount;
-                            storedDepartment.CategoriesCount = receivedStore.CategoriesCount;
-                            storedDepartment.IsAvailable = receivedStore.IsAvailable;
-                            storedDepartment.IsStored = receivedStore.IsStored;
-                            storedDepartment.HasChanged = receivedStore.HasChanged;
-                        }
-
-                        break;
+                        storedStore.Url = receivedStore.Url;
+                        storedStore.Name = receivedStore.Name;
+                        storedStore.Province = receivedStore.Province;
+                        storedStore.DepartmentsCount = receivedStore.DepartmentsCount;
+                        storedStore.CategoriesCount = receivedStore.CategoriesCount;
+                        storedStore.IsAvailable = receivedStore.IsAvailable;
+                        storedStore.IsStored = receivedStore.IsStored;
+                        storedStore.HasChanged = receivedStore.HasChanged;
                     }
+
+                    break;
+                }
             }
 
-            this.OnSourceChanged(alertSource);
+            OnSourceChanged(alertSource);
         }
 
         protected virtual void OnSourceChanged(AlertSource alertSource)
         {
-            if (this.alertSources.Add(alertSource))
+            if (alertSources.Add(alertSource))
             {
-                this.OnStateChanged();
+                OnStateChanged();
             }
         }
 
         protected virtual void OnStateChanged()
         {
-            this.SourceChanged?.Invoke(this, EventArgs.Empty);
+            SourceChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }
