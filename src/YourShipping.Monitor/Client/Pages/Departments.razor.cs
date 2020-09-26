@@ -113,6 +113,11 @@
                     return "border-left: 3px solid var(--pf-global--danger-color--100); color: var(--pf-global--palette--black-400)";
                 }
 
+                if (!department.IsEnabled)
+                {
+                    return "border-left: 3px solid var(--pf-global--disabled-color--100); background-color: var(--pf-global--palette--black-400)";
+                }
+
                 if (!department.IsAvailable)
                 {
                     return "border-left: 3px solid var(--pf-global--disabled-color--100);  color: var(--pf-global--palette--black-400)";

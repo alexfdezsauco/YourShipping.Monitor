@@ -55,7 +55,7 @@
                     new CallActionDefinition
                         {
                             Label = "Buy",
-                            IsDisabled = !product.IsAvailable,
+                            IsDisabled = !product.IsAvailable || !product.IsEnabled,
                             Action = async o => await this.BuyOrBrowseAsync(product)
                         });
                 actionDefinitions.Add(
@@ -126,6 +126,11 @@
                 }
 
                 return "border-left: 3px solid var(--pf-global--danger-color--100); text-decoration: line-through;";
+            }
+
+            if (!product.IsEnabled)
+            {
+                return "border-left: 3px solid var(--pf-global--disabled-color--100); background-color: var(--pf-global--palette--black-400)";
             }
 
             if (!product.IsAvailable)
