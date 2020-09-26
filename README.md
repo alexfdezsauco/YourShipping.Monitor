@@ -34,7 +34,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
 - Run DockerBuild task.
       
       > cd %CLONE_DIR%
-      > dotnet cake -target="DockerBuild" -configuration="Release"
+      > dotnet cake -target="DockerBuild"
     
 ## Execute the container
 
