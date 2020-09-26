@@ -97,7 +97,7 @@
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] { url, url + "&page=0" };
+                var requestUris = new[] { url/*, url + "&page=0"*/ };
 
                 var j = 0;
                 while (!isStoredClosed && j < requestUris.Length
