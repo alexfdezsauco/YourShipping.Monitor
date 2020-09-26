@@ -1,41 +1,32 @@
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using AngleSharp;
+using Catel.Caching;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Orc.EntityFrameworkCore;
+using Serilog;
+using Telegram.Bot;
+using YourShipping.Monitor.Server.Helpers;
+using YourShipping.Monitor.Server.Hubs;
+using YourShipping.Monitor.Server.Models;
+using YourShipping.Monitor.Server.Services;
+using YourShipping.Monitor.Server.Services.HostedServices;
+using YourShipping.Monitor.Server.Services.Interfaces;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+
 namespace YourShipping.Monitor.Server
 {
-    using System;
-    using System.Net;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.Security.Authentication;
-
-    using AngleSharp;
-
-    using Catel.Caching;
-
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-
-    using Orc.EntityFrameworkCore;
-
-    using Serilog;
-
-    using Telegram.Bot;
-
-    using YourShipping.Monitor.Server.Helpers;
-    using YourShipping.Monitor.Server.Hubs;
-    using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Services;
-    using YourShipping.Monitor.Server.Services.HostedServices;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-
-    using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
-
     public class Startup
     {
         public Startup(IConfiguration configuration)
         {
-            this.Configuration = configuration;
+            Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -66,14 +57,14 @@ namespace YourShipping.Monitor.Server
 
             app.UseEndpoints(
                 endpoints =>
-                    {
-                        endpoints.MapRazorPages();
-                        endpoints.MapControllers();
-                        endpoints.MapHub<MessagesHub>("/hubs/messages");
-                        endpoints.MapFallbackToFile("index.html");
-                    });
+                {
+                    endpoints.MapRazorPages();
+                    endpoints.MapControllers();
+                    endpoints.MapHub<MessagesHub>("/hubs/messages");
+                    endpoints.MapFallbackToFile("index.html");
+                });
 
-            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
+            var token = Configuration.GetSection("TelegramBot")?["Token"];
             if (!string.IsNullOrWhiteSpace(token) && token != "%TELEGRAM_BOT_TOKEN%")
             {
                 serviceProvider.GetService<ITelegramCommander>().Start();
@@ -94,7 +85,7 @@ namespace YourShipping.Monitor.Server
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
-            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
+            var token = Configuration.GetSection("TelegramBot")?["Token"];
 
             if (!string.IsNullOrWhiteSpace(token))
             {
@@ -123,67 +114,57 @@ namespace YourShipping.Monitor.Server
 
             services.AddTransient(
                 sp =>
+                {
+                    var cookieContainer = sp.GetService<CookieContainer>();
+
+                    var handler = new HttpClientHandler
                     {
-                        var cookieContainer = sp.GetService<CookieContainer>();
+                        AutomaticDecompression =
+                            DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                                      | DecompressionMethods.Brotli,
+                        AllowAutoRedirect = true
+                        //SslProtocols =
+                        //    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
+                        //    | SslProtocols.Tls13
+                    };
 
-                        var handler = new HttpClientHandler
-                                          {
-                                              AutomaticDecompression =
-                                                  DecompressionMethods.GZip | DecompressionMethods.Deflate
-                                                                            | DecompressionMethods.Brotli,
-                                              AllowAutoRedirect = true,
-                                              //SslProtocols =
-                                              //    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
-                                              //    | SslProtocols.Tls13
-                                          };
+                    if (cookieContainer != null)
+                    {
+                        handler.CookieContainer = cookieContainer;
+                    }
 
-                        if (cookieContainer != null)
-                        {
-                            handler.CookieContainer = cookieContainer;
-                        }
+                    var httpTimeoutInSeconds = Configuration.GetSection("Http")?["TimeoutInSeconds"];
+                    var httpClient = new HttpClient(handler)
+                    {
+                        Timeout = int.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
+                            ? TimeSpan.FromSeconds(timeoutInSeconds)
+                            : ScrappingConfiguration.HttpClientTimeout
+                    };
 
-                        var httpTimeoutInSeconds = this.Configuration.GetSection("Http")?["TimeoutInSeconds"];
-                        var httpClient = new HttpClient(handler)
-                                             {
-                                                 Timeout = int.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
-                                                               ? TimeSpan.FromSeconds(timeoutInSeconds)
-                                                               : ScrappingConfiguration.HttpClientTimeout
-                                             };
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                        "user-agent",
+                        ScrappingConfiguration.GetSupportedAgent());
+                    var random = new Random();
 
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "user-agent",
-                            ScrappingConfiguration.GetSupportedAgent());
-                        var random = new Random();
+                    /*
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                        "X-Forwarded-For",
+                        $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}"); 
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                        "X-Real-IP",
+                        $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}");
+                    */
 
-                        /*
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "X-Forwarded-For",
-                            $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}"); 
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "X-Real-IP",
-                            $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}");
-                        */
+                    // httpClient.DefaultRequestHeaders.Host = $"192.168.43.{random.Next(1, 255)}";
+                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                        "accept-encoding",
+                        "gzip, deflate, br");
+                    httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
 
-                        // httpClient.DefaultRequestHeaders.Host = $"192.168.43.{random.Next(1, 255)}";
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                            "accept-encoding",
-                            "gzip, deflate, br");
-                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
+                    return httpClient;
+                });
 
-                        return httpClient;
-                    });
 
-            // services.AddHttpClient(
-            // "json",
-            // (sp, httpClient) =>
-            // {
-            // httpClient.Timeout = ScrappingConfiguration.HttpClientTimeout;
-            // httpClient.DefaultRequestHeaders.CacheControl =
-            // new CacheControlHeaderValue { NoCache = true };
-            // httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-            // "user-agent",
-            // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
-            // });
             services.AddScoped<IStoreService, StoreService>();
 
             services.AddSingleton<ICacheStorage<string, Product>>(
