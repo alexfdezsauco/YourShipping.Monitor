@@ -60,7 +60,7 @@ You can export the `cookies.txt` by using theses extensions:
 
         "Credentials": {
             "Username": "%USERNAME%",
-            "Password": "%PASSWORD%",
+            "Password": "%PASSWORD%"
         }
 
 - For docker run
