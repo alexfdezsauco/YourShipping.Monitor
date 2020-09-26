@@ -54,7 +54,7 @@ You can export the `cookies.txt` by using theses extensions:
 
 ### Mount products in the shopping cart bypassing the captcha
 
-> ALERT: Linux users must be sure that have installed the following libraries: `libleptonica-dev, libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus`
+> **ALERT**: Linux users should make sure to install the following libraries: `libleptonica-dev, libgif7, libjpeg62, libopenjp2-7, libpng16-16, libtiff5, libwebp6, libc6-dev, libgdiplus`
 
 - Add a configuration section to for credentials 
 
