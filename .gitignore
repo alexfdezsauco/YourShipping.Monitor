@@ -353,3 +353,8 @@ tools
 .vscode
 data
 logs
+/output
+/.config
+/.dotnet
+/.vscode
+/.vs
