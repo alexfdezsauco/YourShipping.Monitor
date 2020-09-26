@@ -1,34 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Blorc.Components;
-using Blorc.PatternFly.Components.Table;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using YourShipping.Monitor.Client.Services.Interfaces;
-using YourShipping.Monitor.Shared;
-
-namespace YourShipping.Monitor.Client.Pages
+﻿namespace YourShipping.Monitor.Client.Pages
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Net.Http;
+    using System.Threading.Tasks;
+
+    using Blorc.Components;
+    using Blorc.PatternFly.Components.Table;
+
+    using Microsoft.AspNetCore.Components;
+    using Microsoft.JSInterop;
+
+    using YourShipping.Monitor.Client.Services.Interfaces;
+    using YourShipping.Monitor.Shared;
+
     public class StoreComponent : BlorcComponentBase
     {
         private readonly Dictionary<object, List<ActionDefinition>> ActionDefinitions =
             new Dictionary<object, List<ActionDefinition>>();
 
-        public bool HasError => !Uri.TryCreate(Url, UriKind.Absolute, out _);
+        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
 
         public bool IsLoading
         {
-            get => GetPropertyValue<bool>(nameof(IsLoading));
-            set => SetPropertyValue(nameof(IsLoading), value);
+            get => this.GetPropertyValue<bool>(nameof(this.IsLoading));
+            set => this.SetPropertyValue(nameof(this.IsLoading), value);
         }
 
         public string Url
         {
-            get => GetPropertyValue<string>(nameof(Url));
-            set => SetPropertyValue(nameof(Url), value);
+            get => this.GetPropertyValue<string>(nameof(this.Url));
+            set => this.SetPropertyValue(nameof(this.Url), value);
         }
 
         [Inject]
@@ -45,72 +48,72 @@ namespace YourShipping.Monitor.Client.Pages
 
         protected List<Store> Stores
         {
-            get => GetPropertyValue<List<Store>>(nameof(Stores));
-            set => SetPropertyValue(nameof(Stores), value);
+            get => this.GetPropertyValue<List<Store>>(nameof(this.Stores));
+            set => this.SetPropertyValue(nameof(this.Stores), value);
         }
 
         public IEnumerable<ActionDefinition> GetActions(object row)
         {
-            if (!ActionDefinitions.ContainsKey(row))
+            if (!this.ActionDefinitions.ContainsKey(row))
             {
-                ActionDefinitions[row] = new List<ActionDefinition>();
+                this.ActionDefinitions[row] = new List<ActionDefinition>();
             }
 
-            var actionDefinitions = ActionDefinitions[row];
+            var actionDefinitions = this.ActionDefinitions[row];
             if (actionDefinitions.Count == 0)
             {
                 if (row is Store store)
                 {
                     actionDefinitions.Add(
                         new CallActionDefinition
-                        {
-                            Label = "Buy",
-                            IsDisabled = !store.IsAvailable,
-                            Action = async o => await BuyOrBrowseAsync(o as Store)
-                        });
+                            {
+                                Label = "Buy",
+                                IsDisabled = !store.IsAvailable,
+                                Action = async o => await this.BuyOrBrowseAsync(o as Store)
+                            });
 
                     actionDefinitions.Add(
                         new CallActionDefinition
-                        {
-                            Label = "Browse", Action = async o => await BuyOrBrowseAsync(o as Store)
-                        });
+                            {
+                                Label = "Browse", Action = async o => await this.BuyOrBrowseAsync(o as Store)
+                            });
 
                     actionDefinitions.Add(
                         new CallActionDefinition
-                        {
-                            Label = "Inspect",
-                            IsDisabled = !store.IsAvailable,
-                            Action = async o => await InspectAsync(o as Store)
-                        });
+                            {
+                                Label = "Inspect",
+                                IsDisabled = !store.IsAvailable,
+                                Action = async o => await this.InspectAsync(o as Store)
+                            });
 
                     actionDefinitions.Add(
                         new CallActionDefinition
-                        {
-                            Label = "UnFollow",
-                            IsDisabled = !store.IsStored,
-                            Action = async o => await UnFollowAsync(o as Store)
-                        });
+                            {
+                                Label = "UnFollow",
+                                IsDisabled = !store.IsStored,
+                                Action = async o => await this.UnFollowAsync(o as Store)
+                            });
 
                     var switchActionDefinition = new SwitchActionDefinition
-                    {
-                        Label = "Turn-On Scan",
-                        IsDisabled = !store.IsStored,
-                        DataContext = store
-                    };
+                                                     {
+                                                         Label = "Turn-On Scan",
+                                                         IsDisabled = !store.IsStored,
+                                                         DataContext = store
+                                                     };
 
                     switchActionDefinition.Action = async (dataContext, isChecked) =>
-                    {
-                        switchActionDefinition.Label =
-                            switchActionDefinition.IsChecked ? "Turn-Off Scan" : "Turn-On Scan";
-                        if (switchActionDefinition.IsChecked)
                         {
-                            await ApplicationState.TurnOnScanAsync(dataContext as Store);
-                        }
-                        else
-                        {
-                            await ApplicationState.TurnOffScanAsync(dataContext as Store);
-                        }
-                    };
+                            switchActionDefinition.Label =
+                                switchActionDefinition.IsChecked ? "Turn-Off Scan" : "Turn-On Scan";
+                            if (switchActionDefinition.IsChecked)
+                            {
+                                await this.ApplicationState.TurnOnScanAsync(dataContext as Store);
+                            }
+                            else
+                            {
+                                await this.ApplicationState.TurnOffScanAsync(dataContext as Store);
+                            }
+                        };
 
                     // switchActionDefinition.Action = (o, b) =>
                     // {
@@ -128,11 +131,11 @@ namespace YourShipping.Monitor.Client.Pages
 
         protected async Task AddAsync()
         {
-            var store = await ApplicationState.AddStoreAsync(Url);
+            var store = await this.ApplicationState.AddStoreAsync(this.Url);
             if (store != null)
             {
-                Url = string.Empty;
-                StateHasChanged();
+                this.Url = string.Empty;
+                this.StateHasChanged();
             }
         }
 
@@ -170,34 +173,42 @@ namespace YourShipping.Monitor.Client.Pages
 
         protected async Task ImportStoresAsync()
         {
-            await ApplicationState.ImportStoresAsync();
+            await this.ApplicationState.ImportStoresAsync();
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            if (this.IsLoading)
+            {
+                this.Stores = await this.ApplicationState.GetStoresFromCacheOrFetchAsync();
+            }
+        }
 
         protected override async Task OnInitializedAsync()
         {
-            ApplicationState.SourceChanged += async (sender, args) =>
-            {
-                if (ApplicationState.HasAlertsFrom(AlertSource.Stores))
+            this.ApplicationState.SourceChanged += async (sender, args) =>
                 {
-                    await RefreshAsync();
-                }
-            };
+                    if (this.ApplicationState.HasAlertsFrom(AlertSource.Stores))
+                    {
+                        await this.RefreshAsync();
+                    }
+                };
 
-            ApplicationState.RemoveAlertsFrom(AlertSource.Stores);
-            await JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
-            await RefreshAsync();
+            this.ApplicationState.RemoveAlertsFrom(AlertSource.Stores);
+            await this.JsRuntime.InvokeAsync<object>("setTitle", "YourShipping.Monitor");
+            await this.RefreshAsync();
         }
 
         protected override void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(IsLoading) || e.PropertyName == nameof(Url))
+            if (e.PropertyName == nameof(this.IsLoading) || e.PropertyName == nameof(this.Url))
             {
-                StateHasChanged();
+                this.StateHasChanged();
             }
-            else if (e.PropertyName == nameof(Stores) && Stores != null)
+            else if (e.PropertyName == nameof(this.Stores) && this.Stores != null)
             {
-                IsLoading = false;
+                this.IsLoading = false;
             }
         }
 
@@ -205,30 +216,30 @@ namespace YourShipping.Monitor.Client.Pages
         {
             if (reload)
             {
-                ApplicationState.InvalidateStoresCache();
-                Stores = null;
+                this.ApplicationState.InvalidateStoresCache();
+                this.Stores = null;
             }
 
-            IsLoading = true;
+            this.IsLoading = true;
         }
 
         private async Task BuyOrBrowseAsync(Store store)
         {
             if (store != null)
             {
-                await JsRuntime.InvokeAsync<object>("open", store.Url, "_blank");
+                await this.JsRuntime.InvokeAsync<object>("open", store.Url, "_blank");
             }
         }
 
         private async Task InspectAsync(Store store)
         {
-            NavigationManager.NavigateTo($"/inspect-store/{store.Id}");
+            this.NavigationManager.NavigateTo($"/inspect-store/{store.Id}");
         }
 
         private async Task UnFollowAsync(Store store)
         {
-            await ApplicationState.UnFollowStoreAsync(store);
-            StateHasChanged();
+            await this.ApplicationState.UnFollowStoreAsync(store);
+            this.StateHasChanged();
         }
     }
 }

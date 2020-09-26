@@ -127,6 +127,15 @@
             return string.Empty;
         }
 
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            await base.OnAfterRenderAsync(firstRender);
+            if (this.IsLoading)
+            {
+                this.Departments = await this.ApplicationState.GetDepartmentsFromCacheOrFetchAsync();
+            }
+        }
+
         protected override async Task OnInitializedAsync()
         {
             this.ApplicationState.SourceChanged += async (sender, args) =>
