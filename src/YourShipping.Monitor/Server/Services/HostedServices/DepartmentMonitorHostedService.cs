@@ -36,7 +36,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
         public DepartmentMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromSeconds(10))
+            : base(serviceProvider, TimeSpan.FromSeconds(1))
         {
         }
 
@@ -62,8 +62,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                     {
                         var serviceScope = serviceProvider.CreateScope();
                         var serviceScopeServiceProvider = serviceScope.ServiceProvider;
-                        var departmentRepository =
-                            serviceScopeServiceProvider.GetService<IRepository<Department, int>>();
+                        var departmentRepository = serviceScopeServiceProvider.GetService<IRepository<Department, int>>();
                         var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
                         var departmentScrapper = serviceProvider.GetService<IEntityScrapper<Department>>();
 

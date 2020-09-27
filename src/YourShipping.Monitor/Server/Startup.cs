@@ -144,18 +144,7 @@ namespace YourShipping.Monitor.Server
                     httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                         "user-agent",
                         ScrappingConfiguration.GetSupportedAgent());
-                    var random = new Random();
 
-                    /*
-                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                        "X-Forwarded-For",
-                        $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}"); 
-                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                        "X-Real-IP",
-                        $"192.168.{random.Next(1, 255)}.{random.Next(1, 255)}");
-                    */
-
-                    // httpClient.DefaultRequestHeaders.Host = $"192.168.43.{random.Next(1, 255)}";
                     httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                         "accept-encoding",
                         "gzip, deflate, br");

@@ -1,30 +1,24 @@
-﻿namespace YourShipping.Monitor.Server.Services
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Dom;
+using Catel.Caching;
+using Catel.Caching.Policies;
+using Dasync.Collections;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using YourShipping.Monitor.Server.Extensions;
+using YourShipping.Monitor.Server.Models;
+using YourShipping.Monitor.Server.Services.Interfaces;
+
+namespace YourShipping.Monitor.Server.Services
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Text.Json;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
-    using AngleSharp;
-    using AngleSharp.Dom;
-
-    using Catel.Caching;
-    using Catel.Caching.Policies;
-
-    using Dasync.Collections;
-
-    using Microsoft.Extensions.DependencyInjection;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Extensions;
-    using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-
     public class DepartmentScrapper : IEntityScrapper<Department>
     {
         private const string StorePrefix = "TuEnvio ";
@@ -68,11 +62,11 @@
                 return null;
             }
 
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       $"{url}/{store != null}",
-                       async () => await this.GetDirectAsync(url, store, disabledProducts),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.DepartmentCacheExpiration),
-                       force);
+            return await cacheStorage.GetFromCacheOrFetchAsync(
+                $"{url}/{store != null}",
+                async () => await GetDirectAsync(url, store, disabledProducts),
+                ExpirationPolicy.Duration(ScrappingConfiguration.DepartmentCacheExpiration),
+                force);
         }
 
         private async Task<Department> GetDirectAsync(
@@ -82,7 +76,7 @@
         {
             Log.Information("Scrapping Department from {Url}", url);
 
-            var store = parentStore ?? await this.storeScrapper.GetAsync(url);
+            var store = parentStore ?? await storeScrapper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
@@ -90,14 +84,14 @@
 
             var storeName = store?.Name;
             Department department = null;
-            var currencies = new[] { "CUP" , "CUC" };
+            var currencies = new[] {"CUP", "CUC"};
             var i = 0;
             var isStoredClosed = false;
 
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] { url/*, url + "&page=0"*/ };
+                var requestUris = new[] {url + "&page=0", url};
 
                 var j = 0;
                 while (!isStoredClosed && j < requestUris.Length
@@ -107,18 +101,19 @@
                     string content = null;
                     try
                     {
-                        var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+                        var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-                        var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
+                        var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await httpClient.PostAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage = await httpClient.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
                         httpResponseMessage.EnsureSuccessStatusCode();
 
-                        isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+                        isStoredClosed =
+                            httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
                         if (!isStoredClosed)
                         {
                             content = await httpResponseMessage.Content.ReadAsStringAsync();
-                            await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                            await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
                         }
                     }
                     catch (Exception e)
@@ -132,10 +127,10 @@
                     }
                     else if (!string.IsNullOrEmpty(content))
                     {
-                        var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+                        var document = await browsingContext.OpenAsync(req => req.Content(content));
 
                         var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
-                                            ?.TextContent == "503";
+                            ?.TextContent == "503";
                         if (isBlocked)
                         {
                             // TODO: Slow down approach?
@@ -188,14 +183,14 @@
                                         && !string.IsNullOrWhiteSpace(departmentCategory))
                                     {
                                         department = new Department
-                                                         {
-                                                             Url = url,
-                                                             Name = departmentName,
-                                                             Category = departmentCategory,
-                                                             Store = storeName,
-                                                             IsAvailable = true,
-                                                             IsEnabled = true
-                                                         };
+                                        {
+                                            Url = url,
+                                            Name = departmentName,
+                                            Category = departmentCategory,
+                                            Store = storeName,
+                                            IsAvailable = true,
+                                            IsEnabled = true
+                                        };
                                     }
                                 }
                                 else if (url.Contains("/Search.aspx?keywords="))
@@ -205,14 +200,14 @@
                                         s1 => s1.Split("=")[0],
                                         s2 => s2.Split("=")[1]);
                                     department = new Department
-                                                     {
-                                                         Url = url,
-                                                         Name = "Search",
-                                                         Category = "Keywords: " + parameters["keywords"],
-                                                         Store = storeName,
-                                                         IsAvailable = true,
-                                                         IsEnabled = true
-                                                     };
+                                    {
+                                        Url = url,
+                                        Name = "Search",
+                                        Category = "Keywords: " + parameters["keywords"],
+                                        Store = storeName,
+                                        IsAvailable = true,
+                                        IsEnabled = true
+                                    };
                                 }
 
                                 if (department != null)
@@ -233,36 +228,36 @@
 
                                     await productElements.ParallelForEachAsync(
                                         async productElement =>
+                                        {
+                                            var productScrapper = serviceProvider
+                                                .GetService<IEntityScrapper<Product>>();
+                                            var element = productElement.QuerySelector<IElement>("a");
+                                            var elementAttribute = element.Attributes["href"];
+
+                                            var productUrl = Regex.Replace(
+                                                $"{baseUrl}/{elementAttribute.Value}",
+                                                @"(&?)(page=\d+(&?)|img=\d+(&?))",
+                                                string.Empty,
+                                                RegexOptions.IgnoreCase).Trim(' ');
+
+                                            var product = await productScrapper.GetAsync(
+                                                productUrl,
+                                                disabledProducts == null
+                                                || !disabledProducts.Contains(
+                                                    productUrl), // Why was in false.
+                                                store,
+                                                department,
+                                                disabledProducts);
+
+                                            if (product != null && product.IsAvailable)
                                             {
-                                                var productScrapper = this.serviceProvider
-                                                    .GetService<IEntityScrapper<Product>>();
-                                                var element = productElement.QuerySelector<IElement>("a");
-                                                var elementAttribute = element.Attributes["href"];
-
-                                                var productUrl = Regex.Replace(
-                                                    $"{baseUrl}/{elementAttribute.Value}",
-                                                    @"(&?)(page=\d+(&?)|img=\d+(&?))",
-                                                    string.Empty,
-                                                    RegexOptions.IgnoreCase).Trim(' ');
-
-                                                var product = await productScrapper.GetAsync(
-                                                                  productUrl,
-                                                                  disabledProducts == null
-                                                                  || !disabledProducts.Contains(
-                                                                      productUrl), // Why was in false.
-                                                                  store,
-                                                                  department,
-                                                                  disabledProducts);
-
-                                                if (product != null && product.IsAvailable)
+                                                lock (department)
                                                 {
-                                                    lock (department)
-                                                    {
-                                                        department.Products.Add(product.Url, product);
-                                                        productsCount++;
-                                                    }
+                                                    department.Products.Add(product.Url, product);
+                                                    productsCount++;
                                                 }
-                                            });
+                                            }
+                                        });
 
                                     department.ProductsCount = productsCount;
                                     department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
@@ -275,7 +270,7 @@
                                     "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
                                     storeName,
                                     store.Url);
-                                this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                                cookiesSynchronizationService.InvalidateCookies(store.Url);
                             }
                         }
                     }

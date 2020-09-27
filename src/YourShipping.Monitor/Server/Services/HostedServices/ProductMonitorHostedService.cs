@@ -35,7 +35,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public class ProductMonitorHostedService : TimedHostedServiceBase
     {
         public ProductMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromSeconds(5))
+            : base(serviceProvider, TimeSpan.FromSeconds(1))
         {
         }
 
