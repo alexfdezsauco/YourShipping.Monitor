@@ -123,9 +123,6 @@ namespace YourShipping.Monitor.Server
                             DecompressionMethods.GZip | DecompressionMethods.Deflate
                                                       | DecompressionMethods.Brotli,
                         AllowAutoRedirect = true
-                        //SslProtocols =
-                        //    SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
-                        //    | SslProtocols.Tls13
                     };
 
                     if (cookieContainer != null)
