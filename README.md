@@ -34,7 +34,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
 - Run DockerBuild task.
       
       > cd %CLONE_DIR%
-      > dotnet cake -target="DockerBuild" -configuration="Release"
+      > dotnet cake -target="DockerBuild"
     
 ## Execute the container
 
@@ -60,7 +60,7 @@ You can export the `cookies.txt` by using theses extensions:
 
         "Credentials": {
             "Username": "%USERNAME%",
-            "Password": "%PASSWORD%",
+            "Password": "%PASSWORD%"
         }
 
 - For docker run
@@ -68,4 +68,4 @@ You can export the `cookies.txt` by using theses extensions:
         > mkdir %APP_DIR%/data
         > mkdir %APP_DIR%/logs
         > mkdir %APP_DIR%/captchas
-        > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -v %APP_DIR%/captcha:/app/captcha -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" -e -e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD" your-shipping-monitor:latest
+        > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -v %APP_DIR%/captcha:/app/captcha -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" -e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD" your-shipping-monitor:latest
