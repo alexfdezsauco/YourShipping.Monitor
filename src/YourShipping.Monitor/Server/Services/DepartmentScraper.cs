@@ -14,6 +14,7 @@ using Dasync.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using YourShipping.Monitor.Server.Extensions;
+using YourShipping.Monitor.Server.Helpers;
 using YourShipping.Monitor.Server.Models;
 using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -51,11 +52,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             var store = parameters?.OfType<Store>().FirstOrDefault();
             var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
-            url = Regex.Replace(
-                url,
-                @"(&?)(ProdPid=\d+(&?)|page=\d+(&?)|img=\d+(&?))",
-                string.Empty,
-                RegexOptions.IgnoreCase).Trim(' ').Replace("/Item", "/Products");
+            url = ScrapingUriHelper.EnsureDepartmentUrl(url);
 
             if (!Regex.IsMatch(url, @"depPid=\d+", RegexOptions.IgnoreCase))
             {

@@ -11,7 +11,7 @@ namespace YourShipping.Monitor.Server.Helpers
 
     public static class PolicyHelper
     {
-        public static RetryPolicy<IDbContextTransaction> WaitAndRetryForever2()
+        public static RetryPolicy<IDbContextTransaction> WaitAndRetry()
         {
             return Policy<IDbContextTransaction>.Handle<Exception>().WaitAndRetryForever(
                 retryAttempt => TimeSpan.FromSeconds(5),
@@ -21,7 +21,7 @@ namespace YourShipping.Monitor.Server.Helpers
                     timespan));
         }
 
-        public static RetryPolicy<IDbContextTransaction> WaitAndRetry()
+        public static RetryPolicy<IDbContextTransaction> WaitAndRetry2()
         {
             return Policy<IDbContextTransaction>.Handle<Exception>().WaitAndRetry(
                 5,

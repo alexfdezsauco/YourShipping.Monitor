@@ -1,20 +1,18 @@
-﻿namespace YourShipping.Monitor.Server.Controllers
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Orc.EntityFrameworkCore;
+using YourShipping.Monitor.Server.Helpers;
+using YourShipping.Monitor.Server.Models.Extensions;
+using YourShipping.Monitor.Server.Services;
+using YourShipping.Monitor.Server.Services.Interfaces;
+using YourShipping.Monitor.Shared;
+
+namespace YourShipping.Monitor.Server.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Linq;
-    using System.Threading.Tasks;
-
-    using Microsoft.AspNetCore.Mvc;
-
-    using Orc.EntityFrameworkCore;
-
-    using YourShipping.Monitor.Server.Helpers;
-    using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-    using YourShipping.Monitor.Shared;
-
     [ApiController]
     [Route("[controller]")]
     public class ProductsController : ControllerBase
@@ -31,12 +29,14 @@
             if (storedProduct == null)
             {
                 var dateTime = DateTime.Now;
-                var product = await entityScraper.GetAsync(absoluteUrl);
-                if (product != null)
+                var product = new Models.Product();
                 {
+                    product.Name = "Unknown Product";
+                    product.Url = ScrapingUriHelper.EnsureProductUrl(absoluteUrl);
                     product.Added = dateTime;
                     product.Updated = dateTime;
                     product.Read = dateTime;
+                    product.IsEnabled = true;
                     var transaction = PolicyHelper.WaitAndRetry().Execute(
                         () => productRepository.BeginTransaction(IsolationLevel.Serializable));
 

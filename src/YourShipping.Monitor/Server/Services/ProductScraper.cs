@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
@@ -12,6 +11,7 @@ using Catel.Caching;
 using Catel.Caching.Policies;
 using Serilog;
 using YourShipping.Monitor.Server.Extensions;
+using YourShipping.Monitor.Server.Helpers;
 using YourShipping.Monitor.Server.Models;
 using YourShipping.Monitor.Server.Services.Interfaces;
 
@@ -54,11 +54,8 @@ namespace YourShipping.Monitor.Server.Services
             var department = parameters?.OfType<Department>().FirstOrDefault();
             var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
 
-            url = Regex.Replace(
-                url,
-                @"(&?)(page=\d+(&?)|img=\d+(&?))",
-                string.Empty,
-                RegexOptions.IgnoreCase).Trim(' ');
+
+            url = ScrapingUriHelper.EnsureProductUrl(url);
 
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 $"{url}/{store != null}/{department != null}",

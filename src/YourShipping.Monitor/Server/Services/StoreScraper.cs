@@ -1,4 +1,6 @@
-﻿namespace YourShipping.Monitor.Server.Services
+﻿using YourShipping.Monitor.Server.Helpers;
+
+namespace YourShipping.Monitor.Server.Services
 {
     using System;
     using System.Linq;
@@ -43,9 +45,8 @@
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
         {
-            var uri = new Uri(url);
-            url =
-                $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}/Products?depPid=0";
+            url = ScrapingUriHelper.EnsureStoreUrl(url)
+                ;                
 
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,

@@ -1,25 +1,21 @@
-﻿namespace YourShipping.Monitor.Server.Services
+﻿using System;
+using System.Data;
+using System.Linq;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using Orc.EntityFrameworkCore;
+using Serilog;
+using YourShipping.Monitor.Server.Helpers;
+using YourShipping.Monitor.Server.Models;
+using YourShipping.Monitor.Server.Models.Extensions;
+using YourShipping.Monitor.Server.Services.Interfaces;
+
+namespace YourShipping.Monitor.Server.Services
 {
-    using System;
-    using System.Data;
-    using System.Linq;
-    using System.Net.Http.Json;
-    using System.Threading.Tasks;
-
-    using Orc.EntityFrameworkCore;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Helpers;
-    using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-
     public class StoreService : IStoreService
     {
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
-
         private readonly IEntityScraper<Store> _entityScraper;
+        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
         private readonly IRepository<Store, int> storesRepository;
 
@@ -29,32 +25,34 @@
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.storesRepository = storesRepository;
-            this._entityScraper = entityScraper;
+            _entityScraper = entityScraper;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
 
         public async Task<Shared.Store> AddAsync(Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
-            var storedStore = this.storesRepository.Find(store => store.Url == absoluteUrl).FirstOrDefault();
+            var storedStore = storesRepository.Find(store => store.Url == absoluteUrl).FirstOrDefault();
             if (storedStore == null)
             {
                 var dateTime = DateTime.Now;
-                var store = await this._entityScraper.GetAsync(absoluteUrl);
-                if (store != null)
+                var store = new Store
                 {
-                    store.Added = dateTime;
-                    store.Updated = dateTime;
-                    store.Read = dateTime;
+                    Name = "Unknown Store",
+                    IsEnabled = true,
+                    Url = ScrapingUriHelper.EnsureStoreUrl(absoluteUrl),
+                    Added = dateTime,
+                    Updated = dateTime,
+                    Read = dateTime
+                };
 
-                    var transaction = PolicyHelper.WaitAndRetry().Execute(
-                        () => this.storesRepository.BeginTransaction(IsolationLevel.Serializable));
+                var transaction = PolicyHelper.WaitAndRetry().Execute(
+                    () => storesRepository.BeginTransaction(IsolationLevel.Serializable));
 
-                    this.storesRepository.Add(store);
-                    await this.storesRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                    return store.ToDataTransferObject(true);
-                }
+                storesRepository.Add(store);
+                await storesRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return store.ToDataTransferObject(true);
             }
 
             return storedStore?.ToDataTransferObject();
@@ -63,19 +61,19 @@
         public async Task ImportAsync()
         {
             var httpClient =
-                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
+                await cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
             OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
                     await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScraperConfigurations.StoresJsonUrl);
+                await cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScraperConfigurations.StoresJsonUrl);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                this.cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
+                cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
             }
 
             // TODO: Report the status as error.
@@ -84,7 +82,7 @@
                 var storesUrl = storesToImport.Select(store => new Uri(store.Url));
                 foreach (var url in storesUrl)
                 {
-                    await this.AddAsync(url);
+                    await AddAsync(url);
                 }
             }
         }

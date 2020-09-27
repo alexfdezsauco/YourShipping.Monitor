@@ -1,20 +1,18 @@
-﻿namespace YourShipping.Monitor.Server.Controllers
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Orc.EntityFrameworkCore;
+using YourShipping.Monitor.Server.Helpers;
+using YourShipping.Monitor.Server.Models.Extensions;
+using YourShipping.Monitor.Server.Services;
+using YourShipping.Monitor.Server.Services.Interfaces;
+using YourShipping.Monitor.Shared;
+
+namespace YourShipping.Monitor.Server.Controllers
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Linq;
-    using System.Threading.Tasks;
-
-    using Microsoft.AspNetCore.Mvc;
-
-    using Orc.EntityFrameworkCore;
-
-    using YourShipping.Monitor.Server.Helpers;
-    using YourShipping.Monitor.Server.Models.Extensions;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-    using YourShipping.Monitor.Shared;
-
     [ApiController]
     [Route("[controller]")]
     public class DepartmentsController : ControllerBase
@@ -30,28 +28,26 @@
                 departmentRepository.Find(department => department.Url == absoluteUrl).FirstOrDefault();
             if (storedDepartment == null)
             {
-                var department = await departmentScraper.GetAsync(absoluteUrl);
-                if (department != null)
+                var dateTime = DateTime.Now;
+                var department = new Models.Department
                 {
-                    var dateTime = DateTime.Now;
-                    department.Added = dateTime;
-                    department.Updated = dateTime;
-                    department.Read = dateTime;
+                    Name = "Unknown Department",
+                    IsEnabled = true,
+                    Url = ScrapingUriHelper.EnsureDepartmentUrl(absoluteUrl),
+                    Added = dateTime,
+                    Updated = dateTime,
+                    Read = dateTime
+                };
 
-                    var transaction = PolicyHelper.WaitAndRetry().Execute(
-                        () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
-                    departmentRepository.Add(department);
-                    await departmentRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                var transaction = PolicyHelper.WaitAndRetry().Execute(
+                    () => departmentRepository.BeginTransaction(IsolationLevel.Serializable));
+                departmentRepository.Add(department);
+                await departmentRepository.SaveChangesAsync();
+                await transaction.CommitAsync();
 
-                    return department.ToDataTransferObject(true);
-                }
+                return department.ToDataTransferObject(true);
             }
 
-            if (storedDepartment == null)
-            {
-                return this.NotFound();
-            }
 
             return storedDepartment?.ToDataTransferObject();
         }
@@ -74,7 +70,7 @@
             var department = departmentRepository.Find(d => d.Id == id).FirstOrDefault();
             if (department == null)
             {
-                return this.NotFound();
+                return NotFound();
             }
 
             return department?.ToDataTransferObject();
