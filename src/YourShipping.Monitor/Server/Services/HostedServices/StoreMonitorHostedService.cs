@@ -56,7 +56,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         var serviceScopeServiceProvider = serviceScope.ServiceProvider;
                         var storeRepository = serviceScopeServiceProvider.GetService<IRepository<Store, int>>();
                         var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
-                        var storeScrapper = serviceProvider.GetService<IEntityScrapper<Store>>();
+                        var storeScrapper = serviceProvider.GetService<IEntityScraper<Store>>();
 
                         var dateTime = DateTime.Now;
                         var store = await storeScrapper.GetAsync(storedStore.Url, true);

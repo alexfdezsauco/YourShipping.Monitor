@@ -20,7 +20,7 @@ namespace YourShipping.Monitor.Server.Services
     /// <summary>
     ///     The product reader.
     /// </summary>
-    public class ProductScrapper : IEntityScrapper<Product>
+    public class ProductScraper : IEntityScraper<Product>
     {
         private const string StorePrefix = "TuEnvio ";
 
@@ -30,20 +30,20 @@ namespace YourShipping.Monitor.Server.Services
 
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
-        private readonly IEntityScrapper<Department> departmentScrapper;
+        private readonly IEntityScraper<Department> _departmentScraper;
 
-        private readonly IEntityScrapper<Store> storeScrapper;
+        private readonly IEntityScraper<Store> _storeScraper;
 
-        public ProductScrapper(
+        public ProductScraper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Store> storeScrapper,
-            IEntityScrapper<Department> departmentScrapper,
+            IEntityScraper<Store> storeScraper,
+            IEntityScraper<Department> departmentScraper,
             ICacheStorage<string, Product> cacheStorage,
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
-            this.storeScrapper = storeScrapper;
-            this.departmentScrapper = departmentScrapper;
+            this._storeScraper = storeScraper;
+            this._departmentScraper = departmentScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
@@ -63,7 +63,7 @@ namespace YourShipping.Monitor.Server.Services
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 $"{url}/{store != null}/{department != null}",
                 async () => await GetDirectAsync(url, store, department, disabledProducts),
-                ExpirationPolicy.Duration(ScrappingConfiguration.ProductCacheExpiration),
+                ExpirationPolicy.Duration(ScraperConfigurations.ProductCacheExpiration),
                 force);
         }
 
@@ -83,7 +83,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             Log.Information("Scrapping Product from {Url}", url);
 
-            var store = parentStore ?? await storeScrapper.GetAsync(url);
+            var store = parentStore ?? await _storeScraper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
@@ -91,7 +91,7 @@ namespace YourShipping.Monitor.Server.Services
 
             var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-            var department = parentDepartment ?? await departmentScrapper.GetAsync(url, false, store);
+            var department = parentDepartment ?? await _departmentScraper.GetAsync(url, false, store);
             if (department == null || !department.IsAvailable)
             {
                 return null;

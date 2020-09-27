@@ -138,12 +138,12 @@ namespace YourShipping.Monitor.Server
                     {
                         Timeout = int.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
                             ? TimeSpan.FromSeconds(timeoutInSeconds)
-                            : ScrappingConfiguration.HttpClientTimeout
+                            : ScraperConfigurations.HttpClientTimeout
                     };
 
                     httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                         "user-agent",
-                        ScrappingConfiguration.GetSupportedAgent());
+                        ScraperConfigurations.GetSupportedAgent());
 
                     httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                         "accept-encoding",
@@ -166,12 +166,12 @@ namespace YourShipping.Monitor.Server
             services.AddSingleton<ICookiesSynchronizationService, CookiesSynchronizationService>();
             services.AddSingleton<IOfficialStoreInfoService, OfficialStoreInfoService>();
 
-            services.AddTransient<IEntityScrapper<Product>, ProductScrapper>();
-            services.AddTransient<IEntityScrapper<Department>, DepartmentScrapper>();
-            services.AddTransient<IEntityScrapper<Store>, StoreScrapper>();
+            services.AddTransient<IEntityScraper<Product>, ProductScraper>();
+            services.AddTransient<IEntityScraper<Department>, DepartmentScraper>();
+            services.AddTransient<IEntityScraper<Store>, StoreScraper>();
 
-            services.AddTransient<IMultiEntityScrapper<Product>, InspectDepartmentProductsScrapper>();
-            services.AddTransient<IMultiEntityScrapper<Department>, InspectStoreDepartmentsScrapper>();
+            services.AddTransient<IMultiEntityScraper<Product>, InspectDepartmentProductsScraper>();
+            services.AddTransient<IMultiEntityScraper<Department>, InspectStoreDepartmentsScraper>();
 
             services.AddSingleton<ImportStoresHostedService>();
 

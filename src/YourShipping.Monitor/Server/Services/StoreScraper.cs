@@ -17,7 +17,7 @@
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
-    public class StoreScrapper : IEntityScrapper<Store>
+    public class StoreScraper : IEntityScraper<Store>
     {
         private const string StorePrefix = "TuEnvio ";
 
@@ -29,7 +29,7 @@
 
         private readonly IOfficialStoreInfoService officialStoreInfoService;
 
-        public StoreScrapper(
+        public StoreScraper(
             IBrowsingContext browsingContext,
             ICacheStorage<string, Store> cacheStorage,
             IOfficialStoreInfoService officialStoreInfoService,
@@ -50,7 +50,7 @@
             return await this.cacheStorage.GetFromCacheOrFetchAsync(
                        url,
                        async () => await this.GetDirectAsync(url),
-                       ExpirationPolicy.Duration(ScrappingConfiguration.StoreCacheExpiration),
+                       ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
                        force);
         }
 

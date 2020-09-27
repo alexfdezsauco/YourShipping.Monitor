@@ -64,7 +64,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         var serviceScopeServiceProvider = serviceScope.ServiceProvider;
                         var departmentRepository = serviceScopeServiceProvider.GetService<IRepository<Department, int>>();
                         var userRepository = serviceScopeServiceProvider.GetService<IRepository<User, int>>();
-                        var departmentScrapper = serviceProvider.GetService<IEntityScrapper<Department>>();
+                        var departmentScrapper = serviceProvider.GetService<IEntityScraper<Department>>();
 
                         // var storedDepartmentStore = storedDepartment.Store;
                         // var storedDepartmentName = storedDepartment.Name;

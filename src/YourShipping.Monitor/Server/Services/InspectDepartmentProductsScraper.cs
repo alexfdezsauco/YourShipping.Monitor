@@ -16,21 +16,21 @@ namespace YourShipping.Monitor.Server
     /// <summary>
     ///     The inspect department product scrapper.
     /// </summary>
-    public class InspectDepartmentProductsScrapper : IMultiEntityScrapper<Product>
+    public class InspectDepartmentProductsScraper : IMultiEntityScraper<Product>
     {
         private readonly IBrowsingContext browsingContext;
 
         private readonly HttpClient httpClient;
 
-        private readonly IEntityScrapper<Product> productScrapper;
+        private readonly IEntityScraper<Product> _productScraper;
 
-        public InspectDepartmentProductsScrapper(
+        public InspectDepartmentProductsScraper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Product> productScrapper,
+            IEntityScraper<Product> productScraper,
             HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
-            this.productScrapper = productScrapper;
+            this._productScraper = productScraper;
             this.httpClient = httpClient;
         }
 
@@ -82,7 +82,7 @@ namespace YourShipping.Monitor.Server
 
                         found = true;
 
-                        var product = await this.productScrapper.GetAsync(productUrl, force);
+                        var product = await this._productScraper.GetAsync(productUrl, force);
                         if (product != null)
                         {
                             yield return product;

@@ -22,7 +22,7 @@
         [HttpPost]
         public async Task<ActionResult<Product>> Add(
             [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IEntityScrapper<Models.Product> entityScrapper,
+            [FromServices] IEntityScraper<Models.Product> entityScraper,
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
@@ -31,7 +31,7 @@
             if (storedProduct == null)
             {
                 var dateTime = DateTime.Now;
-                var product = await entityScrapper.GetAsync(absoluteUrl);
+                var product = await entityScraper.GetAsync(absoluteUrl);
                 if (product != null)
                 {
                     product.Added = dateTime;

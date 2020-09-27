@@ -2,7 +2,7 @@
 {
     using System.Collections.Generic;
 
-    public interface IMultiEntityScrapper<TEntity>
+    public interface IMultiEntityScraper<TEntity>
     {
         IAsyncEnumerable<TEntity> GetAsync(string url, bool force = false);
     }

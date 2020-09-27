@@ -19,7 +19,7 @@ using YourShipping.Monitor.Server.Services.Interfaces;
 
 namespace YourShipping.Monitor.Server.Services
 {
-    public class DepartmentScrapper : IEntityScrapper<Department>
+    public class DepartmentScraper : IEntityScraper<Department>
     {
         private const string StorePrefix = "TuEnvio ";
 
@@ -31,17 +31,17 @@ namespace YourShipping.Monitor.Server.Services
 
         private readonly IServiceProvider serviceProvider;
 
-        private readonly IEntityScrapper<Store> storeScrapper;
+        private readonly IEntityScraper<Store> _storeScraper;
 
-        public DepartmentScrapper(
+        public DepartmentScraper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Store> storeScrapper,
+            IEntityScraper<Store> storeScraper,
             ICacheStorage<string, Department> cacheStorage,
             ICookiesSynchronizationService cookiesSynchronizationService,
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
-            this.storeScrapper = storeScrapper;
+            this._storeScraper = storeScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.serviceProvider = serviceProvider;
@@ -65,7 +65,7 @@ namespace YourShipping.Monitor.Server.Services
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 $"{url}/{store != null}",
                 async () => await GetDirectAsync(url, store, disabledProducts),
-                ExpirationPolicy.Duration(ScrappingConfiguration.DepartmentCacheExpiration),
+                ExpirationPolicy.Duration(ScraperConfigurations.DepartmentCacheExpiration),
                 force);
         }
 
@@ -76,7 +76,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             Log.Information("Scrapping Department from {Url}", url);
 
-            var store = parentStore ?? await storeScrapper.GetAsync(url);
+            var store = parentStore ?? await _storeScraper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
@@ -230,7 +230,7 @@ namespace YourShipping.Monitor.Server.Services
                                         async productElement =>
                                         {
                                             var productScrapper = serviceProvider
-                                                .GetService<IEntityScrapper<Product>>();
+                                                .GetService<IEntityScraper<Product>>();
                                             var element = productElement.QuerySelector<IElement>("a");
                                             var elementAttribute = element.Attributes["href"];
 

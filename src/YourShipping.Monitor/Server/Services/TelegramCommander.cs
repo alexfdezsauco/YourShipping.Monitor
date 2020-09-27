@@ -104,7 +104,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             var storeRepository =
                 this.serviceProvider.CreateScope().ServiceProvider.GetService<IRepository<Store, int>>();
-            var productsScrapper = this.serviceProvider.GetService<IMultiEntityScrapper<Product>>();
+            var productsScrapper = this.serviceProvider.GetService<IMultiEntityScraper<Product>>();
 
             var match = Regex.Match(
                 message.Text,

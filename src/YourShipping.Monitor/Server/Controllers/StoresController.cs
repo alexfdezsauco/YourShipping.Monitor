@@ -77,7 +77,7 @@
         public async Task<IEnumerable<Department>> GetDepartments(
             [FromServices] IRepository<Models.Store, int> storeRepository,
             [FromServices] IRepository<Models.Department, int> productRepository,
-            [FromServices] IMultiEntityScrapper<Models.Department> departmentScrapper,
+            [FromServices] IMultiEntityScraper<Models.Department> departmentScraper,
             int id)
         {
             var departments = new List<Department>();
@@ -85,7 +85,7 @@
             var storedDepartment = storeRepository.Find(department => department.Id == id).FirstOrDefault();
             if (storedDepartment != null)
             {
-                var scrappedDepartments = departmentScrapper.GetAsync(storedDepartment.Url);
+                var scrappedDepartments = departmentScraper.GetAsync(storedDepartment.Url);
                 await foreach (var department in scrappedDepartments)
                 {
                     var productUrl = department.Url;
@@ -100,7 +100,7 @@
         [HttpGet("[action]")]
         public async Task<IEnumerable<Product>> Search(
             [FromServices] IRepository<Models.Store, int> storeRepository,
-            [FromServices] IMultiEntityScrapper<Models.Product> productsScrapper,
+            [FromServices] IMultiEntityScraper<Models.Product> productsScraper,
             string keywords)
         {
             var keywordList = keywords.Split(',', ';').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s))
@@ -116,7 +116,7 @@
                         var url = storedStore.Url.Replace(
                             "/Products?depPid=0",
                             $"/Search.aspx?keywords={keyword}&depPid=0");
-                        await foreach (var product in productsScrapper.GetAsync(url, true))
+                        await foreach (var product in productsScraper.GetAsync(url, true))
                         {
                             products.Add(product.ToDataTransferObject(false, false));
                         }

@@ -22,7 +22,7 @@
         [HttpPost]
         public async Task<ActionResult<Department>> Add(
             [FromServices] IRepository<Models.Department, int> departmentRepository,
-            [FromServices] IEntityScrapper<Models.Department> departmentScrapper,
+            [FromServices] IEntityScraper<Models.Department> departmentScraper,
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
@@ -30,7 +30,7 @@
                 departmentRepository.Find(department => department.Url == absoluteUrl).FirstOrDefault();
             if (storedDepartment == null)
             {
-                var department = await departmentScrapper.GetAsync(absoluteUrl);
+                var department = await departmentScraper.GetAsync(absoluteUrl);
                 if (department != null)
                 {
                     var dateTime = DateTime.Now;
@@ -106,7 +106,7 @@
         public async Task<IEnumerable<Product>> GetProducts(
             [FromServices] IRepository<Models.Department, int> departmentRepository,
             [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IMultiEntityScrapper<Models.Product> productsScrapper,
+            [FromServices] IMultiEntityScraper<Models.Product> productsScraper,
             int id)
         {
             var products = new List<Product>();
@@ -114,7 +114,7 @@
             var storedDepartment = departmentRepository.Find(department => department.Id == id).FirstOrDefault();
             if (storedDepartment != null)
             {
-                var scrappedProducts = productsScrapper.GetAsync(storedDepartment.Url);
+                var scrappedProducts = productsScraper.GetAsync(storedDepartment.Url);
                 await foreach (var product in scrappedProducts)
                 {
                     var productUrl = product.Url;

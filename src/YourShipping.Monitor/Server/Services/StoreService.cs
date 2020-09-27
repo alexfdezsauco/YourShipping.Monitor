@@ -19,17 +19,17 @@
     {
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
-        private readonly IEntityScrapper<Store> entityScrapper;
+        private readonly IEntityScraper<Store> _entityScraper;
 
         private readonly IRepository<Store, int> storesRepository;
 
         public StoreService(
             IRepository<Store, int> storesRepository,
-            IEntityScrapper<Store> entityScrapper,
+            IEntityScraper<Store> entityScraper,
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.storesRepository = storesRepository;
-            this.entityScrapper = entityScrapper;
+            this._entityScraper = entityScraper;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
 
@@ -40,7 +40,7 @@
             if (storedStore == null)
             {
                 var dateTime = DateTime.Now;
-                var store = await this.entityScrapper.GetAsync(absoluteUrl);
+                var store = await this._entityScraper.GetAsync(absoluteUrl);
                 if (store != null)
                 {
                     store.Added = dateTime;
@@ -63,19 +63,19 @@
         public async Task ImportAsync()
         {
             var httpClient =
-                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
+                await this.cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
             OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
-                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
-                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScrappingConfiguration.StoresJsonUrl);
+                    await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
+                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScraperConfigurations.StoresJsonUrl);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
+                this.cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
             }
 
             // TODO: Report the status as error.

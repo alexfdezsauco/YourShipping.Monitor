@@ -2,7 +2,7 @@
 {
     using System;
 
-    internal class ScrappingConfiguration
+    internal class ScraperConfigurations
     {
         public static readonly Uri CookieCollectionUrl = new Uri("https://www.tuenvio.cu");
 

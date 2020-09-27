@@ -87,7 +87,7 @@ namespace YourShipping.Monitor.Server.Helpers
             var clientHandler = httpClient.GetHttpClientHandler();
             var cookieCollection = await GetCookieCollectionAsync(url);
 
-            clientHandler.CookieContainer.Add(ScrappingConfiguration.CookieCollectionUrl, cookieCollection);
+            clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
 
             return httpClient;
         }
@@ -148,7 +148,7 @@ namespace YourShipping.Monitor.Server.Helpers
         {
             var httpClientHandler = httpClient.GetHttpClientHandler();
             var cookieContainer = httpClientHandler.CookieContainer;
-            var cookieCollection = cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
+            var cookieCollection = cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
             if (!string.IsNullOrWhiteSpace(cookieCollection[".ASPXANONYMOUS"]?.Value))
             {
                 Log.Warning("Session expires. Cookies will be invalidated.");
@@ -235,15 +235,15 @@ namespace YourShipping.Monitor.Server.Helpers
                 {
                     CookieContainer = cookieContainer
                 };
-                cookieContainer.Add(ScrappingConfiguration.CookieCollectionUrl, antiScrappingCookie);
+                cookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, antiScrappingCookie);
 
                 var httpClient = new HttpClient(httpMessageHandler)
                 {
-                    Timeout = ScrappingConfiguration.HttpClientTimeout
+                    Timeout = ScraperConfigurations.HttpClientTimeout
                 };
                 httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent",
-                    ScrappingConfiguration.SupportedAgents);
+                    ScraperConfigurations.SupportedAgents);
 
                 var signinPageContent = string.Empty;
                 try
@@ -280,7 +280,7 @@ namespace YourShipping.Monitor.Server.Helpers
                                     signInUrl,
                                     new FormUrlEncodedContent(signInParameters));
                                 httpHandlerCookieCollection =
-                                    cookieContainer.GetCookies(ScrappingConfiguration.CookieCollectionUrl);
+                                    cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
                                 isAuthenticated =
                                     !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
                             }
@@ -567,14 +567,14 @@ namespace YourShipping.Monitor.Server.Helpers
 
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                     "user-agent",
-                    ScrappingConfiguration.GetSupportedAgent());
+                    ScraperConfigurations.GetSupportedAgent());
 
                 var requester = new HttpClientRequester(httpClient);
                 var config = Configuration.Default.WithRequester(requester)
                     .WithDefaultLoader(new LoaderOptions {IsResourceLoadingEnabled = true}).WithJs();
 
                 var context = BrowsingContext.New(config);
-                var document = await context.OpenAsync(ScrappingConfiguration.StoresJsonUrl).WaitUntilAvailable();
+                var document = await context.OpenAsync(ScraperConfigurations.StoresJsonUrl).WaitUntilAvailable();
 
                 var content = document.Body.TextContent;
                 var match = Regex.Match(content, @"Server\sError\s+406");

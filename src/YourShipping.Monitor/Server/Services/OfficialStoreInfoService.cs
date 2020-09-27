@@ -37,12 +37,12 @@
             {
                 try
                 {
-                    var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(ScrappingConfiguration.StoresJsonUrl);
+                    var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
                     this.storesToImport =
-                        await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScrappingConfiguration.StoresJsonUrl);
+                        await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
                     await this.cookiesSynchronizationService.SyncCookiesAsync(
                         httpClient,
-                        ScrappingConfiguration.StoresJsonUrl);
+                        ScraperConfigurations.StoresJsonUrl);
                     this.setTime = DateTime.Now;
                 }
                 catch (Exception e)
@@ -50,8 +50,8 @@
                     Log.Error(
                         e,
                         "Error requesting '{Url}'. Cookies will be invalidated.",
-                        ScrappingConfiguration.StoresJsonUrl);
-                    this.cookiesSynchronizationService.InvalidateCookies(ScrappingConfiguration.StoresJsonUrl);
+                        ScraperConfigurations.StoresJsonUrl);
+                    this.cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
                 }
             }
 

@@ -13,21 +13,21 @@ namespace YourShipping.Monitor.Server
     using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Services.Interfaces;
 
-    public class InspectStoreDepartmentsScrapper : IMultiEntityScrapper<Department>
+    public class InspectStoreDepartmentsScraper : IMultiEntityScraper<Department>
     {
         private readonly IBrowsingContext browsingContext;
 
-        private readonly IEntityScrapper<Department> entityScrapper;
+        private readonly IEntityScraper<Department> _entityScraper;
 
         private readonly HttpClient httpClient;
 
-        public InspectStoreDepartmentsScrapper(
+        public InspectStoreDepartmentsScraper(
             IBrowsingContext browsingContext,
-            IEntityScrapper<Department> entityScrapper,
+            IEntityScraper<Department> entityScraper,
             HttpClient httpClient)
         {
             this.browsingContext = browsingContext;
-            this.entityScrapper = entityScrapper;
+            this._entityScraper = entityScraper;
             this.httpClient = httpClient;
         }
 
@@ -66,7 +66,7 @@ namespace YourShipping.Monitor.Server
                             {
                                 var idx = url.IndexOf(uri.PathAndQuery, StringComparison.Ordinal);
                                 var departmentUrl = url.Substring(0, idx + 1) + storeSegment + pathAndQuery;
-                                var department = await this.entityScrapper.GetAsync(departmentUrl);
+                                var department = await this._entityScraper.GetAsync(departmentUrl);
                                 if (department != null)
                                 {
                                     yield return department;
