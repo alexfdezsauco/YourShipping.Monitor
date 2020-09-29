@@ -1,24 +1,19 @@
-﻿using YourShipping.Monitor.Server.Helpers;
+﻿using System;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Dom;
+using Catel.Caching;
+using Catel.Caching.Policies;
+using Serilog;
+using YourShipping.Monitor.Server.Extensions;
+using YourShipping.Monitor.Server.Helpers;
+using YourShipping.Monitor.Server.Models;
+using YourShipping.Monitor.Server.Services.Interfaces;
 
 namespace YourShipping.Monitor.Server.Services
 {
-    using System;
-    using System.Linq;
-    using System.Text.Json;
-    using System.Threading.Tasks;
-
-    using AngleSharp;
-    using AngleSharp.Dom;
-
-    using Catel.Caching;
-    using Catel.Caching.Policies;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Extensions;
-    using YourShipping.Monitor.Server.Models;
-    using YourShipping.Monitor.Server.Services.Interfaces;
-
     public class StoreScraper : IEntityScraper<Store>
     {
         private const string StorePrefix = "TuEnvio ";
@@ -46,33 +41,33 @@ namespace YourShipping.Monitor.Server.Services
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
         {
             url = ScrapingUriHelper.EnsureStoreUrl(url)
-                ;                
+                ;
 
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       async () => await this.GetDirectAsync(url),
-                       ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
-                       force);
+            return await cacheStorage.GetFromCacheOrFetchAsync(
+                url,
+                async () => await GetDirectAsync(url),
+                ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
+                force);
         }
 
         private async Task<Store> GetDirectAsync(string storeUrl)
         {
             Log.Information("Scrapping Store from {Url}", storeUrl);
 
-            var storesToImport = await this.officialStoreInfoService.GetAsync();
+            var storesToImport = await officialStoreInfoService.GetAsync();
 
             var isStoredClosed = true;
             var requestUri = storeUrl;
             string content = null;
             try
             {
-                var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
+                var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
                 var httpResponseMessage = await httpClient.GetAsync(requestUri);
                 isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
                 if (!isStoredClosed)
                 {
                     content = await httpResponseMessage.Content.ReadAsStringAsync();
-                    await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                    await cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
                 }
             }
             catch (Exception e)
@@ -84,9 +79,11 @@ namespace YourShipping.Monitor.Server.Services
                 storesToImport?.FirstOrDefault(s => $"{s.Url.Trim()}/Products?depPid=0" == storeUrl.Trim());
             var storeName = storeToImport?.Name;
 
+
             var isAvailable = false;
             var categoriesCount = 0;
             var departmentsCount = 0;
+            var hasProductInCart = false;
 
             if (isStoredClosed)
             {
@@ -94,7 +91,7 @@ namespace YourShipping.Monitor.Server.Services
             }
             else if (!string.IsNullOrWhiteSpace(content))
             {
-                var document = await this.browsingContext.OpenAsync(req => req.Content(content));
+                var document = await browsingContext.OpenAsync(req => req.Content(content));
 
                 var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
                                 == "503";
@@ -106,6 +103,8 @@ namespace YourShipping.Monitor.Server.Services
                 else
                 {
                     var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+                    hasProductInCart = document
+                        .QuerySelectorAll<IElement>("#ctl00_UpperCartPanel > div > table > tbody > tr > td > a").Any();
 
                     if (string.IsNullOrWhiteSpace(storeName))
                     {
@@ -162,7 +161,7 @@ namespace YourShipping.Monitor.Server.Services
                             storeName,
                             storeUrl);
 
-                        this.cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                        cookiesSynchronizationService.InvalidateCookies(storeUrl);
                     }
                 }
             }
@@ -170,15 +169,16 @@ namespace YourShipping.Monitor.Server.Services
             if (!string.IsNullOrEmpty(storeName))
             {
                 var store = new Store
-                                {
-                                    Name = storeName,
-                                    DepartmentsCount = departmentsCount,
-                                    CategoriesCount = categoriesCount,
-                                    Province = storeToImport?.Province,
-                                    Url = storeUrl,
-                                    IsAvailable = isAvailable,
-                                    IsEnabled = true
-                                };
+                {
+                    Name = storeName,
+                    DepartmentsCount = departmentsCount,
+                    CategoriesCount = categoriesCount,
+                    Province = storeToImport?.Province,
+                    Url = storeUrl,
+                    IsAvailable = isAvailable,
+                    HasProductsInCart = hasProductInCart,
+                    IsEnabled = true
+                };
 
                 store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
                 return store;

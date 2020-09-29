@@ -1,10 +1,9 @@
-﻿namespace YourShipping.Monitor.Server.Models
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
+
+namespace YourShipping.Monitor.Server.Models
 {
-    using System;
-    using System.ComponentModel.DataAnnotations;
-
-    using Newtonsoft.Json;
-
     public class Store
     {
         [System.Text.Json.Serialization.JsonIgnore]
@@ -43,5 +42,8 @@
 
         [JsonProperty(Order = 5)]
         public string Url { get; set; }
+
+        [JsonProperty(Order = 6)]
+        public bool HasProductsInCart { get; set; }
     }
 }

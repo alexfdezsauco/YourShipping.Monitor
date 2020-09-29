@@ -19,7 +19,8 @@
                            DepartmentsCount = store.DepartmentsCount,
                            IsEnabled = store.IsEnabled,
                            IsAvailable = store.IsAvailable,
-                           IsStored = stored
+                           IsStored = stored,
+                           HasProductsInCart = store.HasProductsInCart
                        };
         }
     }

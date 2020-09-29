@@ -1,12 +1,12 @@
-﻿namespace YourShipping.Monitor.Shared
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using YourShipping.Monitor.Shared.Annotations;
+
+namespace YourShipping.Monitor.Shared
 {
-    using System.ComponentModel;
-    using System.Runtime.CompilerServices;
-
-    using YourShipping.Monitor.Shared.Annotations;
-
     public class Store : INotifyPropertyChanged
     {
+        private bool _hasProductsInCart;
         private int categoriesCount;
 
         private int departmentsCount;
@@ -27,162 +27,177 @@
 
         private string url;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public int CategoriesCount
         {
-            get => this.categoriesCount;
+            get => categoriesCount;
             set
             {
-                if (value.Equals(this.categoriesCount))
+                if (value.Equals(categoriesCount))
                 {
                     return;
                 }
 
-                this.categoriesCount = value;
-                this.OnPropertyChanged();
+                categoriesCount = value;
+                OnPropertyChanged();
             }
         }
 
         public int DepartmentsCount
         {
-            get => this.departmentsCount;
+            get => departmentsCount;
             set
             {
-                if (value.Equals(this.departmentsCount))
+                if (value.Equals(departmentsCount))
                 {
                     return;
                 }
 
-                this.departmentsCount = value;
-                this.OnPropertyChanged();
+                departmentsCount = value;
+                OnPropertyChanged();
             }
         }
 
         public bool HasChanged
         {
-            get => this.hasChanged;
+            get => hasChanged;
             set
             {
-                if (value == this.hasChanged)
+                if (value == hasChanged)
                 {
                     return;
                 }
 
-                this.hasChanged = value;
-                this.OnPropertyChanged();
+                hasChanged = value;
+                OnPropertyChanged();
             }
         }
 
         public int Id
         {
-            get => this.id;
+            get => id;
             set
             {
-                if (value == this.id)
+                if (value == id)
                 {
                     return;
                 }
 
-                this.id = value;
-                this.OnPropertyChanged();
+                id = value;
+                OnPropertyChanged();
             }
         }
 
         public bool IsAvailable
         {
-            get => this.isAvailable;
+            get => isAvailable;
             set
             {
-                if (value == this.isAvailable)
+                if (value == isAvailable)
                 {
                     return;
                 }
 
-                this.isAvailable = value;
-                this.OnPropertyChanged();
+                isAvailable = value;
+                OnPropertyChanged();
             }
         }
 
         public bool IsEnabled
         {
-            get => this.isEnabled;
+            get => isEnabled;
             set
             {
-                if (value == this.isEnabled)
+                if (value == isEnabled)
                 {
                     return;
                 }
 
-                this.isEnabled = value;
-                this.OnPropertyChanged();
+                isEnabled = value;
+                OnPropertyChanged();
             }
         }
 
         public bool IsStored
         {
-            get => this.isStored;
+            get => isStored;
             set
             {
-                if (value == this.isStored)
+                if (value == isStored)
                 {
                     return;
                 }
 
-                this.isStored = value;
-                this.OnPropertyChanged();
+                isStored = value;
+                OnPropertyChanged();
             }
         }
 
         public string Name
         {
-            get => this.name;
+            get => name;
             set
             {
-                if (value == this.name)
+                if (value == name)
                 {
                     return;
                 }
 
-                this.name = value;
-                this.OnPropertyChanged();
+                name = value;
+                OnPropertyChanged();
             }
         }
 
         public string Province
         {
-            get => this.province;
+            get => province;
             set
             {
-                if (value == this.province)
+                if (value == province)
                 {
                     return;
                 }
 
-                this.province = value;
-                this.OnPropertyChanged();
+                province = value;
+                OnPropertyChanged();
             }
         }
 
         public string Url
         {
-            get => this.url;
+            get => url;
             set
             {
-                if (value == this.url)
+                if (value == url)
                 {
                     return;
                 }
 
-                this.url = value;
-                this.OnPropertyChanged();
+                url = value;
+                OnPropertyChanged();
             }
         }
+
+        public bool HasProductsInCart
+        {
+            get => _hasProductsInCart;
+            set
+            {
+                if (value == _hasProductsInCart)
+                {
+                    return;
+                }
+
+                _hasProductsInCart = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
