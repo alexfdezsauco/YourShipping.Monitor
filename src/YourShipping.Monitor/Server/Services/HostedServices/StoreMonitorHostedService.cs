@@ -69,7 +69,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             sourceChanged = true;
 
                             Log.Information(
-                                "Store {Store} from {Province} has changed. Is Available: {IsAvailable}. Has Products In Cart {HasProductsInCart}.",
+                                "Store {Store} from {Province} has changed. Is Available: {IsAvailable}. Has Products In Cart: {HasProductsInCart}.",
                                 storedStore.Name,
                                 storedStore.Province,
                                 storedStore.IsAvailable,
@@ -87,7 +87,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         sourceChanged = true;
 
                         Log.Information(
-                            "Store {Store} from {Province} has changed. Is Available: {IsAvailable}. Has Products In Cart {HasProductsInCart}.",
+                            "Store {Store} from {Province} has changed. Is Available: {IsAvailable}. Has Products In Cart: {HasProductsInCart}.",
                             store.Name,
                             store.Province,
                             store.IsAvailable,
