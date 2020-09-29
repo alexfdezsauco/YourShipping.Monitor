@@ -1,28 +1,28 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using YourShipping.Monitor.Server.Services.Attributes;
+
 namespace YourShipping.Monitor.Server.Services.HostedServices
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Threading;
-    using System.Threading.Tasks;
-
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-
-    using Serilog;
-
-    using YourShipping.Monitor.Server.Services.Attributes;
-
     public class TimedHostedServiceBase : IHostedService, IDisposable
     {
         private readonly IHostApplicationLifetime applicationLifetime;
-
-        private readonly IServiceProvider serviceProvider;
+        private readonly MethodInfo executeMethod;
 
         private readonly TimeSpan period;
 
+        private readonly IServiceProvider serviceProvider;
+
         private readonly object syncObj = new object();
+
+        private readonly ParameterInfo[] executeMethodParameters;
 
         private bool isRunning;
 
@@ -30,52 +30,56 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         public TimedHostedServiceBase(IServiceProvider serviceProvider, TimeSpan period)
         {
-            this.applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
+            applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             this.serviceProvider = serviceProvider;
             this.period = period;
+
+            executeMethod = GetType()
+                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+            if (executeMethod != null)
+            {
+                executeMethodParameters = executeMethod.GetParameters();
+            }
         }
 
         public void Dispose()
         {
-            this.timer?.Dispose();
+            timer?.Dispose();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.StartAsync(cancellationToken, true);
+            return StartAsync(cancellationToken, true);
         }
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
             Log.Information("Timed Hosted Service is stopping.");
 
-            this.timer?.Change(Timeout.Infinite, 0);
+            timer?.Change(Timeout.Infinite, 0);
 
             return Task.CompletedTask;
         }
 
         private void DoWork(CancellationToken cancellationToken)
         {
-            Monitor.Enter(this.syncObj);
+            System.Threading.Monitor.Enter(syncObj);
 
-            if (!this.isRunning)
+            if (!isRunning)
             {
-                this.isRunning = true;
+                isRunning = true;
 
-                Monitor.Exit(this.syncObj);
+                System.Threading.Monitor.Exit(syncObj);
 
                 try
                 {
-                    var executeMethod = this.GetType()
-                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
-
                     if (executeMethod != null)
                     {
-                        var parameters = this.ResolveParameters(executeMethod, cancellationToken);
+                        var parameters = ResolveParameters(cancellationToken);
 
                         var startTime = DateTime.Now;
-                        Log.Information("Executing hosted service '{Type}'", this.GetType());
+                        Log.Information("Executing hosted service '{Type}'", GetType());
                         var result = executeMethod.Invoke(this, parameters);
                         if (result is Task task)
                         {
@@ -83,38 +87,34 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         }
 
                         var elapsedTime = DateTime.Now.Subtract(startTime);
-                        Log.Information("Executed hosted service '{Type}' in '{Time}'", this.GetType(), elapsedTime.ToString(@"hh\h\:mm\m\:ss\s"));
+                        Log.Information("Executed hosted service '{Type}' in '{Time}'", GetType(),
+                            elapsedTime.ToString(@"hh\h\:mm\m\:ss\s"));
                     }
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "Error executing hosted service '{Type}'", this.GetType());
+                    Log.Error(e, "Error executing hosted service '{Type}'", GetType());
                 }
                 finally
                 {
-                    lock (this.syncObj)
+                    lock (syncObj)
                     {
-                        this.isRunning = false;
+                        isRunning = false;
                     }
                 }
             }
             else
             {
-                Monitor.Exit(this.syncObj);
-
-                // Log.Information(
-                //    "Skipped execution of hosted service '{Type}' because is already running",
-                //    this.GetType());
+                System.Threading.Monitor.Exit(syncObj);
             }
         }
 
-        private object[] ResolveParameters(MethodInfo executeMethodInfo, CancellationToken cancellationToken)
+        private object[] ResolveParameters(CancellationToken cancellationToken)
         {
             var objects = new List<object>();
-            var parameterInfos = executeMethodInfo.GetParameters();
-            var serviceScope = this.serviceProvider.CreateScope();
+            var serviceScope = serviceProvider.CreateScope();
 
-            foreach (var parameterInfo in parameterInfos)
+            foreach (var parameterInfo in executeMethodParameters)
             {
                 if (parameterInfo.ParameterType == typeof(CancellationToken))
                 {
@@ -126,7 +126,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                     try
                     {
-                        service = this.serviceProvider.GetService(parameterInfo.ParameterType);
+                        service = serviceProvider.GetService(parameterInfo.ParameterType);
                     }
                     catch (InvalidOperationException)
                     {
@@ -144,17 +144,17 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         {
             if (sync)
             {
-                this.applicationLifetime.ApplicationStarted.Register(() => this.StartAsync(cancellationToken, false));
+                applicationLifetime.ApplicationStarted.Register(() => StartAsync(cancellationToken, false));
             }
             else
             {
                 Log.Information("Timed Hosted Service running.");
 
-                this.timer = new Timer(
-                    o => this.DoWork(cancellationToken),
+                timer = new Timer(
+                    o => DoWork(cancellationToken),
                     null,
                     TimeSpan.Zero,
-                    this.period);
+                    period);
             }
 
             return Task.CompletedTask;
