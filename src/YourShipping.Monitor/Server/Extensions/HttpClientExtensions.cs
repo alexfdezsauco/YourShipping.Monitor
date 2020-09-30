@@ -125,8 +125,8 @@ namespace YourShipping.Monitor.Server.Extensions
             if (httpResponseMessage != null)
             {
                 var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                var captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
-                while (captchaResolutionRequired)
+                var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
+                while (httpResponseMessage != null && captchaResolutionRequired)
                 {
                     var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
                     var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
@@ -154,7 +154,7 @@ namespace YourShipping.Monitor.Server.Extensions
                             File.WriteAllBytes(combine + ".png", bytes);
                         }
 
-                        File.WriteAllText($"re-captchas/{captchaProblem}/!solution", string.Empty);
+                        File.Create($"re-captchas/{captchaProblem}/!solution");
                         captchaResolutionRequired = false;
                     }
                     else if (File.Exists(captchaSolutionPath))
@@ -163,6 +163,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
+
                         await httpClient.PostAsync(requestUriAbsoluteUri, new FormUrlEncodedContent(parameters));
 
                         try
@@ -176,8 +177,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         if (httpResponseMessage != null)
                         {
-                            await ProcessCaptchaSolutionAsync(httpResponseMessage, captchaProblem, captchaSolutionPath,
-                                solutionText.Split(','));
+                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage, captchaProblem, captchaSolutionPath, solutionText.Split(','));
                         }
                     }
                 }
@@ -186,7 +186,14 @@ namespace YourShipping.Monitor.Server.Extensions
             return httpResponseMessage;
         }
 
-        private static async Task ProcessCaptchaSolutionAsync(HttpResponseMessage httpResponseMessage,
+        private static bool IsCaptchaResolutionRequired(HttpResponseMessage httpResponseMessage)
+        {
+            Argument.IsNotNull(() => httpResponseMessage);
+
+            return httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("captcha.aspx");
+        }
+
+        private static async Task<bool> ProcessCaptchaSolutionAsync(HttpResponseMessage httpResponseMessage,
             string captchaProblem,
             string captchaSolutionPath, string[] solutions)
         {
@@ -194,8 +201,7 @@ namespace YourShipping.Monitor.Server.Extensions
             Argument.IsNotNullOrWhitespace(() => captchaProblem);
             Argument.IsNotNullOrEmptyArray(() => solutions);
 
-            var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-            var captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
+            var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
 
             var solutionVerifiedFilePath = captchaSolutionPath + "-verified";
             var solutionWarningFilePath = captchaSolutionPath + "-warning";
@@ -211,7 +217,8 @@ namespace YourShipping.Monitor.Server.Extensions
                         var streamWriter = new StreamWriter(solutionVerifiedFilePath) {AutoFlush = true};
                         foreach (var solution in solutions)
                         {
-                            var content = await File.ReadAllTextAsync($"re-captchas/{captchaProblem}/{solution.Trim()}");
+                            var content =
+                                await File.ReadAllTextAsync($"re-captchas/{captchaProblem}/{solution.Trim()}");
                             await streamWriter.WriteLineAsync(content.Trim());
                         }
 
@@ -267,6 +274,8 @@ namespace YourShipping.Monitor.Server.Extensions
 
                 SemaphoreSlim.Release();
             }
+
+            return captchaResolutionRequired;
         }
     }
 }
