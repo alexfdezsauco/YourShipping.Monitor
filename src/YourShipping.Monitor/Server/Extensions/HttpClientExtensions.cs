@@ -169,11 +169,12 @@ namespace YourShipping.Monitor.Server.Extensions
                     if (!captchaResolutionRequired)
                     {
                         await semaphoreSlim.WaitAsync();
+                        
                         if (!File.Exists(solutionVerifiedFilePath))
                         {
                             try
                             {
-                                StringBuilder builder = new StringBuilder();
+                                var builder = new StringBuilder();
                                 var files = solution.Split(',');
                                 foreach (var file in files)
                                 {
@@ -201,15 +202,16 @@ namespace YourShipping.Monitor.Server.Extensions
                     else if (!File.Exists(solutionVerifiedFilePath) && !File.Exists(solutionWarningFilePath))
                     {
                         await semaphoreSlim.WaitAsync();
-                        if (!strikes.TryGetValue(captchaProblem, out var count))
+                        if (!strikes.TryGetValue(captchaProblem, out _))
                         {
                             strikes[captchaProblem] = 1;
                         }
                         else
                         {
-                            strikes[captchaProblem] = ++count;
+                            strikes[captchaProblem]++;
                         }
 
+                        var count = strikes[captchaProblem];
                         Log.Warning("I'm not human for captcha problem: {Name}. Strikes: {Count}", captchaProblem,
                             count);
 
