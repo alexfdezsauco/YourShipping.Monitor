@@ -52,7 +52,7 @@ You can export the `cookies.txt` by using theses extensions:
 - *Microsoft Edge*: [get-cookiestxt](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip)
 
 
-### Mount products in the shopping cart bypassing the captcha
+### Mount products in the shopping cart bypassing the 1st captcha ()
 
 > **ALERT**: Linux users should make sure to install the following libraries: `libleptonica-dev, libgif7, libjpeg62, libopenjp2-7, libpng16-16, libtiff5, libwebp6, libc6-dev, libgdiplus`
 
@@ -63,9 +63,14 @@ You can export the `cookies.txt` by using theses extensions:
             "Password": "%PASSWORD%"
         }
 
+### Mount products in the shopping cart bypassing also the 2nd captcha
+
+> **ALERT**: The captcha database could require updates on the time, so if you notice new captchas challengs just solve it and create a PR on the database repository.
+
 - For docker run
 
         > mkdir %APP_DIR%/data
         > mkdir %APP_DIR%/logs
         > mkdir %APP_DIR%/captchas
-        > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -v %APP_DIR%/captcha:/app/captcha -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" -e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD" your-shipping-monitor:latest
+        > git clone --progress -v "https://github.com/alexfdezsauco/YourShipping.Monitor-ReCaptchasDB.git" "%APP_DIR%/re-captchas"
+        > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -v %APP_DIR%/captchas:/app/captchas -v %APP_DIR%/re-captchas:/app/re-captchas -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" -e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD" your-shipping-monitor:latest
