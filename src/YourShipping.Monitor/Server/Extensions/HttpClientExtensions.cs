@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
@@ -172,12 +173,15 @@ namespace YourShipping.Monitor.Server.Extensions
                         {
                             try
                             {
+                                StringBuilder builder = new StringBuilder();
                                 var files = solution.Split(',');
                                 foreach (var file in files)
                                 {
                                     var content = File.ReadAllText($"re-captchas/{captchaProblem}/{file}");
-                                    File.AppendAllText(solutionVerifiedFilePath, content);
+                                    builder.AppendLine(content);
                                 }
+
+                                File.AppendAllText(solutionVerifiedFilePath, builder.ToString());
 
                                 if (File.Exists(solutionWarningFilePath))
                                 {
