@@ -249,7 +249,11 @@ namespace YourShipping.Monitor.Server.Helpers
                 try
                 {
                     var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client => await client.GetAsync(signInUrl));
-                    signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                    if (httpResponseMessage?.Content != null)
+                    {
+                        signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                    }
+
                     // signinPageContent = await httpClient.GetStringAsync(signInUrl);
                 }
                 catch (Exception e)

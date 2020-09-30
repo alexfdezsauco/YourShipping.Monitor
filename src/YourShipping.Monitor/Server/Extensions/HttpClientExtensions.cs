@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
@@ -15,17 +14,17 @@ namespace YourShipping.Monitor.Server.Extensions
 {
     public static class HttpClientExtensions
     {
-        private static readonly object syncObj = new object();
+        private static readonly object SyncObj = new object();
 
         private static FieldInfo _fieldInfo;
 
-        private static readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+        private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1, 1);
 
-        private static readonly Dictionary<string, int> strikes = new Dictionary<string, int>();
+        private static readonly Dictionary<string, int> Strikes = new Dictionary<string, int>();
 
         static HttpClientExtensions()
         {
-            lock (syncObj)
+            lock (SyncObj)
             {
                 if (_fieldInfo == null)
                 {
@@ -49,7 +48,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
         private static FieldInfo GetFieldInfo()
         {
-            lock (syncObj)
+            lock (SyncObj)
             {
                 if (_fieldInfo == null)
                 {
@@ -113,127 +112,161 @@ namespace YourShipping.Monitor.Server.Extensions
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
 
-            // await semaphoreSlim.WaitAsync();
-            var httpResponseMessage = await httpClientTask(httpClient);
-            // semaphoreSlim.Release();
-
-            var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-            var captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
-            while (captchaResolutionRequired)
+            HttpResponseMessage httpResponseMessage = null;
+            try
             {
-                var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
-                var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
-                var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
-                    .Text();
-                var captchaProblemPath = $"re-captchas/{captchaProblem}";
-                var captchaSolutionPath = $"re-captchas/{captchaProblem}/solution";
-                if (!Directory.Exists(captchaProblemPath))
+                httpResponseMessage = await httpClientTask(httpClient);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error executing HttpClient task");
+            }
+
+            if (httpResponseMessage != null)
+            {
+                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                var captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
+                while (captchaResolutionRequired)
                 {
-                    Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
+                    var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                    var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
+                    var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
+                        .Text();
 
-                    Directory.CreateDirectory(captchaProblemPath);
-                    var querySelector = captchaDocument.QuerySelectorAll<IElement>(
-                        "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
+                    var captchaProblemPath = $"re-captchas/{captchaProblem}";
+                    var captchaSolutionPath = $"re-captchas/{captchaProblem}/solution";
 
-                    foreach (var element in querySelector)
+                    if (!Directory.Exists(captchaProblemPath))
                     {
-                        var name = element.Attributes["name"].Value;
-                        var src = element.Attributes["src"].Value;
-                        var combine = Path.Combine(captchaProblemPath, name);
-                        File.WriteAllText(combine, src);
-                        var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
-                        File.WriteAllBytes(combine + ".png", bytes);
+                        Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
+
+                        Directory.CreateDirectory(captchaProblemPath);
+                        var querySelector = captchaDocument.QuerySelectorAll<IElement>(
+                            "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
+
+                        foreach (var element in querySelector)
+                        {
+                            var name = element.Attributes["name"].Value;
+                            var src = element.Attributes["src"].Value;
+                            var combine = Path.Combine(captchaProblemPath, name);
+                            File.WriteAllText(combine, src);
+                            var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
+                            File.WriteAllBytes(combine + ".png", bytes);
+                        }
+
+                        File.WriteAllText($"re-captchas/{captchaProblem}/!solution", string.Empty);
+                        captchaResolutionRequired = false;
                     }
-
-                    File.WriteAllText($"re-captchas/{captchaProblem}/!solution", string.Empty);
-                    captchaResolutionRequired = false;
-                }
-                else if (File.Exists(captchaSolutionPath))
-                {
-                    Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
-
-                    var solution = File.ReadAllText(captchaSolutionPath).Trim() + ",";
-                    var parameters = BuildReCaptchaParameters(solution, captchaDocument);
-                    await httpClient.PostAsync(requestUriAbsoluteUri, new FormUrlEncodedContent(parameters));
-
-                    // await semaphoreSlim.WaitAsync();
-                    httpResponseMessage = await httpClientTask(httpClient);
-                    // semaphoreSlim.Release();
-
-                    requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                    captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
-                    var solutionVerifiedFilePath = captchaSolutionPath + "-verified";
-                    var solutionWarningFilePath = captchaSolutionPath + "-warning";
-
-
-                    if (!captchaResolutionRequired)
+                    else if (File.Exists(captchaSolutionPath))
                     {
-                        await semaphoreSlim.WaitAsync();
-                        
-                        if (!File.Exists(solutionVerifiedFilePath))
+                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
+
+                        var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
+                        var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
+                        await httpClient.PostAsync(requestUriAbsoluteUri, new FormUrlEncodedContent(parameters));
+
+                        try
                         {
-                            try
-                            {
-                                var builder = new StringBuilder();
-                                var files = solution.Split(',');
-                                foreach (var file in files)
-                                {
-                                    var content = File.ReadAllText($"re-captchas/{captchaProblem}/{file}");
-                                    builder.AppendLine(content);
-                                }
-
-                                File.AppendAllText(solutionVerifiedFilePath, builder.ToString());
-
-                                if (File.Exists(solutionWarningFilePath))
-                                {
-                                    File.Delete(solutionWarningFilePath);
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Warning(e, "Error creating solution verification file.", captchaProblem);
-                            }
+                            httpResponseMessage = await httpClientTask(httpClient);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error executing HttpClient task");
                         }
 
-                        semaphoreSlim.Release();
-
-                        Log.Information("I'm human for captcha problem: {Name}", captchaProblem);
-                    }
-                    else if (!File.Exists(solutionVerifiedFilePath) && !File.Exists(solutionWarningFilePath))
-                    {
-                        await semaphoreSlim.WaitAsync();
-                        if (!strikes.TryGetValue(captchaProblem, out _))
+                        if (httpResponseMessage != null)
                         {
-                            strikes[captchaProblem] = 1;
+                            await ProcessCaptchaSolutionAsync(httpResponseMessage, captchaProblem, captchaSolutionPath,
+                                solutionText.Split(','));
                         }
-                        else
-                        {
-                            strikes[captchaProblem]++;
-                        }
-
-                        var count = strikes[captchaProblem];
-                        Log.Warning("I'm not human for captcha problem: {Name}. Strikes: {Count}", captchaProblem,
-                            count);
-
-                        if (count == 3 && !File.Exists(solutionWarningFilePath))
-                        {
-                            try
-                            {
-                                File.Create(solutionWarningFilePath);
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Warning(e, "Error creating warning file for captcha problem {CaptchaProblem}.",
-                                    captchaProblem);
-                            }
-                        }
-
-                        semaphoreSlim.Release();
                     }
                 }
             }
 
             return httpResponseMessage;
+        }
+
+        private static async Task ProcessCaptchaSolutionAsync(HttpResponseMessage httpResponseMessage,
+            string captchaProblem,
+            string captchaSolutionPath, string[] solutions)
+        {
+            Argument.IsNotNull(() => httpResponseMessage);
+            Argument.IsNotNullOrWhitespace(() => captchaProblem);
+            Argument.IsNotNullOrEmptyArray(() => solutions);
+
+            var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+            var captchaResolutionRequired = requestUriAbsoluteUri.EndsWith("captcha.aspx");
+
+            var solutionVerifiedFilePath = captchaSolutionPath + "-verified";
+            var solutionWarningFilePath = captchaSolutionPath + "-warning";
+
+            if (!captchaResolutionRequired)
+            {
+                await SemaphoreSlim.WaitAsync();
+
+                if (!File.Exists(solutionVerifiedFilePath))
+                {
+                    try
+                    {
+                        var streamWriter = new StreamWriter(solutionVerifiedFilePath) {AutoFlush = true};
+                        foreach (var solution in solutions)
+                        {
+                            var content = await File.ReadAllTextAsync($"re-captchas/{captchaProblem}/{solution.Trim()}");
+                            await streamWriter.WriteLineAsync(content.Trim());
+                        }
+
+                        await streamWriter.FlushAsync();
+                        streamWriter.Close();
+
+                        if (File.Exists(solutionWarningFilePath))
+                        {
+                            File.Delete(solutionWarningFilePath);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e, "Error creating solution verification file.", captchaProblem);
+                    }
+                }
+
+                SemaphoreSlim.Release();
+
+                Log.Information("I'm human for captcha problem: {Name}", captchaProblem);
+            }
+            else if (!File.Exists(solutionVerifiedFilePath) && !File.Exists(solutionWarningFilePath))
+            {
+                await SemaphoreSlim.WaitAsync();
+
+                if (!Strikes.TryGetValue(captchaProblem, out _))
+                {
+                    Strikes[captchaProblem] = 1;
+                }
+                else
+                {
+                    Strikes[captchaProblem]++;
+                }
+
+                var strikesCount = Strikes[captchaProblem];
+                Log.Warning("I'm not human for captcha problem: {Name}. Strikes: {Count}",
+                    captchaProblem,
+                    strikesCount);
+
+                if (strikesCount == 3 && !File.Exists(solutionWarningFilePath))
+                {
+                    try
+                    {
+                        File.Create(solutionWarningFilePath);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e,
+                            "Error creating warning file for captcha problem {CaptchaProblem}.",
+                            captchaProblem);
+                    }
+                }
+
+                SemaphoreSlim.Release();
+            }
         }
     }
 }

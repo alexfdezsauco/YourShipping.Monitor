@@ -104,12 +104,16 @@ namespace YourShipping.Monitor.Server.Services
             {
                 var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
                     await client.GetAsync(url + $"&requestId={Guid.NewGuid()}"));
-                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
-                if (!isStoredClosed)
+
+                if (httpResponseMessage?.Content != null)
                 {
-                    content = await httpResponseMessage.Content.ReadAsStringAsync();
-                    await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                    var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                    isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
+                    if (!isStoredClosed)
+                    {
+                        content = await httpResponseMessage.Content.ReadAsStringAsync();
+                        await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                    }
                 }
             }
             catch (Exception e)
@@ -337,17 +341,18 @@ namespace YourShipping.Monitor.Server.Services
                             product.Url,
                             new FormUrlEncodedContent(parameters)));
 
-                    httpResponseMessage.EnsureSuccessStatusCode();
-
-                    var content = await httpClient.GetStringAsync(product.Url);
-                    var responseDocument = await browsingContext.OpenAsync(req => req.Content(content));
-                    if (IsInCart(product, responseDocument))
+                    if (httpResponseMessage?.Content != null)
                     {
-                        product.IsInCart = true;
-                        Log.Information(
-                            "Product '{ProductName}' was added to the cart on the store '{StoreName}'",
-                            product.Name,
-                            product.Store);
+                        var content = await httpClient.GetStringAsync(product.Url);
+                        var responseDocument = await browsingContext.OpenAsync(req => req.Content(content));
+                        if (IsInCart(product, responseDocument))
+                        {
+                            product.IsInCart = true;
+                            Log.Information(
+                                "Product '{ProductName}' was added to the cart on the store '{StoreName}'",
+                                product.Name,
+                                product.Store);
+                        }
                     }
                 }
             }

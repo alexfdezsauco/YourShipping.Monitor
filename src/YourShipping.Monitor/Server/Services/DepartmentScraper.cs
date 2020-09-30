@@ -105,12 +105,15 @@ namespace YourShipping.Monitor.Server.Services
                             return await client.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
                         });
 
-                        var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                        isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
-                        if (!isStoredClosed)
+                        if (httpResponseMessage?.Content != null)
                         {
-                            content = await httpResponseMessage.Content.ReadAsStringAsync();
-                            await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                            var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                            isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
+                            if (!isStoredClosed)
+                            {
+                                content = await httpResponseMessage.Content.ReadAsStringAsync();
+                                await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                            }
                         }
                     }
                     catch (Exception e)

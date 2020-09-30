@@ -64,13 +64,15 @@ namespace YourShipping.Monitor.Server.Services
                 var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
 
                 var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client => await client.GetAsync(requestUri));
-
-                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
-                if (!isStoredClosed)
+                if (httpResponseMessage?.Content != null)
                 {
-                    content = await httpResponseMessage.Content.ReadAsStringAsync();
-                    await cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                    var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                    isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
+                    if (!isStoredClosed)
+                    {
+                        content = await httpResponseMessage.Content.ReadAsStringAsync();
+                        await cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                    }
                 }
             }
             catch (Exception e)
