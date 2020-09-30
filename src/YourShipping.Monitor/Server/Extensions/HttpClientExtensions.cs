@@ -124,7 +124,6 @@ namespace YourShipping.Monitor.Server.Extensions
 
             if (httpResponseMessage != null)
             {
-                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
                 var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
                 while (httpResponseMessage != null && captchaResolutionRequired)
                 {
@@ -164,7 +163,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
-                        await httpClient.PostAsync(requestUriAbsoluteUri, new FormUrlEncodedContent(parameters));
+                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri, new FormUrlEncodedContent(parameters));
 
                         try
                         {
