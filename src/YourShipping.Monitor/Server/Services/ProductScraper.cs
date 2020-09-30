@@ -102,8 +102,7 @@ namespace YourShipping.Monitor.Server.Services
             string content = null;
             try
             {
-                var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
-                    await client.GetAsync(url + $"&requestId={Guid.NewGuid()}"));
+                var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(url);
 
                 if (httpResponseMessage?.Content != null)
                 {
@@ -336,10 +335,9 @@ namespace YourShipping.Monitor.Server.Services
                         {"__ASYNCPOST", "true"}
                     };
 
-                    var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
-                        await httpClient.PostAsync(
-                            product.Url,
-                            new FormUrlEncodedContent(parameters)));
+                    var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(
+                        product.Url,
+                        new FormUrlEncodedContent(parameters));
 
                     if (httpResponseMessage?.Content != null)
                     {

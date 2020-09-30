@@ -91,19 +91,18 @@ namespace YourShipping.Monitor.Server.Services
                 var requestUris = new[] {url + "&page=0", url};
 
                 var j = 0;
-                while (!isStoredClosed && j < requestUris.Length && (department == null || department.ProductsCount == 0))
+                while (!isStoredClosed && j < requestUris.Length &&
+                       (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
                     try
                     {
+                        var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
+                        var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
-                        var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
-                        {
-                            var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
-                            var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                            return await client.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
-                        });
+
+                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
 
                         if (httpResponseMessage?.Content != null)
                         {

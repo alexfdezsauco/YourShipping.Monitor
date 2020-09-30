@@ -107,15 +107,15 @@ namespace YourShipping.Monitor.Server.Extensions
             return parameters;
         }
 
-        public static async Task<HttpResponseMessage> CaptchaSaveTaskAsync(this HttpClient httpClient,
-            Func<HttpClient, Task<HttpResponseMessage>> httpClientTask)
+        public static async Task<HttpResponseMessage> PostCaptchaSaveAsync(this HttpClient httpClient,
+            string uri, HttpContent httpContent)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
 
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                httpResponseMessage = await httpClientTask(httpClient);
+                httpResponseMessage = await httpClient.PostAsync(uri, httpContent);
             }
             catch (Exception e)
             {
@@ -163,11 +163,12 @@ namespace YourShipping.Monitor.Server.Extensions
                         var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
-                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri, new FormUrlEncodedContent(parameters));
+                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
+                            new FormUrlEncodedContent(parameters));
 
                         try
                         {
-                            httpResponseMessage = await httpClientTask(httpClient);
+                            httpResponseMessage = await httpClient.PostAsync(uri, httpContent);
                         }
                         catch (Exception e)
                         {
@@ -176,7 +177,88 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         if (httpResponseMessage != null)
                         {
-                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage, captchaProblem, captchaSolutionPath, solutionText.Split(','));
+                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
+                                captchaProblem, captchaSolutionPath, solutionText.Split(','));
+                        }
+                    }
+                }
+            }
+
+            return httpResponseMessage;
+        }
+
+        public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient,
+            string uri)
+        {
+            var browsingContext = BrowsingContext.New(Configuration.Default);
+
+            HttpResponseMessage httpResponseMessage = null;
+            try
+            {
+                httpResponseMessage = await httpClient.GetAsync(uri);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error executing HttpClient task");
+            }
+
+            if (httpResponseMessage != null)
+            {
+                var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
+                while (httpResponseMessage != null && captchaResolutionRequired)
+                {
+                    var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                    var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
+                    var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
+                        .Text();
+
+                    var captchaProblemPath = $"re-captchas/{captchaProblem}";
+                    var captchaSolutionPath = $"re-captchas/{captchaProblem}/solution";
+
+                    if (!Directory.Exists(captchaProblemPath))
+                    {
+                        Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
+
+                        Directory.CreateDirectory(captchaProblemPath);
+                        var querySelector = captchaDocument.QuerySelectorAll<IElement>(
+                            "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
+
+                        foreach (var element in querySelector)
+                        {
+                            var name = element.Attributes["name"].Value;
+                            var src = element.Attributes["src"].Value;
+                            var combine = Path.Combine(captchaProblemPath, name);
+                            File.WriteAllText(combine, src);
+                            var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
+                            File.WriteAllBytes(combine + ".png", bytes);
+                        }
+
+                        File.Create($"re-captchas/{captchaProblem}/!solution");
+                        captchaResolutionRequired = false;
+                    }
+                    else if (File.Exists(captchaSolutionPath))
+                    {
+                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
+
+                        var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
+                        var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
+
+                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
+                            new FormUrlEncodedContent(parameters));
+
+                        try
+                        {
+                            httpResponseMessage = await httpClient.GetAsync(uri);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error executing HttpClient task");
+                        }
+
+                        if (httpResponseMessage != null)
+                        {
+                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
+                                captchaProblem, captchaSolutionPath, solutionText.Split(','));
                         }
                     }
                 }
