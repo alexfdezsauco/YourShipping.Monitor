@@ -63,7 +63,8 @@ namespace YourShipping.Monitor.Server.Services
             {
                 var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
 
-                var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(requestUri);
+                var httpResponseMessage =
+                    await httpClient.GetCaptchaSaveAsync(requestUri + $"&requestId={Guid.NewGuid()}");
                 if (httpResponseMessage?.Content != null)
                 {
                     var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;

@@ -102,7 +102,7 @@ namespace YourShipping.Monitor.Server.Services
             string content = null;
             try
             {
-                var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(url);
+                var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(url + $"&requestId={Guid.NewGuid()}");
 
                 if (httpResponseMessage?.Content != null)
                 {
@@ -336,7 +336,7 @@ namespace YourShipping.Monitor.Server.Services
                     };
 
                     var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(
-                        product.Url,
+                        product.Url + $"&requestId={Guid.NewGuid()}",
                         new FormUrlEncodedContent(parameters));
 
                     if (httpResponseMessage?.Content != null)
