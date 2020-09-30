@@ -248,7 +248,9 @@ namespace YourShipping.Monitor.Server.Helpers
                 var signinPageContent = string.Empty;
                 try
                 {
-                    signinPageContent = await httpClient.GetStringAsync(signInUrl);
+                    var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client => await client.GetAsync(signInUrl));
+                    signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                    // signinPageContent = await httpClient.GetStringAsync(signInUrl);
                 }
                 catch (Exception e)
                 {

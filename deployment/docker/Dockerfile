@@ -31,19 +31,16 @@ FROM mcr.microsoft.com/dotnet/core/aspnet@sha256:07d9cfc7442360e2827b638e78d15e2
 
 ENV ASPNETCORE_URLS=http://0.0.0.0:80
 
-VOLUME  /app/captchas
-VOLUME  /app/data
-VOLUME  /app/logs
-
 WORKDIR /app
 RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
-RUN apt -y update && apt -y install libleptonica-dev
 
+# RUN apt -y update && apt -y install libleptonica-dev
 # RUN mkdir -p /app/x64
 # RUN cp /usr/lib/x86_64-linux-gnu/liblept.so /app/x64/liblept1753.so
 # RUN apt install -y libc6-dev  libgdiplus  libx11-dev
+# RUN apt install -y libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
 
-RUN apt install -y libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
+RUN apt -y update && apt -y install libleptonica-dev libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
 ADD deployment/lib/x64 /app/x64
 
 # RUN apt install -y libtesseract-dev
@@ -54,5 +51,9 @@ COPY --from=build /build/output/Release/YourShipping.Monitor .
 RUN rm appsettings.json
 RUN rm appsettings.Development.json
 
-# COPY deployment/docker/appsettings.json .
+VOLUME  /app/captchas
+VOLUME  /app/re-captchas
+VOLUME  /app/data
+VOLUME  /app/logs
+
 ENTRYPOINT ["dotnet", "YourShipping.Monitor.Server.dll"]

@@ -24,6 +24,8 @@ namespace YourShipping.Monitor.Server.Services
     {
         private const string StorePrefix = "TuEnvio ";
 
+        private readonly IEntityScraper<Store> _storeScraper;
+
         private readonly IBrowsingContext browsingContext;
 
         private readonly ICacheStorage<string, Department> cacheStorage;
@@ -31,8 +33,6 @@ namespace YourShipping.Monitor.Server.Services
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
 
         private readonly IServiceProvider serviceProvider;
-
-        private readonly IEntityScraper<Store> _storeScraper;
 
         public DepartmentScraper(
             IBrowsingContext browsingContext,
@@ -42,7 +42,7 @@ namespace YourShipping.Monitor.Server.Services
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
-            this._storeScraper = storeScraper;
+            _storeScraper = storeScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.serviceProvider = serviceProvider;
@@ -91,22 +91,22 @@ namespace YourShipping.Monitor.Server.Services
                 var requestUris = new[] {url + "&page=0", url};
 
                 var j = 0;
-                while (!isStoredClosed && j < requestUris.Length
-                                       && (department == null || department.ProductsCount == 0))
+                while (!isStoredClosed && j < requestUris.Length && (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
                     try
                     {
                         var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+                        var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
+                        {
+                            var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
+                            var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
+                            return await client.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
+                        });
 
-                        var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
-                        var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpResponseMessage = await httpClient.PostAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
-                        httpResponseMessage.EnsureSuccessStatusCode();
-
-                        isStoredClosed =
-                            httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+                        var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                        isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                         if (!isStoredClosed)
                         {
                             content = await httpResponseMessage.Content.ReadAsStringAsync();

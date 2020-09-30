@@ -24,15 +24,15 @@ namespace YourShipping.Monitor.Server.Services
     {
         private const string StorePrefix = "TuEnvio ";
 
+        private readonly IEntityScraper<Department> _departmentScraper;
+
+        private readonly IEntityScraper<Store> _storeScraper;
+
         private readonly IBrowsingContext browsingContext;
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
         private readonly ICookiesSynchronizationService cookiesSynchronizationService;
-
-        private readonly IEntityScraper<Department> _departmentScraper;
-
-        private readonly IEntityScraper<Store> _storeScraper;
 
         public ProductScraper(
             IBrowsingContext browsingContext,
@@ -42,8 +42,8 @@ namespace YourShipping.Monitor.Server.Services
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
-            this._storeScraper = storeScraper;
-            this._departmentScraper = departmentScraper;
+            _storeScraper = storeScraper;
+            _departmentScraper = departmentScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
@@ -102,9 +102,10 @@ namespace YourShipping.Monitor.Server.Services
             string content = null;
             try
             {
-                var httpResponseMessage = await httpClient.GetAsync(url + $"&requestId={Guid.NewGuid()}");
-                isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
-
+                var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
+                    await client.GetAsync(url + $"&requestId={Guid.NewGuid()}"));
+                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                 if (!isStoredClosed)
                 {
                     content = await httpResponseMessage.Content.ReadAsStringAsync();
@@ -331,9 +332,10 @@ namespace YourShipping.Monitor.Server.Services
                         {"__ASYNCPOST", "true"}
                     };
 
-                    var httpResponseMessage = await httpClient.PostAsync(
-                        product.Url,
-                        new FormUrlEncodedContent(parameters));
+                    var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client =>
+                        await httpClient.PostAsync(
+                            product.Url,
+                            new FormUrlEncodedContent(parameters)));
 
                     httpResponseMessage.EnsureSuccessStatusCode();
 

@@ -27,7 +27,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public sealed class StoreMonitorHostedService : TimedHostedServiceBase
     {
         public StoreMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromMinutes(5))
+            : base(serviceProvider, TimeSpan.FromSeconds(30))
         {
         }
 

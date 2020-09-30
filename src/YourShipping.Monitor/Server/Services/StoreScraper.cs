@@ -40,8 +40,7 @@ namespace YourShipping.Monitor.Server.Services
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
         {
-            url = ScrapingUriHelper.EnsureStoreUrl(url)
-                ;
+            url = ScrapingUriHelper.EnsureStoreUrl(url);
 
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 url,
@@ -49,6 +48,7 @@ namespace YourShipping.Monitor.Server.Services
                 ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
                 force);
         }
+
 
         private async Task<Store> GetDirectAsync(string storeUrl)
         {
@@ -62,8 +62,11 @@ namespace YourShipping.Monitor.Server.Services
             try
             {
                 var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
-                var httpResponseMessage = await httpClient.GetAsync(requestUri);
-                isStoredClosed = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("StoreClosed.aspx");
+
+                var httpResponseMessage = await httpClient.CaptchaSaveTaskAsync(async client => await client.GetAsync(requestUri));
+
+                var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                 if (!isStoredClosed)
                 {
                     content = await httpResponseMessage.Content.ReadAsStringAsync();

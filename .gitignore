@@ -358,3 +358,7 @@ logs
 /.dotnet
 /.vscode
 /.vs
+/src/YourShipping.Monitor/Server/captchas
+/src/YourShipping.Monitor/Server/data
+/src/YourShipping.Monitor/Server/logs
+/src/YourShipping.Monitor/Server/re-captchas
