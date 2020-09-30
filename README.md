@@ -52,7 +52,7 @@ You can export the `cookies.txt` by using theses extensions:
 - *Microsoft Edge*: [get-cookiestxt](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip)
 
 
-### Mount products in the shopping cart bypassing the 1st captcha ()
+### Unattended authentication bypassing the 1st captcha
 
 > **ALERT**: Linux users should make sure to install the following libraries: `libleptonica-dev, libgif7, libjpeg62, libopenjp2-7, libpng16-16, libtiff5, libwebp6, libc6-dev, libgdiplus`
 
@@ -63,9 +63,14 @@ You can export the `cookies.txt` by using theses extensions:
             "Password": "%PASSWORD%"
         }
 
-### Mount products in the shopping cart bypassing also the 2nd captcha
+- For docker run use this environment variables
 
-> **ALERT**: The captcha database could require updates on the time, so if you notice new captchas challengs just solve it and create a PR on the database repository.
+	-e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD"
+
+
+### Mount products in the shopping cart bypassing the 2nd captcha
+
+> **ALERT**: The captcha database might require updates over time, so if you notice a new captcha challenge, just solve it and create a PR in the database repository.
 
 - For docker run
 
