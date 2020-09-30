@@ -79,7 +79,7 @@ namespace YourShipping.Monitor.Server.Services
             }
 
             var storeToImport =
-                storesToImport?.FirstOrDefault(s => $"{s.Url.Trim()}/Products?depPid=0" == storeUrl.Trim());
+                storesToImport?.FirstOrDefault(s => $"{s.Url.Trim(' ', '/')}/Products?depPid=0" == storeUrl.Trim());
             var storeName = storeToImport?.Name;
 
 
