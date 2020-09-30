@@ -95,7 +95,7 @@ namespace YourShipping.Monitor.Server.Extensions
                     {"Language", "es-MX"},
                     {"CurrentLanguage", "es-MX"},
                     {"Currency", string.Empty},
-                    {"ctl00$cphPage$ctl00$seleccion", solution},
+                    {"ctl00$cphPage$ctl00$seleccion", solution.Trim(' ', ',') + ","},
                     {"ctl00$cphPage$ctl00$Button1", "Enviar respuesta"}
                 };
             }
