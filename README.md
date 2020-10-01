@@ -25,7 +25,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
       > dotnet new tool-manifest
       > dotnet tool install Cake.Tool
 
-- Linux users need also to install `mono` required to run `GitVersion.CommandLine`
+- Linux users need to also [Install Mono](https://www.mono-project.com/download/stable/#download-lin) required to run `GitVersion.CommandLine` 
 - Run `Publish` task
 
       > cd %CLONE_DIR%
