@@ -16,6 +16,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
 
 ## Build
 
+
 ### Build binaries for your current OS.
 
 - [Install .NET Core on Windows, Linux, and macOS](https://docs.microsoft.com/en-us/dotnet/core/install/)
@@ -24,7 +25,8 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
       > dotnet new tool-manifest
       > dotnet tool install Cake.Tool
 
-- Run Publish task
+- Linux users need also to install `mono` required to run `GitVersion.CommandLine`
+- Run `Publish` task
 
       > cd %CLONE_DIR%
       > dotnet cake -target="Publish" -configuration="Release"
