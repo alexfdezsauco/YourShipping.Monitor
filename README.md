@@ -44,15 +44,14 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
     > mkdir %APP_DIR%/logs
     > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
     
-### Mount products in the shopping cart using cookies.txt
-
-In oder to mount products in the shopping cart the user must be authenticated. This is an "incomplete" feature. So, you can create a pull request ;) or just save the `cookies.txt` file in the data directory.
+### Authenticating with using cookies.txt (Deprecated)
 
 You can export the `cookies.txt` by using theses extensions:
 
 - *Chrome / Microsoft Edge*: [cookiestxt](https://chrome.google.com/webstore/detail/cookiestxt/njabckikapfpffapmjgojcnbfjonfjfg)
 - *Microsoft Edge*: [get-cookiestxt](https://microsoftedge.microsoft.com/addons/detail/get-cookiestxt/helleheikohejgehaknifdkcfcmceeip)
 
+and save it in this location `%APP_DIR%/data`.
 
 ### Unattended authentication bypassing the 1st captcha
 
