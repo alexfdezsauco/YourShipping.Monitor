@@ -16,6 +16,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
 
 ## Build
 
+> **ALERT**: Linux users need to [Install Mono](https://www.mono-project.com/docs/getting-started/install/linux/) required to run `GitVersion.CommandLine` 
 
 ### Build binaries for your current OS.
 
@@ -25,7 +26,6 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
       > dotnet new tool-manifest
       > dotnet tool install Cake.Tool
 
-- Linux users need to also [Install Mono](https://www.mono-project.com/download/stable/#download-lin) required to run `GitVersion.CommandLine` 
 - Run `Publish` task
 
       > cd %CLONE_DIR%
