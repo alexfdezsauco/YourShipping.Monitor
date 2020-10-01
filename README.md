@@ -71,7 +71,7 @@ and save it in this location `%APP_DIR%/data`.
 
 ### Mount products in the shopping cart bypassing the 2nd captcha
 
-> **ALERT**: The captcha database might require updates over time, so if you notice a new captcha challenge, just solve it and create a PR in the database repository.
+> **ALERT**: The captcha database might require updates over time, so if you notice a new captcha challenge, just solve it and create a PR in the database [repository](https://github.com/alexfdezsauco/YourShipping.Monitor-ReCaptchasDB).
 
 - For docker run
 
