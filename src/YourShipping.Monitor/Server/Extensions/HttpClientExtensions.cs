@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
@@ -132,14 +134,32 @@ namespace YourShipping.Monitor.Server.Extensions
                     var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
                         .Text();
 
-                    var captchaProblemPath = $"re-captchas/{captchaProblem}";
-                    var captchaSolutionPath = $"re-captchas/{captchaProblem}/solution";
+                    // TODO: This code is duplicated.
+                    var oldCaptchaProblemPath = $"re-captchas/{captchaProblem}";
+                    var encodedCaptchaProblem = ComputeSha256Hash(captchaProblem);
+                    var captchaProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
+                    var captchaSolutionFilePath = $"re-captchas/{encodedCaptchaProblem}/solution";
+                    var captchaProblemFilePath = $"re-captchas/{encodedCaptchaProblem}/problem";
+                    if (Directory.Exists(oldCaptchaProblemPath))
+                    {
+                        try
+                        {
+                            Directory.Move(oldCaptchaProblemPath, captchaProblemDirectoryPath);
+                            File.WriteAllText(captchaProblemFilePath, captchaProblem);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error rename folder {FolderName}", oldCaptchaProblemPath);
+                        }
+                    }
 
-                    if (!Directory.Exists(captchaProblemPath))
+                    if (!Directory.Exists(captchaProblemDirectoryPath))
                     {
                         Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
 
-                        Directory.CreateDirectory(captchaProblemPath);
+                        Directory.CreateDirectory(captchaProblemDirectoryPath);
+                        File.WriteAllText(captchaProblemFilePath, captchaProblem);
+
                         var querySelector = captchaDocument.QuerySelectorAll<IElement>(
                             "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
 
@@ -147,20 +167,20 @@ namespace YourShipping.Monitor.Server.Extensions
                         {
                             var name = element.Attributes["name"].Value;
                             var src = element.Attributes["src"].Value;
-                            var combine = Path.Combine(captchaProblemPath, name);
+                            var combine = Path.Combine(captchaProblemDirectoryPath, name);
                             File.WriteAllText(combine, src);
                             var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
                             File.WriteAllBytes(combine + ".png", bytes);
                         }
 
-                        File.Create($"re-captchas/{captchaProblem}/!solution");
+                        File.Create($"re-captchas/{encodedCaptchaProblem}/!solution");
                         captchaResolutionRequired = false;
                     }
-                    else if (File.Exists(captchaSolutionPath))
+                    else if (File.Exists(captchaSolutionFilePath))
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
 
-                        var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
+                        var solutionText = File.ReadAllText(captchaSolutionFilePath).Trim(' ', ',');
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
                         await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
@@ -178,13 +198,32 @@ namespace YourShipping.Monitor.Server.Extensions
                         if (httpResponseMessage != null)
                         {
                             captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
-                                captchaProblem, captchaSolutionPath, solutionText.Split(','));
+                                captchaProblem, captchaSolutionFilePath, solutionText.Split(','));
                         }
                     }
                 }
             }
 
             return httpResponseMessage;
+        }
+
+        private static string ComputeSha256Hash(string rawData)
+        {
+            // Create a SHA256   
+            using (var sha256Hash = SHA256.Create())
+            {
+                // ComputeHash - returns byte array  
+                var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+
+                // Convert byte array to a string   
+                var builder = new StringBuilder();
+                for (var i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+
+                return builder.ToString();
+            }
         }
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient,
@@ -212,14 +251,33 @@ namespace YourShipping.Monitor.Server.Extensions
                     var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
                         .Text();
 
-                    var captchaProblemPath = $"re-captchas/{captchaProblem}";
-                    var captchaSolutionPath = $"re-captchas/{captchaProblem}/solution";
+                    var oldCaptchaProblemPath = $"re-captchas/{captchaProblem}";
+                    var encodedCaptchaProblem = ComputeSha256Hash(captchaProblem);
 
-                    if (!Directory.Exists(captchaProblemPath))
+
+                    var captchaProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
+                    var captchaSolutionFilePath = $"re-captchas/{encodedCaptchaProblem}/solution";
+                    var captchaProblemFilePath = $"re-captchas/{encodedCaptchaProblem}/problem";
+
+                    if (Directory.Exists(oldCaptchaProblemPath))
+                    {
+                        try
+                        {
+                            Directory.Move(oldCaptchaProblemPath, captchaProblemDirectoryPath);
+                            File.WriteAllText(captchaProblemFilePath, captchaProblem);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error rename folder {FolderName}", oldCaptchaProblemPath);
+                        }
+                    }
+
+                    if (!Directory.Exists(captchaProblemDirectoryPath))
                     {
                         Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
 
-                        Directory.CreateDirectory(captchaProblemPath);
+                        Directory.CreateDirectory(captchaProblemDirectoryPath);
+                        File.WriteAllText(captchaProblemFilePath, captchaProblem);
                         var querySelector = captchaDocument.QuerySelectorAll<IElement>(
                             "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
 
@@ -227,20 +285,20 @@ namespace YourShipping.Monitor.Server.Extensions
                         {
                             var name = element.Attributes["name"].Value;
                             var src = element.Attributes["src"].Value;
-                            var combine = Path.Combine(captchaProblemPath, name);
+                            var combine = Path.Combine(captchaProblemDirectoryPath, name);
                             File.WriteAllText(combine, src);
                             var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
                             File.WriteAllBytes(combine + ".png", bytes);
                         }
 
-                        File.Create($"re-captchas/{captchaProblem}/!solution");
+                        File.Create($"re-captchas/{encodedCaptchaProblem}/!solution");
                         captchaResolutionRequired = false;
                     }
-                    else if (File.Exists(captchaSolutionPath))
+                    else if (File.Exists(captchaSolutionFilePath))
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
 
-                        var solutionText = File.ReadAllText(captchaSolutionPath).Trim(' ', ',');
+                        var solutionText = File.ReadAllText(captchaSolutionFilePath).Trim(' ', ',');
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
                         await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
@@ -258,7 +316,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         if (httpResponseMessage != null)
                         {
                             captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
-                                captchaProblem, captchaSolutionPath, solutionText.Split(','));
+                                captchaProblem, captchaSolutionFilePath, solutionText.Split(','));
                         }
                     }
                 }
