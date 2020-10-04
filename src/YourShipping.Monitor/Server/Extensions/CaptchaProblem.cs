@@ -8,10 +8,14 @@ namespace YourShipping.Monitor.Server.Extensions
 {
     public class CaptchaProblem
     {
+        private readonly string _captchaProblemId;
+
         public CaptchaProblem(string text, SortedList<string, CaptchaImage> images)
         {
             Text = text;
             Images = images;
+            var serializeObject = JsonConvert.SerializeObject(this);
+            _captchaProblemId = serializeObject.ComputeSHA256();
         }
 
         [JsonProperty(Order = 0)]
@@ -20,15 +24,13 @@ namespace YourShipping.Monitor.Server.Extensions
         [JsonProperty(Order = 1)]
         public SortedList<string, CaptchaImage> Images { get; }
 
-        public bool TrySolve(out List<string> solutions)
+        public bool TrySolve(out List<string> solutionNames)
         {
-            var serializeObject = JsonConvert.SerializeObject(this);
-            var encodedCaptchaProblem = serializeObject.ComputeSHA256();
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
             var captchaProblemFilePath = $"{captchaEncodedProblemDirectoryPath}/problem";
             var captchaProblemSolutionFilePath = $"{captchaEncodedProblemDirectoryPath}/solution";
 
-            solutions = null;
+            solutionNames = null;
 
             if (!Directory.Exists(captchaEncodedProblemDirectoryPath))
             {
@@ -45,22 +47,34 @@ namespace YourShipping.Monitor.Server.Extensions
                 }
 
                 File.Create($"{captchaEncodedProblemDirectoryPath}/!solution");
+
                 return false;
             }
-
+            
             if (File.Exists(captchaProblemSolutionFilePath))
             {
-                solutions = new List<string>();
-                var readAllLines = File.ReadAllLines(captchaProblemSolutionFilePath);
-                foreach (var readAllLine in readAllLines)
+                solutionNames = new List<string>();
+                var solutionFileLines = File.ReadAllLines(captchaProblemSolutionFilePath);
+                foreach (var solutionFileLine in solutionFileLines)
                 {
-                    if (Images.TryGetValue(readAllLine, out var captchaImage))
+                    if (Images.TryGetValue(solutionFileLine, out var captchaImage))
                     {
-                        solutions.AddRange(captchaImage.Names);
+                        solutionNames.AddRange(captchaImage.Names);
                     }
                     else
                     {
-                        File.Move(captchaProblemSolutionFilePath, $"{captchaEncodedProblemDirectoryPath}/!solution");
+                        Log.Warning("Incorrect solution for problem {Text} with {Id}",Text,_captchaProblemId);
+
+                        try
+                        {
+                            File.Move(captchaProblemSolutionFilePath,
+                                $"{captchaEncodedProblemDirectoryPath}/!solution");
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error renaming solution file.");
+                        }
+
                         return false;
                     }
                 }
@@ -75,9 +89,7 @@ namespace YourShipping.Monitor.Server.Extensions
         {
             Log.Information("I'm human for captcha problem: {Text}", Text);
 
-            var serializeObject = JsonConvert.SerializeObject(this);
-            var encodedCaptchaProblem = serializeObject.ComputeSHA256();
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
             var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
@@ -94,26 +106,25 @@ namespace YourShipping.Monitor.Server.Extensions
                 }
                 catch (Exception e)
                 {
-                    Log.Warning(e,"Error deleting solution alert file.");
+                    Log.Warning(e, "Error deleting solution alert file.");
                 }
             }
         }
 
         public void Fail()
         {
-            var serializeObject = JsonConvert.SerializeObject(this);
-            var encodedCaptchaProblem = serializeObject.ComputeSHA256();
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
             var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
             if (File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
-                Log.Warning("I'm not human for captcha problem: {Text} but solution is verified", Text);
+                Log.Warning("I'm not human for captcha problem: {Text} but solution is verified. {Id}", Text,
+                    _captchaProblemId);
             }
             else
             {
-                Log.Warning("I'm not human for captcha problem: {Text}.", Text);
+                Log.Warning("I'm not human for captcha problem: {Text}. {Id}", Text, _captchaProblemId);
 
                 File.Create(solutionAlertFile);
             }

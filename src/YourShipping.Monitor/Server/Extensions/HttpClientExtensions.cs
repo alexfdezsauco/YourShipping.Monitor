@@ -116,24 +116,6 @@ namespace YourShipping.Monitor.Server.Extensions
             return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
         }
 
-        private static string ComputeSha256Hash(string rawData)
-        {
-            // Create a SHA256   
-            using (var sha256Hash = SHA256.Create())
-            {
-                // ComputeHash - returns byte array  
-                var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-
-                // Convert byte array to a string   
-                var builder = new StringBuilder();
-                for (var i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-
-                return builder.ToString();
-            }
-        }
 
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
             Func<Task<HttpResponseMessage>> httpResponseMessageFunction)
@@ -197,16 +179,24 @@ namespace YourShipping.Monitor.Server.Extensions
                         var solutionText = solutions.Aggregate(string.Empty, (current, solution) => current + solution + ",");
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
-                        var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                        await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+                        try
+                        {
+                            var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                            await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error solving captcha {Text}", solutionText);
+                        }
 
                         try
                         {
+                           
                             httpResponseMessage = await httpResponseMessageFunction();
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error executing HttpClient task on this {Url}", url);
+                            Log.Error(e, "Error executing HttpClient task");
                         }
 
                         if (httpResponseMessage != null)
@@ -238,91 +228,6 @@ namespace YourShipping.Monitor.Server.Extensions
             Argument.IsNotNull(() => httpResponseMessage);
 
             return httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("captcha.aspx");
-        }
-
-        private static async Task<bool> ProcessCaptchaSolutionAsync(HttpResponseMessage httpResponseMessage,
-            string captchaProblem,
-            string captchaSolutionPath, string[] solutions)
-        {
-            Argument.IsNotNull(() => httpResponseMessage);
-            Argument.IsNotNullOrWhitespace(() => captchaProblem);
-            Argument.IsNotNullOrEmptyArray(() => solutions);
-
-            var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
-
-            var solutionVerifiedFilePath = captchaSolutionPath + "-verified";
-            var solutionWarningFilePath = captchaSolutionPath + "-warning";
-
-            if (!captchaResolutionRequired)
-            {
-                await SemaphoreSlim.WaitAsync();
-
-                if (!File.Exists(solutionVerifiedFilePath))
-                {
-                    try
-                    {
-                        var streamWriter = new StreamWriter(solutionVerifiedFilePath) {AutoFlush = true};
-                        foreach (var solution in solutions)
-                        {
-                            var content =
-                                await File.ReadAllTextAsync($"re-captchas/{captchaProblem}/{solution.Trim()}");
-                            await streamWriter.WriteLineAsync(content.Trim());
-                        }
-
-                        await streamWriter.FlushAsync();
-                        streamWriter.Close();
-
-                        if (File.Exists(solutionWarningFilePath))
-                        {
-                            File.Delete(solutionWarningFilePath);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e, "Error creating solution verification file.", captchaProblem);
-                    }
-                }
-
-                SemaphoreSlim.Release();
-
-                Log.Information("I'm human for captcha problem: {Name}", captchaProblem);
-            }
-            else if (!File.Exists(solutionVerifiedFilePath) && !File.Exists(solutionWarningFilePath))
-            {
-                await SemaphoreSlim.WaitAsync();
-
-                if (!Strikes.TryGetValue(captchaProblem, out _))
-                {
-                    Strikes[captchaProblem] = 1;
-                }
-                else
-                {
-                    Strikes[captchaProblem]++;
-                }
-
-                var strikesCount = Strikes[captchaProblem];
-                Log.Warning("I'm not human for captcha problem: {Name}. Strikes: {Count}",
-                    captchaProblem,
-                    strikesCount);
-
-                if (strikesCount == 3 && !File.Exists(solutionWarningFilePath))
-                {
-                    try
-                    {
-                        File.Create(solutionWarningFilePath);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e,
-                            "Error creating warning file for captcha problem {CaptchaProblem}.",
-                            captchaProblem);
-                    }
-                }
-
-                SemaphoreSlim.Release();
-            }
-
-            return captchaResolutionRequired;
         }
     }
 }
