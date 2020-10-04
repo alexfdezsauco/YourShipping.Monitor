@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Catel.Collections;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -9,20 +8,27 @@ namespace YourShipping.Monitor.Server.Extensions
 {
     public class CaptchaProblem
     {
+        public CaptchaProblem(string text, SortedList<string, CaptchaImage> images)
+        {
+            Text = text;
+            Images = images;
+        }
+
         [JsonProperty(Order = 0)]
         public string Text { get; set; }
 
         [JsonProperty(Order = 1)]
-        public SortedList<string, CaptchaImage> Images { get; } = new SortedList<string, CaptchaImage>();
+        public SortedList<string, CaptchaImage> Images { get; }
 
         public bool TrySolve(out List<string> solutions)
         {
-            solutions = null;
             var serializeObject = JsonConvert.SerializeObject(this);
             var encodedCaptchaProblem = serializeObject.ComputeSHA256();
             var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
             var captchaProblemFilePath = $"{captchaEncodedProblemDirectoryPath}/problem";
             var captchaProblemSolutionFilePath = $"{captchaEncodedProblemDirectoryPath}/solution";
+
+            solutions = null;
 
             if (!Directory.Exists(captchaEncodedProblemDirectoryPath))
             {
@@ -64,26 +70,36 @@ namespace YourShipping.Monitor.Server.Extensions
             return false;
         }
 
-        public void MarkAsResolved()
+        public void Pass()
         {
+            Log.Information("I'm human for captcha problem: {Text}", Text);
+
             var serializeObject = JsonConvert.SerializeObject(this);
             var encodedCaptchaProblem = serializeObject.ComputeSHA256();
             var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
-            var captchaProblemSolutionFilePath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
-            if (!File.Exists(captchaProblemSolutionFilePath))
+            var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
+
+            if (!File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
-                File.Create(captchaProblemSolutionFilePath);
+                File.Create(captchaProblemSolutionFileVerifiedPath);
             }
         }
 
-        public void InvalidateIfNotResolved()
+        public void Fail()
         {
             var serializeObject = JsonConvert.SerializeObject(this);
             var encodedCaptchaProblem = serializeObject.ComputeSHA256();
             var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
-            var captchaProblemSolutionFilePath = $"{captchaEncodedProblemDirectoryPath}/solution";
-            if (!File.Exists(captchaProblemSolutionFilePath))
+            var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
+
+            if (File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
+                Log.Warning("I'm not human for captcha problem: {Text} but solution is verified", Text);
+            }
+            else
+            {
+                Log.Warning("I'm not human for captcha problem: {Text}.", Text);
+
                 File.Create($"{captchaEncodedProblemDirectoryPath}/solution-alert");
             }
         }

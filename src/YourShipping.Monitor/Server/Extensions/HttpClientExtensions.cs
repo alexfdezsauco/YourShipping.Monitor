@@ -156,25 +156,23 @@ namespace YourShipping.Monitor.Server.Extensions
                 {
                     var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
                     var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
-                    var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
+                    var captchaProblemText = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
                         .Text();
 
 
                     var selectorAll = captchaDocument.QuerySelectorAll<IElement>(
                         "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
 
-                    var problem = new CaptchaProblem
-                    {
-                        Text = captchaProblem
-                    };
 
+
+                    SortedList<string, CaptchaImage> images = new SortedList<string, CaptchaImage>();
                     foreach (var element in selectorAll)
                     {
                         var src = element.Attributes["src"].Value;
                         var name = element.Attributes["name"].Value;
                         var key = src.ComputeSHA256();
 
-                        if (problem.Images.TryGetValue(key, out var captchaImage))
+                        if (images.TryGetValue(key, out var captchaImage))
                         {
                             captchaImage.Names.Add(name);
                         }
@@ -186,13 +184,16 @@ namespace YourShipping.Monitor.Server.Extensions
                             };
 
                             captchaImage.Names.Add(name);
-                            problem.Images[key] = captchaImage;
+                            images[key] = captchaImage;
                         }
                     }
 
+                    var problem = new CaptchaProblem(captchaProblemText, images);
+
+
                     if (problem.TrySolve(out var solutions))
                     {
-                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
+                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
 
                         var solutionText = string.Empty;
                         foreach (var solution in solutions)
@@ -219,11 +220,11 @@ namespace YourShipping.Monitor.Server.Extensions
                             captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
                             if (captchaResolutionRequired)
                             {
-                                problem.MarkAsResolved();
+                                problem.Pass();
                             }
                             else
                             {
-                                problem.InvalidateIfNotResolved();
+                                problem.Fail();
                             }
                         }
                     }
