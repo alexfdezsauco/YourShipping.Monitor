@@ -44,7 +44,7 @@ Follow the [Bots: An introduction for developers](https://core.telegram.org/bots
     > mkdir %APP_DIR%/logs
     > docker run -d --name your-shipping-monitor --rm -p 80:80 -v %APP_DIR%/data:/app/data -v %APP_DIR%/logs:/app/logs -e "TelegramBot:Token=%TELEGRAM_BOT_TOKEN%" your-shipping-monitor:latest
     
-### Authenticating with using cookies.txt (Deprecated)
+### Authenticating with using cookies.txt
 
 You can export the `cookies.txt` by using theses extensions:
 
@@ -57,6 +57,8 @@ and save it in this location `%APP_DIR%/data`.
 
 > **ALERT**: Linux users should make sure to install the following libraries: `libleptonica-dev, libgif7, libjpeg62, libopenjp2-7, libpng16-16, libtiff5, libwebp6, libc6-dev, libgdiplus`
 
+> **ALERT**: If this method doesn't work for you, just use the cookies.txt file.
+
 - Add a configuration section to for credentials 
 
         "Credentials": {
@@ -68,10 +70,9 @@ and save it in this location `%APP_DIR%/data`.
 
 	-e "Credentials:Username=%USERNAME%" -e "Credentials:Password=PASSWORD"
 
-
 ### Mount products in the shopping cart bypassing the 2nd captcha
 
-> **ALERT**: The captcha database might require updates over time, so if you notice a new captcha challenge, just solve it and create a PR in the database repository.
+> **ALERT**: The captcha database might require updates over time, so if you notice a new captcha challenge, just solve it and create a PR in the database [repository](https://github.com/alexfdezsauco/YourShipping.Monitor-ReCaptchasDB).
 
 - For docker run
 
