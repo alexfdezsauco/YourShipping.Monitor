@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -193,16 +194,11 @@ namespace YourShipping.Monitor.Server.Extensions
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
 
-                        var solutionText = string.Empty;
-                        foreach (var solution in solutions)
-                        {
-                            solutionText += solution + ",";
-                        }
-
+                        var solutionText = solutions.Aggregate(string.Empty, (current, solution) => current + solution + ",");
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
-                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
-                            new FormUrlEncodedContent(parameters));
+                        var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                        await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
 
                         try
                         {
@@ -210,7 +206,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error executing HttpClient task");
+                            Log.Error(e, "Error executing HttpClient task on this {Url}", url);
                         }
 
                         if (httpResponseMessage != null)
