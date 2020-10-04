@@ -188,10 +188,8 @@ namespace YourShipping.Monitor.Server.Extensions
                         }
                     }
 
-                    var problem = new CaptchaProblem(captchaProblemText, images);
-
-
-                    if (problem.TrySolve(out var solutions))
+                    var captchaProblem = new CaptchaProblem(captchaProblemText, images);
+                    if (captchaProblem.TrySolve(out var solutions))
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
 
@@ -220,11 +218,11 @@ namespace YourShipping.Monitor.Server.Extensions
                             captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
                             if (captchaResolutionRequired)
                             {
-                                problem.Pass();
+                                captchaProblem.Pass();
                             }
                             else
                             {
-                                problem.Fail();
+                                captchaProblem.Fail();
                             }
                         }
                     }
@@ -234,8 +232,7 @@ namespace YourShipping.Monitor.Server.Extensions
             return httpResponseMessage;
         }
 
-        public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient,
-            string uri)
+        public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
             return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
         }

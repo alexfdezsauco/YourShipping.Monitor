@@ -33,6 +33,7 @@ namespace YourShipping.Monitor.Server.Extensions
             if (!Directory.Exists(captchaEncodedProblemDirectoryPath))
             {
                 Log.Warning("New unresolved captcha problem: {Name}", Text);
+
                 Directory.CreateDirectory(captchaEncodedProblemDirectoryPath);
                 File.WriteAllText(captchaProblemFilePath, Text);
                 foreach (var keyValuePair in Images)
@@ -78,10 +79,23 @@ namespace YourShipping.Monitor.Server.Extensions
             var encodedCaptchaProblem = serializeObject.ComputeSHA256();
             var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
+            var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
             if (!File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
                 File.Create(captchaProblemSolutionFileVerifiedPath);
+            }
+
+            if (File.Exists(solutionAlertFile))
+            {
+                try
+                {
+                    File.Delete(solutionAlertFile);
+                }
+                catch (Exception e)
+                {
+                    Log.Warning(e,"Error deleting solution alert file.");
+                }
             }
         }
 
@@ -91,6 +105,7 @@ namespace YourShipping.Monitor.Server.Extensions
             var encodedCaptchaProblem = serializeObject.ComputeSHA256();
             var captchaEncodedProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
+            var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
             if (File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
@@ -100,7 +115,7 @@ namespace YourShipping.Monitor.Server.Extensions
             {
                 Log.Warning("I'm not human for captcha problem: {Text}.", Text);
 
-                File.Create($"{captchaEncodedProblemDirectoryPath}/solution-alert");
+                File.Create(solutionAlertFile);
             }
         }
     }
