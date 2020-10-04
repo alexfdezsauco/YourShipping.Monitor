@@ -112,99 +112,7 @@ namespace YourShipping.Monitor.Server.Extensions
         public static async Task<HttpResponseMessage> PostCaptchaSaveAsync(this HttpClient httpClient,
             string uri, HttpContent httpContent)
         {
-            var browsingContext = BrowsingContext.New(Configuration.Default);
-
-            HttpResponseMessage httpResponseMessage = null;
-            try
-            {
-                httpResponseMessage = await httpClient.PostAsync(uri, httpContent);
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error executing HttpClient task");
-            }
-
-            if (httpResponseMessage != null)
-            {
-                var captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
-                while (httpResponseMessage != null && captchaResolutionRequired)
-                {
-                    var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
-                    var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
-                    var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
-                        .Text();
-
-                    // TODO: This code is duplicated.
-                    var oldCaptchaProblemPath = $"re-captchas/{captchaProblem}";
-                    var encodedCaptchaProblem = ComputeSha256Hash(captchaProblem);
-                    var captchaProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
-                    var captchaSolutionFilePath = $"re-captchas/{encodedCaptchaProblem}/solution";
-                    var captchaProblemFilePath = $"re-captchas/{encodedCaptchaProblem}/problem";
-                    if (Directory.Exists(oldCaptchaProblemPath))
-                    {
-                        try
-                        {
-                            Directory.Move(oldCaptchaProblemPath, captchaProblemDirectoryPath);
-                            File.WriteAllText(captchaProblemFilePath, captchaProblem);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Warning(e, "Error rename folder {FolderName}", oldCaptchaProblemPath);
-                        }
-                    }
-
-                    if (!Directory.Exists(captchaProblemDirectoryPath))
-                    {
-                        Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
-
-                        Directory.CreateDirectory(captchaProblemDirectoryPath);
-                        File.WriteAllText(captchaProblemFilePath, captchaProblem);
-
-                        var querySelector = captchaDocument.QuerySelectorAll<IElement>(
-                            "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
-
-                        foreach (var element in querySelector)
-                        {
-                            var name = element.Attributes["name"].Value;
-                            var src = element.Attributes["src"].Value;
-                            var combine = Path.Combine(captchaProblemDirectoryPath, name);
-                            File.WriteAllText(combine, src);
-                            var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
-                            File.WriteAllBytes(combine + ".png", bytes);
-                        }
-
-                        File.Create($"re-captchas/{encodedCaptchaProblem}/!solution");
-                        captchaResolutionRequired = false;
-                    }
-                    else if (File.Exists(captchaSolutionFilePath))
-                    {
-                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
-
-                        var solutionText = File.ReadAllText(captchaSolutionFilePath).Trim(' ', ',');
-                        var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
-
-                        await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
-                            new FormUrlEncodedContent(parameters));
-
-                        try
-                        {
-                            httpResponseMessage = await httpClient.PostAsync(uri, httpContent);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error executing HttpClient task");
-                        }
-
-                        if (httpResponseMessage != null)
-                        {
-                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
-                                captchaProblem, captchaSolutionFilePath, solutionText.Split(','));
-                        }
-                    }
-                }
-            }
-
-            return httpResponseMessage;
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
         }
 
         private static string ComputeSha256Hash(string rawData)
@@ -226,15 +134,15 @@ namespace YourShipping.Monitor.Server.Extensions
             }
         }
 
-        public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient,
-            string uri)
+        private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
+            Func<Task<HttpResponseMessage>> httpResponseMessageFunction)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
 
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                httpResponseMessage = await httpClient.GetAsync(uri);
+                httpResponseMessage = await httpResponseMessageFunction();
             }
             catch (Exception e)
             {
@@ -251,54 +159,47 @@ namespace YourShipping.Monitor.Server.Extensions
                     var captchaProblem = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
                         .Text();
 
-                    var oldCaptchaProblemPath = $"re-captchas/{captchaProblem}";
-                    var encodedCaptchaProblem = ComputeSha256Hash(captchaProblem);
 
+                    var selectorAll = captchaDocument.QuerySelectorAll<IElement>(
+                        "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
 
-                    var captchaProblemDirectoryPath = $"re-captchas/{encodedCaptchaProblem}";
-                    var captchaSolutionFilePath = $"re-captchas/{encodedCaptchaProblem}/solution";
-                    var captchaProblemFilePath = $"re-captchas/{encodedCaptchaProblem}/problem";
-
-                    if (Directory.Exists(oldCaptchaProblemPath))
+                    var problem = new CaptchaProblem
                     {
-                        try
+                        Text = captchaProblem
+                    };
+
+                    foreach (var element in selectorAll)
+                    {
+                        var src = element.Attributes["src"].Value;
+                        var name = element.Attributes["name"].Value;
+                        var key = src.ComputeSHA256();
+
+                        if (problem.Images.TryGetValue(key, out var captchaImage))
                         {
-                            Directory.Move(oldCaptchaProblemPath, captchaProblemDirectoryPath);
-                            File.WriteAllText(captchaProblemFilePath, captchaProblem);
+                            captchaImage.Names.Add(name);
                         }
-                        catch (Exception e)
+                        else
                         {
-                            Log.Warning(e, "Error rename folder {FolderName}", oldCaptchaProblemPath);
+                            captchaImage = new CaptchaImage
+                            {
+                                Src = src
+                            };
+
+                            captchaImage.Names.Add(name);
+                            problem.Images[key] = captchaImage;
                         }
                     }
 
-                    if (!Directory.Exists(captchaProblemDirectoryPath))
-                    {
-                        Log.Warning("New unresolved captcha problem: {Name}", captchaProblem);
-
-                        Directory.CreateDirectory(captchaProblemDirectoryPath);
-                        File.WriteAllText(captchaProblemFilePath, captchaProblem);
-                        var querySelector = captchaDocument.QuerySelectorAll<IElement>(
-                            "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
-
-                        foreach (var element in querySelector)
-                        {
-                            var name = element.Attributes["name"].Value;
-                            var src = element.Attributes["src"].Value;
-                            var combine = Path.Combine(captchaProblemDirectoryPath, name);
-                            File.WriteAllText(combine, src);
-                            var bytes = Convert.FromBase64String(src.Substring("data:image/png;base64,%20".Length));
-                            File.WriteAllBytes(combine + ".png", bytes);
-                        }
-
-                        File.Create($"re-captchas/{encodedCaptchaProblem}/!solution");
-                        captchaResolutionRequired = false;
-                    }
-                    else if (File.Exists(captchaSolutionFilePath))
+                    if (problem.TrySolve(out var solutions))
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblem);
 
-                        var solutionText = File.ReadAllText(captchaSolutionFilePath).Trim(' ', ',');
+                        var solutionText = string.Empty;
+                        foreach (var solution in solutions)
+                        {
+                            solutionText += solution + ",";
+                        }
+
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
                         await httpClient.PostAsync(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
@@ -306,7 +207,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         try
                         {
-                            httpResponseMessage = await httpClient.GetAsync(uri);
+                            httpResponseMessage = await httpResponseMessageFunction();
                         }
                         catch (Exception e)
                         {
@@ -315,14 +216,27 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         if (httpResponseMessage != null)
                         {
-                            captchaResolutionRequired = await ProcessCaptchaSolutionAsync(httpResponseMessage,
-                                captchaProblem, captchaSolutionFilePath, solutionText.Split(','));
+                            captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
+                            if (captchaResolutionRequired)
+                            {
+                                problem.MarkAsResolved();
+                            }
+                            else
+                            {
+                                problem.InvalidateIfNotResolved();
+                            }
                         }
                     }
                 }
             }
 
             return httpResponseMessage;
+        }
+
+        public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient,
+            string uri)
+        {
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
         }
 
         private static bool IsCaptchaResolutionRequired(HttpResponseMessage httpResponseMessage)
