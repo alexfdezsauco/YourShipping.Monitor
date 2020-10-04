@@ -8,14 +8,12 @@ namespace YourShipping.Monitor.Server.Extensions
 {
     public class CaptchaProblem
     {
-        private readonly string _captchaProblemId;
-
         public CaptchaProblem(string text, SortedList<string, CaptchaImage> images)
         {
             Text = text;
             Images = images;
             var serializeObject = JsonConvert.SerializeObject(this);
-            _captchaProblemId = serializeObject.ComputeSHA256();
+            Id = serializeObject.ComputeSHA256();
         }
 
         [JsonProperty(Order = 0)]
@@ -24,9 +22,12 @@ namespace YourShipping.Monitor.Server.Extensions
         [JsonProperty(Order = 1)]
         public SortedList<string, CaptchaImage> Images { get; }
 
+        [JsonIgnore]
+        public string Id { get; }
+
         public bool TrySolve(out List<string> solutionNames)
         {
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{Id}";
             var captchaProblemFilePath = $"{captchaEncodedProblemDirectoryPath}/problem";
             var captchaProblemSolutionFilePath = $"{captchaEncodedProblemDirectoryPath}/solution";
 
@@ -50,7 +51,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
                 return false;
             }
-            
+
             if (File.Exists(captchaProblemSolutionFilePath))
             {
                 solutionNames = new List<string>();
@@ -63,7 +64,7 @@ namespace YourShipping.Monitor.Server.Extensions
                     }
                     else
                     {
-                        Log.Warning("Incorrect solution for problem {Text} with {Id}",Text,_captchaProblemId);
+                        Log.Warning("Incorrect solution for problem {Text} with {Id}", Text, Id);
 
                         try
                         {
@@ -89,7 +90,7 @@ namespace YourShipping.Monitor.Server.Extensions
         {
             Log.Information("I'm human for captcha problem: {Text}", Text);
 
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{Id}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
             var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
@@ -106,25 +107,25 @@ namespace YourShipping.Monitor.Server.Extensions
                 }
                 catch (Exception e)
                 {
-                    Log.Warning(e, "Error deleting solution alert file.");
+                    Log.Warning(e, "Error deleting solution alert file. Problem {Text}. {Id}", Text, Id);
                 }
             }
         }
 
         public void Fail()
         {
-            var captchaEncodedProblemDirectoryPath = $"re-captchas/{_captchaProblemId}";
+            var captchaEncodedProblemDirectoryPath = $"re-captchas/{Id}";
             var captchaProblemSolutionFileVerifiedPath = $"{captchaEncodedProblemDirectoryPath}/solution-verified";
             var solutionAlertFile = $"{captchaEncodedProblemDirectoryPath}/solution-alert";
 
             if (File.Exists(captchaProblemSolutionFileVerifiedPath))
             {
                 Log.Warning("I'm not human for captcha problem: {Text} but solution is verified. {Id}", Text,
-                    _captchaProblemId);
+                    Id);
             }
             else
             {
-                Log.Warning("I'm not human for captcha problem: {Text}. {Id}", Text, _captchaProblemId);
+                Log.Warning("I'm not human for captcha problem: {Text}. {Id}", Text, Id);
 
                 File.Create(solutionAlertFile);
             }

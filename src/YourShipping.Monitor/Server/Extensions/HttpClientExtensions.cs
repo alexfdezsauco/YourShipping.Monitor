@@ -186,7 +186,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error solving captcha {Text}", solutionText);
+                            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text, captchaProblem.Id);
                         }
 
                         try
@@ -202,7 +202,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         if (httpResponseMessage != null)
                         {
                             captchaResolutionRequired = IsCaptchaResolutionRequired(httpResponseMessage);
-                            if (captchaResolutionRequired)
+                            if (!captchaResolutionRequired)
                             {
                                 captchaProblem.Pass();
                             }
