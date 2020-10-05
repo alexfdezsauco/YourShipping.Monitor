@@ -137,7 +137,7 @@ namespace YourShipping.Monitor.Server
                     var httpTimeoutInSeconds = Configuration.GetSection("Http")?["TimeoutInSeconds"];
                     var httpClient = new HttpClient(handler)
                     {
-                        Timeout = int.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
+                        Timeout = float.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
                             ? TimeSpan.FromSeconds(timeoutInSeconds)
                             : ScraperConfigurations.HttpClientTimeout
                     };
