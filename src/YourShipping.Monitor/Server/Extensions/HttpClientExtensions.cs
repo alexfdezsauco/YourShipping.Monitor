@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
@@ -21,11 +22,10 @@ namespace YourShipping.Monitor.Server.Extensions
 
         private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1, 1);
 
-        private static readonly Dictionary<string, int> Strikes = new Dictionary<string, int>();
+        private static TimeSpan TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(0.5);
 
-        private static DateTime _lastRequestTime;
-
-        private static TimeSpan TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(2.5);
+        private static readonly Dictionary<string, SemaphoreSlimDateTimeBundle> SemaphoreSlims =
+            new Dictionary<string, SemaphoreSlimDateTimeBundle>();
 
         static HttpClientExtensions()
         {
@@ -115,22 +115,25 @@ namespace YourShipping.Monitor.Server.Extensions
         public static async Task<HttpResponseMessage> PostCaptchaSaveAsync(this HttpClient httpClient,
             string uri, HttpContent httpContent)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
+            var storeSlug = GetStoreSlug(uri);
+
+            return await httpClient.FuncCaptchaSaveAsync(storeSlug,
+                async () => await httpClient.PostAsync(uri, httpContent));
         }
 
-        private static async Task<T> SerializeCallAsync<T>(Func<Task<T>> call)
+        private static async Task<T> SerializeCallAsync<T>(string storeSlug, Func<Task<T>> call)
         {
             await SemaphoreSlim.WaitAsync();
-            if (_lastRequestTime != default)
+
+            if (!SemaphoreSlims.TryGetValue(storeSlug, out var semaphoreSlimDateTimeBundle))
             {
-                var elapsedTime = DateTime.Now.Subtract(_lastRequestTime);
-                if (elapsedTime < TimeBetweenCallsInSeconds)
-                {
-                    var timeToSleep = TimeBetweenCallsInSeconds.Subtract(elapsedTime);
-                    Log.Information("Requests too fast. Will wait {Time}.", timeToSleep);
-                    await Task.Delay(timeToSleep);
-                }
+                SemaphoreSlims[storeSlug] = semaphoreSlimDateTimeBundle =
+                    new SemaphoreSlimDateTimeBundle(storeSlug, TimeBetweenCallsInSeconds);
             }
+
+            SemaphoreSlim.Release();
+
+            await semaphoreSlimDateTimeBundle.WaitAsync();
 
             try
             {
@@ -138,12 +141,12 @@ namespace YourShipping.Monitor.Server.Extensions
             }
             finally
             {
-                _lastRequestTime = DateTime.Now;
-                SemaphoreSlim.Release();
+                semaphoreSlimDateTimeBundle.Release();
             }
         }
 
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
+            string storeSlug,
             Func<Task<HttpResponseMessage>> httpCall)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
@@ -151,7 +154,7 @@ namespace YourShipping.Monitor.Server.Extensions
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                httpResponseMessage = await SerializeCallAsync(httpCall);
+                httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
             }
             catch (Exception e)
             {
@@ -209,7 +212,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         try
                         {
                             var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                            await SerializeCallAsync(() =>
+                            await SerializeCallAsync(storeSlug, () =>
                                 httpClient.PostAsync(url, new FormUrlEncodedContent(parameters)));
                         }
                         catch (Exception e)
@@ -220,7 +223,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         try
                         {
-                            httpResponseMessage = await SerializeCallAsync(httpCall);
+                            httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
                         }
                         catch (Exception e)
                         {
@@ -248,7 +251,21 @@ namespace YourShipping.Monitor.Server.Extensions
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
+            var storeSlug = GetStoreSlug(uri);
+
+            return await httpClient.FuncCaptchaSaveAsync(storeSlug, async () => await httpClient.GetAsync(uri));
+        }
+
+        private static string GetStoreSlug(string uri)
+        {
+            var matchCollection = Regex.Matches(uri, "([^/]+)");
+            if (matchCollection.Count > 3)
+            {
+                var match = matchCollection[2];
+                return match.Value;
+            }
+
+            return "/";
         }
 
         private static bool IsCaptchaResolutionRequired(HttpResponseMessage httpResponseMessage)
@@ -265,6 +282,45 @@ namespace YourShipping.Monitor.Server.Extensions
             {
                 TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(timeBetweenCallsInSeconds);
             }
+        }
+    }
+
+    public class SemaphoreSlimDateTimeBundle
+    {
+        private readonly string _id;
+        private readonly TimeSpan _timeBetweenCallsInSeconds;
+
+        public SemaphoreSlimDateTimeBundle(string Id, TimeSpan timeBetweenCallsInSeconds)
+        {
+            _id = Id;
+            _timeBetweenCallsInSeconds = timeBetweenCallsInSeconds;
+        }
+
+        public SemaphoreSlim SemaphoreSlim { get; } = new SemaphoreSlim(1, 1);
+
+        public DateTime LastDateTime { get; set; }
+
+        public async Task WaitAsync()
+        {
+            await SemaphoreSlim.WaitAsync();
+
+            var lastDateTime = LastDateTime;
+            if (lastDateTime != default)
+            {
+                var elapsedTime = DateTime.Now.Subtract(lastDateTime);
+                if (elapsedTime < _timeBetweenCallsInSeconds)
+                {
+                    var timeToSleep = _timeBetweenCallsInSeconds.Subtract(elapsedTime);
+                    Log.Information("Requests too fast to {StoreSlug}. Will wait {Time}.", _id, timeToSleep);
+                    await Task.Delay(timeToSleep);
+                }
+            }
+        }
+
+        public void Release()
+        {
+            LastDateTime = DateTime.Now;
+            SemaphoreSlim.Release();
         }
     }
 }
