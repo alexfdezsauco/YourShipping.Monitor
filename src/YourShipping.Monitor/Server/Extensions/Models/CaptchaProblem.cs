@@ -4,7 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Serilog;
 
-namespace YourShipping.Monitor.Server.Extensions
+namespace YourShipping.Monitor.Server.Extensions.Models
 {
     public class CaptchaProblem
     {
@@ -13,7 +13,7 @@ namespace YourShipping.Monitor.Server.Extensions
             Text = text;
             Images = images;
             var serializeObject = JsonConvert.SerializeObject(this);
-            Id = serializeObject.ComputeSHA256();
+            Id = serializeObject.ComputeSha256();
         }
 
         [JsonProperty(Order = 0)]

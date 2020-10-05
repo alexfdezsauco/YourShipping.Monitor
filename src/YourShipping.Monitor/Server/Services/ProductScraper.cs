@@ -254,7 +254,7 @@ namespace YourShipping.Monitor.Server.Services
                             cookiesSynchronizationService.InvalidateCookies(store.Url);
                         }
 
-                        product.Sha256 = JsonSerializer.Serialize(product).ComputeSHA256();
+                        product.Sha256 = JsonSerializer.Serialize(product).ComputeSha256();
 
                         return product;
                     }

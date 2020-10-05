@@ -10,6 +10,8 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Catel;
 using Serilog;
+using YourShipping.Monitor.Server.Extensions.Models;
+using YourShipping.Monitor.Server.Extensions.Threading;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace YourShipping.Monitor.Server.Extensions
@@ -22,10 +24,10 @@ namespace YourShipping.Monitor.Server.Extensions
 
         private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1, 1);
 
-        private static TimeSpan TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(0.5);
+        private static TimeSpan _timeBetweenCallsInSeconds = TimeSpan.FromSeconds(0.5);
 
-        private static readonly Dictionary<string, SemaphoreSlimDateTimeBundle> SemaphoreSlims =
-            new Dictionary<string, SemaphoreSlimDateTimeBundle>();
+        private static readonly Dictionary<string, StoreSemaphore> SemaphorePerStore =
+            new Dictionary<string, StoreSemaphore>();
 
         private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
 
@@ -127,15 +129,14 @@ namespace YourShipping.Monitor.Server.Extensions
         {
             await SemaphoreSlim.WaitAsync();
 
-            if (!SemaphoreSlims.TryGetValue(storeSlug, out var semaphoreSlimDateTimeBundle))
+            if (!SemaphorePerStore.TryGetValue(storeSlug, out var storeSemaphore))
             {
-                SemaphoreSlims[storeSlug] = semaphoreSlimDateTimeBundle =
-                    new SemaphoreSlimDateTimeBundle(storeSlug, TimeBetweenCallsInSeconds);
+                storeSemaphore = SemaphorePerStore[storeSlug] = new StoreSemaphore(storeSlug, _timeBetweenCallsInSeconds);
             }
 
             SemaphoreSlim.Release();
 
-            await semaphoreSlimDateTimeBundle.WaitAsync();
+            await storeSemaphore.WaitAsync();
 
             try
             {
@@ -143,7 +144,7 @@ namespace YourShipping.Monitor.Server.Extensions
             }
             finally
             {
-                semaphoreSlimDateTimeBundle.Release();
+                storeSemaphore.Release();
             }
         }
 
@@ -184,7 +185,7 @@ namespace YourShipping.Monitor.Server.Extensions
                     {
                         var src = element.Attributes["src"].Value;
                         var name = element.Attributes["name"].Value;
-                        var key = src.ComputeSHA256();
+                        var key = src.ComputeSha256();
 
                         if (images.TryGetValue(key, out var captchaImage))
                         {
@@ -282,47 +283,8 @@ namespace YourShipping.Monitor.Server.Extensions
             var timeBetweenCalls = configuration.GetSection("Http")?["TimeBetweenCallsInSeconds"];
             if (float.TryParse(timeBetweenCalls, out var timeBetweenCallsInSeconds))
             {
-                TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(timeBetweenCallsInSeconds);
+                _timeBetweenCallsInSeconds = TimeSpan.FromSeconds(timeBetweenCallsInSeconds);
             }
-        }
-    }
-
-    public class SemaphoreSlimDateTimeBundle
-    {
-        private readonly string _id;
-        private readonly TimeSpan _timeBetweenCallsInSeconds;
-
-        public SemaphoreSlimDateTimeBundle(string Id, TimeSpan timeBetweenCallsInSeconds)
-        {
-            _id = Id;
-            _timeBetweenCallsInSeconds = timeBetweenCallsInSeconds;
-        }
-
-        public SemaphoreSlim SemaphoreSlim { get; } = new SemaphoreSlim(1, 1);
-
-        public DateTime LastDateTime { get; set; }
-
-        public async Task WaitAsync()
-        {
-            await SemaphoreSlim.WaitAsync();
-
-            var lastDateTime = LastDateTime;
-            if (lastDateTime != default)
-            {
-                var elapsedTime = DateTime.Now.Subtract(lastDateTime);
-                if (elapsedTime < _timeBetweenCallsInSeconds)
-                {
-                    var timeToSleep = _timeBetweenCallsInSeconds.Subtract(elapsedTime);
-                    Log.Information("Requests too fast to {StoreSlug}. Will wait {Time}.", _id, timeToSleep);
-                    await Task.Delay(timeToSleep);
-                }
-            }
-        }
-
-        public void Release()
-        {
-            LastDateTime = DateTime.Now;
-            SemaphoreSlim.Release();
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿namespace YourShipping.Monitor.Server.Extensions
-{
-    using System.Security.Cryptography;
-    using System.Text;
+﻿using System.Security.Cryptography;
+using System.Text;
 
+namespace YourShipping.Monitor.Server.Extensions
+{
     public static class StringExtensions
     {
-        public static string ComputeSHA256(this string content)
+        public static string ComputeSha256(this string content)
         {
             using (var hashAlgorithm = SHA256.Create())
             {

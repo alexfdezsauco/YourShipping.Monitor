@@ -87,7 +87,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                                 department.IsAvailable = false;
                                 department.Updated = dateTime;
-                                department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
+                                department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
 
                                 sourceChanged = true;
                                 Log.Information(

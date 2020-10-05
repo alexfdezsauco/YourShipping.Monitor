@@ -186,7 +186,7 @@ namespace YourShipping.Monitor.Server.Services
                     IsEnabled = true
                 };
 
-                store.Sha256 = JsonSerializer.Serialize(store).ComputeSHA256();
+                store.Sha256 = JsonSerializer.Serialize(store).ComputeSha256();
                 return store;
             }
 

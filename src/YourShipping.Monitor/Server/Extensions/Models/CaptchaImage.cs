@@ -1,8 +1,7 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace YourShipping.Monitor.Server.Extensions
+namespace YourShipping.Monitor.Server.Extensions.Models
 {
     public class CaptchaImage
     {

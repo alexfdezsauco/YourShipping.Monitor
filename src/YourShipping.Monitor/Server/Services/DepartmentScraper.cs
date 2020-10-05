@@ -259,7 +259,7 @@ namespace YourShipping.Monitor.Server.Services
                                         });
 
                                     department.ProductsCount = productsCount;
-                                    department.Sha256 = JsonSerializer.Serialize(department).ComputeSHA256();
+                                    department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
                                 }
                             }
 
