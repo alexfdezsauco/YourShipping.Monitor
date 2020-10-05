@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
 using Catel;
 using Serilog;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace YourShipping.Monitor.Server.Extensions
 {
@@ -24,6 +22,10 @@ namespace YourShipping.Monitor.Server.Extensions
         private static readonly SemaphoreSlim SemaphoreSlim = new SemaphoreSlim(1, 1);
 
         private static readonly Dictionary<string, int> Strikes = new Dictionary<string, int>();
+
+        private static DateTime _lastRequestTime;
+
+        private static TimeSpan TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(2.5);
 
         static HttpClientExtensions()
         {
@@ -116,16 +118,40 @@ namespace YourShipping.Monitor.Server.Extensions
             return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
         }
 
+        private static async Task<T> SerializeCallAsync<T>(Func<Task<T>> call)
+        {
+            await SemaphoreSlim.WaitAsync();
+            if (_lastRequestTime != default)
+            {
+                var elapsedTime = DateTime.Now.Subtract(_lastRequestTime);
+                if (elapsedTime < TimeBetweenCallsInSeconds)
+                {
+                    var timeToSleep = TimeBetweenCallsInSeconds.Subtract(elapsedTime);
+                    Log.Information("Requests too fast. Will wait {Time}.", timeToSleep);
+                    await Task.Delay(timeToSleep);
+                }
+            }
+
+            try
+            {
+                return await call();
+            }
+            finally
+            {
+                _lastRequestTime = DateTime.Now;
+                SemaphoreSlim.Release();
+            }
+        }
 
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
-            Func<Task<HttpResponseMessage>> httpResponseMessageFunction)
+            Func<Task<HttpResponseMessage>> httpCall)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
 
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                httpResponseMessage = await httpResponseMessageFunction();
+                httpResponseMessage = await SerializeCallAsync(httpCall);
             }
             catch (Exception e)
             {
@@ -139,7 +165,8 @@ namespace YourShipping.Monitor.Server.Extensions
                 {
                     var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
                     var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
-                    var captchaProblemText = captchaDocument.QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
+                    var captchaProblemText = captchaDocument
+                        .QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
                         .Text();
 
 
@@ -147,8 +174,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
 
 
-
-                    SortedList<string, CaptchaImage> images = new SortedList<string, CaptchaImage>();
+                    var images = new SortedList<string, CaptchaImage>();
                     foreach (var element in selectorAll)
                     {
                         var src = element.Attributes["src"].Value;
@@ -176,23 +202,25 @@ namespace YourShipping.Monitor.Server.Extensions
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
 
-                        var solutionText = solutions.Aggregate(string.Empty, (current, solution) => current + solution + ",");
+                        var solutionText = solutions.Aggregate(string.Empty,
+                            (current, solution) => current + solution + ",");
                         var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
 
                         try
                         {
                             var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                            await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+                            await SerializeCallAsync(() =>
+                                httpClient.PostAsync(url, new FormUrlEncodedContent(parameters)));
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text, captchaProblem.Id);
+                            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text,
+                                captchaProblem.Id);
                         }
 
                         try
                         {
-                           
-                            httpResponseMessage = await httpResponseMessageFunction();
+                            httpResponseMessage = await SerializeCallAsync(httpCall);
                         }
                         catch (Exception e)
                         {
@@ -228,6 +256,15 @@ namespace YourShipping.Monitor.Server.Extensions
             Argument.IsNotNull(() => httpResponseMessage);
 
             return httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("captcha.aspx");
+        }
+
+        public static void Configure(IConfiguration configuration)
+        {
+            var timeBetweenCalls = configuration.GetSection("Http")?["TimeBetweenCallsInSeconds"];
+            if (float.TryParse(timeBetweenCalls, out var timeBetweenCallsInSeconds))
+            {
+                TimeBetweenCallsInSeconds = TimeSpan.FromSeconds(timeBetweenCallsInSeconds);
+            }
         }
     }
 }

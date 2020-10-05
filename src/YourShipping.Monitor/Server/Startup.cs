@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Linq;
 using Orc.EntityFrameworkCore;
 using Serilog;
 using Telegram.Bot;
+using YourShipping.Monitor.Server.Extensions;
 using YourShipping.Monitor.Server.Helpers;
 using YourShipping.Monitor.Server.Hubs;
 using YourShipping.Monitor.Server.Models;
@@ -107,6 +109,8 @@ namespace YourShipping.Monitor.Server
                 Log.Warning(
                     "Telegram notification is disable. To enable it, add a TelegramBot section with a key Token.");
             }
+
+            HttpClientExtensions.Configure(Configuration);
 
             services.AddTransient(sp => new CookieContainer());
 
