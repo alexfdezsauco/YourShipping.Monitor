@@ -27,6 +27,8 @@ namespace YourShipping.Monitor.Server.Extensions
         private static readonly Dictionary<string, SemaphoreSlimDateTimeBundle> SemaphoreSlims =
             new Dictionary<string, SemaphoreSlimDateTimeBundle>();
 
+        private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
+
         static HttpClientExtensions()
         {
             lock (SyncObj)
@@ -258,7 +260,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
         private static string GetStoreSlug(string uri)
         {
-            var matchCollection = Regex.Matches(uri, "([^/]+)");
+            var matchCollection = UrlSlugPattern.Matches(uri);
             if (matchCollection.Count > 3)
             {
                 var match = matchCollection[2];
