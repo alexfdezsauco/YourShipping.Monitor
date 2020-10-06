@@ -192,53 +192,23 @@ namespace YourShipping.Monitor.Server.Services
                                         };
                                     }
                                 }
-                                else if (url.Contains("/Search.aspx?keywords="))
-                                {
-                                    var s = url.Split("?")[1];
-                                    var parameters = s.Split("&").ToDictionary(
-                                        s1 => s1.Split("=")[0],
-                                        s2 => s2.Split("=")[1]);
-                                    department = new Department
-                                    {
-                                        Url = url,
-                                        Name = "Search",
-                                        Category = "Keywords: " + parameters["keywords"],
-                                        Store = storeName,
-                                        IsAvailable = true,
-                                        IsEnabled = true
-                                    };
-                                }
 
                                 if (department != null)
                                 {
-                                    var productElements = mainPanelElement
+                                    var productElements = document
                                         .QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
                                     var productsCount = 0;
-                                    var baseUrl = Regex.Replace(
-                                        url,
-                                        "/Search[.]aspx[^/]+",
-                                        string.Empty,
-                                        RegexOptions.IgnoreCase);
-                                    baseUrl = Regex.Replace(
-                                        baseUrl,
-                                        "/(Products|Item)[?]depPid=\\d+",
-                                        string.Empty,
-                                        RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
+                                    var urlParts = url.Split('/');
+                                    var baseUrl = urlParts[0] + "//" + urlParts[2] + "/" + urlParts[3];
                                     await productElements.ParallelForEachAsync(
                                         async productElement =>
                                         {
                                             var productScrapper = serviceProvider
                                                 .GetService<IEntityScraper<Product>>();
-                                            var element = productElement.QuerySelector<IElement>("a");
+                                            var element = productElement.QuerySelector<IElement>("a.invarseColor");
                                             var elementAttribute = element.Attributes["href"];
 
-                                            var productUrl = Regex.Replace(
-                                                $"{baseUrl}/{elementAttribute.Value}",
-                                                @"(&?)(page=\d+(&?)|img=\d+(&?))",
-                                                string.Empty,
-                                                RegexOptions.IgnoreCase).Trim(' ');
-
+                                            var productUrl = ScrapingUriHelper.EnsureProductUrl($"{baseUrl}/{elementAttribute.Value}");
                                             var product = await productScrapper.GetAsync(
                                                 productUrl,
                                                 disabledProducts == null

@@ -169,6 +169,8 @@ namespace YourShipping.Monitor.Server.Services
                         var errorElement = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_lblError");
                         if (errorElement != null)
                         {
+                            Log.Error("The request to {Url} was responded with an error response.", url);
+
                             return null;
                         }
 
@@ -180,6 +182,8 @@ namespace YourShipping.Monitor.Server.Services
                         var isAvailable = missingProductElement == null;
                         if (!isAvailable)
                         {
+                            Log.Error("The request to product '{Url}' was responded with a product missing page.", url);
+
                             productNameElement = mainPanelElement.QuerySelector<IElement>(
                                 "#ctl00_cphPage_UpdatePanel1 > table > tbody > tr:nth-child(4) > td > table > tbody > tr > td:nth-child(5) > table > tbody > tr:nth-child(1) > td.DescriptionValue > span");
                             productPriceElement = mainPanelElement.QuerySelector<IElement>(
