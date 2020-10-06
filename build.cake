@@ -68,7 +68,6 @@ Task("Restore")
           Sources = new[] { nugetRepositoryProxy },
           NoCache = true
       });
-    }
 });
 
 Task("Build")
