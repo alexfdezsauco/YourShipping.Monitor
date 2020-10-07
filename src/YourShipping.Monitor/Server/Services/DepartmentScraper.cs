@@ -102,7 +102,7 @@ namespace YourShipping.Monitor.Server.Services
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri + $"&requestId={Guid.NewGuid()}", formUrlEncodedContent);
+                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
 
                         if (httpResponseMessage?.Content != null)
                         {
