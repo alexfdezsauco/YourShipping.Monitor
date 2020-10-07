@@ -209,6 +209,8 @@ namespace YourShipping.Monitor.Server.Services
                                             var elementAttribute = element.Attributes["href"];
 
                                             var productUrl = ScrapingUriHelper.EnsureProductUrl($"{baseUrl}/{elementAttribute.Value}");
+
+                                            Log.Information("Found product with url '{Url}' in department '{DepartmentName}'", department.Name, productUrl);
                                             var product = await productScrapper.GetAsync(
                                                 productUrl,
                                                 disabledProducts == null

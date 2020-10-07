@@ -172,12 +172,12 @@ namespace YourShipping.Monitor.Server.Extensions
                     var captchaContent = await httpResponseMessage.Content.ReadAsStringAsync();
                     var captchaDocument = await browsingContext.OpenAsync(req => req.Content(captchaContent));
                     var captchaProblemText = captchaDocument
-                        .QuerySelector<IElement>("#ctl00_cphPage_ctl00_enunciado > b")
+                        .QuerySelector<IElement>("#ctl00_cphPage_ctl00_select > b")
                         .Text();
 
 
                     var selectorAll = captchaDocument.QuerySelectorAll<IElement>(
-                        "#mainPanel > div > div > div.span10.offset1 > div:nth-child(2) > div > div > div > a > img:nth-child(2)");
+                        "#mainPanel > div > div > div.span10.offset1 > div:nth-child(1) > div > div > div > a > img:nth-child(2)");
 
 
                     var images = new SortedList<string, CaptchaImage>();
