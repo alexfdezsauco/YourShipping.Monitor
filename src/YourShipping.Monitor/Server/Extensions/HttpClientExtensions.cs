@@ -122,7 +122,7 @@ namespace YourShipping.Monitor.Server.Extensions
         public static async Task<HttpResponseMessage> PostCaptchaSaveAsync(this HttpClient httpClient,
             string uri, HttpContent httpContent)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
+            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.PostAsync(uri, httpContent));
         }
 
         private static async Task<T> SerializeCallAsync<T>(string storeSlug, Func<Task<T>> call)
@@ -163,7 +163,7 @@ namespace YourShipping.Monitor.Server.Extensions
         public static async Task<HttpResponseMessage> FormPostCaptchaSaveAsync(this HttpClient httpClient,
             string uri, Dictionary<string, string> parameters)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.FormPostAsync(uri, parameters));
+            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.FormPostAsync(uri, parameters));
         }
 
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
@@ -174,7 +174,6 @@ namespace YourShipping.Monitor.Server.Extensions
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                // httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
                 httpResponseMessage = await httpCallAsync();
             }
             catch (Exception e)
@@ -288,7 +287,7 @@ namespace YourShipping.Monitor.Server.Extensions
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
+            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.GetAsync(uri));
         }
 
 
