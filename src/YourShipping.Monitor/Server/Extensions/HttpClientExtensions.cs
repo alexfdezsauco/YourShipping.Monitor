@@ -131,7 +131,8 @@ namespace YourShipping.Monitor.Server.Extensions
 
             if (!SemaphorePerStore.TryGetValue(storeSlug, out var storeSemaphore))
             {
-                storeSemaphore = SemaphorePerStore[storeSlug] = new StoreSemaphore(storeSlug, _timeBetweenCallsInSeconds);
+                storeSemaphore = SemaphorePerStore[storeSlug] =
+                    new StoreSemaphore(storeSlug, _timeBetweenCallsInSeconds);
             }
 
             SemaphoreSlim.Release();
@@ -150,14 +151,15 @@ namespace YourShipping.Monitor.Server.Extensions
 
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
             string storeSlug,
-            Func<Task<HttpResponseMessage>> httpCall)
+            Func<Task<HttpResponseMessage>> httpCallAsync)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
 
             HttpResponseMessage httpResponseMessage = null;
             try
             {
-                httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
+                // httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
+                httpResponseMessage = await httpCallAsync();
             }
             catch (Exception e)
             {
@@ -215,8 +217,22 @@ namespace YourShipping.Monitor.Server.Extensions
                         try
                         {
                             var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                            await SerializeCallAsync(storeSlug, () =>
-                                httpClient.PostAsync(url, new FormUrlEncodedContent(parameters)));
+                            await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+
+                            //await SerializeCallAsync(storeSlug, async () =>
+                            //    {
+                            //        try
+                            //        {
+                            //            return await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+                            //        }
+                            //        catch (Exception e)
+                            //        {
+                            //            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text, captchaProblem.Id);
+                            //        }
+
+                            //        return null;
+                            //    }
+                            //);
                         }
                         catch (Exception e)
                         {
@@ -226,7 +242,8 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         try
                         {
-                            httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
+                            // httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
+                            httpResponseMessage = await httpCallAsync();
                         }
                         catch (Exception e)
                         {
@@ -274,8 +291,8 @@ namespace YourShipping.Monitor.Server.Extensions
         private static bool IsCaptchaResolutionRequired(HttpResponseMessage httpResponseMessage)
         {
             Argument.IsNotNull(() => httpResponseMessage);
-
-            return httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri.EndsWith("captcha.aspx");
+            var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+            return requestUriAbsoluteUri.EndsWith("captcha.aspx") || requestUriAbsoluteUri.EndsWith("captch.aspx");
         }
 
         public static void Configure(IConfiguration configuration)
