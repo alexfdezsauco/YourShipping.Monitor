@@ -166,9 +166,12 @@ namespace YourShipping.Monitor.Server.Helpers
             var cookieCollection = new CookieCollection();
 
             var storedCookieCollection = await GetCookiesCollectionFromCacheAsync(url);
-            lock (storedCookieCollection)
+            if (storedCookieCollection != null)
             {
-                cookieCollection.AddRange(storedCookieCollection.Values);
+                lock (storedCookieCollection)
+                {
+                    cookieCollection.AddRange(storedCookieCollection.Values);
+                }
             }
 
             return cookieCollection;
@@ -451,34 +454,37 @@ namespace YourShipping.Monitor.Server.Helpers
             return captchaFilePath;
         }
 
-        public async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
+        private async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
             var storedCookieCollection = await GetCookiesCollectionFromCacheAsync(url);
-            lock (storedCookieCollection)
+            if (storedCookieCollection != null)
             {
-                Log.Information("Synchronizing cookies for url '{Url}'...", url);
-
-                foreach (Cookie cookie in cookieCollection)
+                lock (storedCookieCollection)
                 {
-                    if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
-                    {
-                        Log.Information(
-                            "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                            cookie.Name,
-                            cookie.Value,
-                            url);
+                    Log.Information("Synchronizing cookies for url '{Url}'...", url);
 
-                        storedCookieCollection.Add(cookie.Name, cookie);
-                    }
-                    else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
+                    foreach (Cookie cookie in cookieCollection)
                     {
-                        Log.Information(
-                            "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                            cookie.Name,
-                            cookie.Value,
-                            url);
+                        if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
+                        {
+                            Log.Information(
+                                "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                cookie.Name,
+                                cookie.Value,
+                                url);
 
-                        storedCookieCollection[cookie.Name] = cookie;
+                            storedCookieCollection.Add(cookie.Name, cookie);
+                        }
+                        else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
+                        {
+                            Log.Information(
+                                "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                cookie.Name,
+                                cookie.Value,
+                                url);
+
+                            storedCookieCollection[cookie.Name] = cookie;
+                        }
                     }
                 }
             }
