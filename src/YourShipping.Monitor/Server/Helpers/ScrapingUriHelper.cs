@@ -5,6 +5,20 @@ namespace YourShipping.Monitor.Server.Helpers
 {
     public static class ScrapingUriHelper
     {
+        private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
+
+        private static string GetStoreSlug(string uri)
+        {
+            var matchCollection = UrlSlugPattern.Matches(uri);
+            if (matchCollection.Count > 3)
+            {
+                var match = matchCollection[2];
+                return match.Value;
+            }
+
+            return "/";
+        }
+
         public static string EnsureProductUrl(string url)
         {
             return Regex.Replace(

@@ -339,9 +339,7 @@ namespace YourShipping.Monitor.Server.Services
                         {"__ASYNCPOST", "true"}
                     };
 
-                    HttpResponseMessage httpResponseMessage = await httpClient.PostCaptchaSaveAsync(
-                        product.Url,
-                        new FormUrlEncodedContent(parameters));
+                    var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(product.Url, parameters);
 
                     if (httpResponseMessage?.Content != null)
                     {

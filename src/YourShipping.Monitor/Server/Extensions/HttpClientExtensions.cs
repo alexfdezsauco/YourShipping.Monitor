@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -29,7 +30,7 @@ namespace YourShipping.Monitor.Server.Extensions
         private static readonly Dictionary<string, StoreSemaphore> SemaphorePerStore =
             new Dictionary<string, StoreSemaphore>();
 
-        private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
+      
 
         static HttpClientExtensions()
         {
@@ -70,15 +71,17 @@ namespace YourShipping.Monitor.Server.Extensions
             return _fieldInfo;
         }
 
-        private static Dictionary<string, string> BuildReCaptchaParameters(string solution,
+        private static Dictionary<string, string> BuildReCaptchaParameters(List<string> captchaSolution,
             IDocument captchaPageDocument)
         {
-            Argument.IsNotNullOrWhitespace(() => solution);
+            Argument.IsNotNull(() => captchaSolution);
             Argument.IsNotNull(() => captchaPageDocument);
 
             Dictionary<string, string> parameters = null;
             try
             {
+                var captchaSolutionText = captchaSolution
+                    .Aggregate(string.Empty, (current, solution) => current + solution + ",").Trim(' ', ' ');
                 parameters = new Dictionary<string, string>
                 {
                     {
@@ -104,7 +107,7 @@ namespace YourShipping.Monitor.Server.Extensions
                     {"Language", "es-MX"},
                     {"CurrentLanguage", "es-MX"},
                     {"Currency", string.Empty},
-                    {"ctl00$cphPage$ctl00$seleccion", solution.Trim(' ', ',') + ","},
+                    {"ctl00$cphPage$ctl00$seleccion", captchaSolutionText},
                     {"ctl00$cphPage$ctl00$Button1", "Enviar respuesta"}
                 };
             }
@@ -119,10 +122,7 @@ namespace YourShipping.Monitor.Server.Extensions
         public static async Task<HttpResponseMessage> PostCaptchaSaveAsync(this HttpClient httpClient,
             string uri, HttpContent httpContent)
         {
-            var storeSlug = GetStoreSlug(uri);
-
-            return await httpClient.FuncCaptchaSaveAsync(storeSlug,
-                async () => await httpClient.PostAsync(uri, httpContent));
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
         }
 
         private static async Task<T> SerializeCallAsync<T>(string storeSlug, Func<Task<T>> call)
@@ -149,8 +149,24 @@ namespace YourShipping.Monitor.Server.Extensions
             }
         }
 
+        private static async Task<HttpResponseMessage> FormPostAsync(this HttpClient httpClient, string url,
+            Dictionary<string, string> parameters)
+        {
+            var encodedItems = parameters.Select(i =>
+                WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
+            var encodedContent = new StringContent(string.Join("&", encodedItems), null,
+                "application/x-www-form-urlencoded");
+
+            return await httpClient.PostAsync(url, encodedContent);
+        }
+
+        public static async Task<HttpResponseMessage> FormPostCaptchaSaveAsync(this HttpClient httpClient,
+            string uri, Dictionary<string, string> parameters)
+        {
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.FormPostAsync(uri, parameters));
+        }
+
         private static async Task<HttpResponseMessage> FuncCaptchaSaveAsync(this HttpClient httpClient,
-            string storeSlug,
             Func<Task<HttpResponseMessage>> httpCallAsync)
         {
             var browsingContext = BrowsingContext.New(Configuration.Default);
@@ -206,18 +222,19 @@ namespace YourShipping.Monitor.Server.Extensions
                     }
 
                     var captchaProblem = new CaptchaProblem(captchaProblemText, images);
-                    if (captchaProblem.TrySolve(out var solutions))
+                    if (captchaProblem.TrySolve(out var captchaSolution))
                     {
                         Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
 
-                        var solutionText = solutions.Aggregate(string.Empty,
-                            (current, solution) => current + solution + ",");
-                        var parameters = BuildReCaptchaParameters(solutionText, captchaDocument);
-
+                        var parameters = BuildReCaptchaParameters(captchaSolution, captchaDocument);
                         try
                         {
                             var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                            await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+
+                            await httpClient.FormPostAsync(url, parameters);
+
+                            // await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
+                            // await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
 
                             //await SerializeCallAsync(storeSlug, async () =>
                             //    {
@@ -271,22 +288,9 @@ namespace YourShipping.Monitor.Server.Extensions
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
-            var storeSlug = GetStoreSlug(uri);
-
-            return await httpClient.FuncCaptchaSaveAsync(storeSlug, async () => await httpClient.GetAsync(uri));
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
         }
 
-        private static string GetStoreSlug(string uri)
-        {
-            var matchCollection = UrlSlugPattern.Matches(uri);
-            if (matchCollection.Count > 3)
-            {
-                var match = matchCollection[2];
-                return match.Value;
-            }
-
-            return "/";
-        }
 
         private static bool IsCaptchaResolutionRequired(HttpResponseMessage httpResponseMessage)
         {
