@@ -229,26 +229,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         try
                         {
                             var url = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-
                             await httpClient.FormPostAsync(url, parameters);
-
-                            // await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
-                            // await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
-
-                            //await SerializeCallAsync(storeSlug, async () =>
-                            //    {
-                            //        try
-                            //        {
-                            //            return await httpClient.PostAsync(url, new FormUrlEncodedContent(parameters));
-                            //        }
-                            //        catch (Exception e)
-                            //        {
-                            //            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text, captchaProblem.Id);
-                            //        }
-
-                            //        return null;
-                            //    }
-                            //);
                         }
                         catch (Exception e)
                         {
@@ -258,7 +239,6 @@ namespace YourShipping.Monitor.Server.Extensions
 
                         try
                         {
-                            // httpResponseMessage = await SerializeCallAsync(storeSlug, httpCall);
                             httpResponseMessage = await httpCallAsync();
                         }
                         catch (Exception e)
