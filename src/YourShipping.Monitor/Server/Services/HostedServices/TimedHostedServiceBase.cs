@@ -78,7 +78,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                         var result = executeMethod.Invoke(this, parameters);
                         if (result is Task task)
                         {
-                            task.ConfigureAwait(true).GetAwaiter().GetResult();
+                            task.ConfigureAwait(false).GetAwaiter().GetResult();
                         }
 
                         var elapsedTime = DateTime.Now.Subtract(startTime);
