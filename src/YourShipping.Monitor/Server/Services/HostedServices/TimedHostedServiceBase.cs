@@ -14,7 +14,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     public class TimedHostedServiceBase : IHostedService, IDisposable
     {
         private readonly IHostApplicationLifetime applicationLifetime;
-        private readonly MethodInfo executeMethod;
+
 
         private readonly TimeSpan period;
 
@@ -22,7 +22,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
         private readonly object syncObj = new object();
 
-        private readonly ParameterInfo[] executeMethodParameters;
 
         private bool isRunning;
 
@@ -33,14 +32,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             this.serviceProvider = serviceProvider;
             this.period = period;
-
-            executeMethod = GetType()
-                .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
-            if (executeMethod != null)
-            {
-                executeMethodParameters = executeMethod.GetParameters();
-            }
         }
 
         public void Dispose()
@@ -74,16 +65,20 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 try
                 {
+                    var executeMethod = GetType()
+                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+
                     if (executeMethod != null)
                     {
-                        var parameters = ResolveParameters(cancellationToken);
+                        var parameters = ResolveParameters(executeMethod.GetParameters(), cancellationToken);
 
                         var startTime = DateTime.Now;
                         Log.Information("Executing hosted service '{Type}'", GetType());
                         var result = executeMethod.Invoke(this, parameters);
                         if (result is Task task)
                         {
-                            task.GetAwaiter().GetResult();
+                            task.ConfigureAwait(true).GetAwaiter().GetResult();
                         }
 
                         var elapsedTime = DateTime.Now.Subtract(startTime);
@@ -97,10 +92,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                 }
                 finally
                 {
-                    lock (syncObj)
-                    {
-                        isRunning = false;
-                    }
+                    isRunning = false;
                 }
             }
             else
@@ -109,12 +101,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
         }
 
-        private object[] ResolveParameters(CancellationToken cancellationToken)
+        private object[] ResolveParameters(ParameterInfo[] parameters, CancellationToken cancellationToken)
         {
             var objects = new List<object>();
             var serviceScope = serviceProvider.CreateScope();
 
-            foreach (var parameterInfo in executeMethodParameters)
+            foreach (var parameterInfo in parameters)
             {
                 if (parameterInfo.ParameterType == typeof(CancellationToken))
                 {
