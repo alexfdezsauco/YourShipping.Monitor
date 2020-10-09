@@ -15,9 +15,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     {
         private readonly IHostApplicationLifetime applicationLifetime;
 
-
         private readonly TimeSpan period;
 
+        private readonly MethodInfo executeMethod;
+        private readonly ParameterInfo[] executeMethodParameters;
         private readonly IServiceProvider serviceProvider;
 
         private readonly object syncObj = new object();
@@ -32,6 +33,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             this.serviceProvider = serviceProvider;
             this.period = period;
+            this.executeMethod = GetType()
+                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
+            this.executeMethodParameters = executeMethod.GetParameters();                        
         }
 
         public void Dispose()
@@ -65,13 +70,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                 try
                 {
-                    var executeMethod = GetType()
-                        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                        .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
-
                     if (executeMethod != null)
                     {
-                        var parameters = ResolveParameters(executeMethod.GetParameters(), cancellationToken);
+                        var parameters = ResolveParameters(cancellationToken);
 
                         var startTime = DateTime.Now;
                         Log.Information("Executing hosted service '{Type}'", GetType());
@@ -83,7 +84,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
                         var elapsedTime = DateTime.Now.Subtract(startTime);
                         Log.Information("Executed hosted service '{Type}' in '{Time}'", GetType(),
-                            elapsedTime.ToString(@"hh\h\:mm\m\:ss\s"));
+                            elapsedTime);
                     }
                 }
                 catch (Exception e)
@@ -101,12 +102,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             }
         }
 
-        private object[] ResolveParameters(ParameterInfo[] parameters, CancellationToken cancellationToken)
+        private object[] ResolveParameters(CancellationToken cancellationToken)
         {
             var objects = new List<object>();
             var serviceScope = serviceProvider.CreateScope();
 
-            foreach (var parameterInfo in parameters)
+            foreach (var parameterInfo in executeMethodParameters)
             {
                 if (parameterInfo.ParameterType == typeof(CancellationToken))
                 {
