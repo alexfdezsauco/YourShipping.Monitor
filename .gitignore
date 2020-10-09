@@ -362,3 +362,5 @@ logs
 /src/YourShipping.Monitor/Server/data
 /src/YourShipping.Monitor/Server/logs
 /src/YourShipping.Monitor/Server/re-captchas
+re-captchas
+captchas

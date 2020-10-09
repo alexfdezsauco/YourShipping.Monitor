@@ -84,6 +84,7 @@ namespace YourShipping.Monitor.Server.Services
             var currencies = new[] {"CUP", "CUC"};
             var i = 0;
             var isStoredClosed = false;
+            Department lastNonNullDepartment = null;
 
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
@@ -232,6 +233,7 @@ namespace YourShipping.Monitor.Server.Services
 
                                     department.ProductsCount = productsCount;
                                     department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
+                                    lastNonNullDepartment = department;
                                 }
                             }
 
@@ -252,7 +254,7 @@ namespace YourShipping.Monitor.Server.Services
                 i++;
             }
 
-            return department;
+            return lastNonNullDepartment;
         }
     }
 }
