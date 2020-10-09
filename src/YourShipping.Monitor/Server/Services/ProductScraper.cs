@@ -169,7 +169,7 @@ namespace YourShipping.Monitor.Server.Services
                         var errorElement = mainPanelElement.QuerySelector<IElement>("#ctl00_cphPage_lblError");
                         if (errorElement != null)
                         {
-                            Log.Error("The request to {Url} was responded with an error response.", url);
+                            Log.Error("The request to {Url} was responded with an error message.", url);
 
                             return null;
                         }

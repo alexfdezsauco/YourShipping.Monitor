@@ -84,7 +84,7 @@ namespace YourShipping.Monitor.Server.Services
             var currencies = new[] {"CUP", "CUC"};
             var i = 0;
             var isStoredClosed = false;
-            Department lastNonNullDepartment = null;
+            Department bestScrapedDepartment = null;
 
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
@@ -103,7 +103,8 @@ namespace YourShipping.Monitor.Server.Services
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage =
+                            await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
 
                         if (httpResponseMessage?.Content != null)
                         {
@@ -198,7 +199,6 @@ namespace YourShipping.Monitor.Server.Services
                                 {
                                     var productElements = document
                                         .QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                                    var productsCount = 0;
                                     var urlParts = url.Split('/');
                                     var baseUrl = urlParts[0] + "//" + urlParts[2] + "/" + urlParts[3];
                                     await productElements.ParallelForEachAsync(
@@ -208,10 +208,13 @@ namespace YourShipping.Monitor.Server.Services
                                                 .GetService<IEntityScraper<Product>>();
                                             var element = productElement.QuerySelector<IElement>("a.invarseColor");
                                             var elementAttribute = element.Attributes["href"];
-
-                                            var productUrl = ScrapingUriHelper.EnsureProductUrl($"{baseUrl}/{elementAttribute.Value}");
-
-                                            Log.Information("Found product with url '{Url}' in department '{DepartmentName}'", department.Name, productUrl);
+                                            var productName = element.Text();
+                                            var productUrl =
+                                                ScrapingUriHelper.EnsureProductUrl(
+                                                    $"{baseUrl}/{elementAttribute.Value}");
+                                            Log.Information(
+                                                "Found product {Product} with url '{Url}' in department '{DepartmentName}'",
+                                                productName, productUrl, department.Name);
                                             var product = await productScrapper.GetAsync(
                                                 productUrl,
                                                 disabledProducts == null
@@ -226,14 +229,14 @@ namespace YourShipping.Monitor.Server.Services
                                                 lock (department)
                                                 {
                                                     department.Products.Add(product.Url, product);
-                                                    productsCount++;
                                                 }
                                             }
                                         });
 
-                                    department.ProductsCount = productsCount;
+                                    // TODO: Improve this?
+                                    department.ProductsCount = department.Products.Count;
                                     department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
-                                    lastNonNullDepartment = department;
+                                    bestScrapedDepartment = department;
                                 }
                             }
 
@@ -254,7 +257,7 @@ namespace YourShipping.Monitor.Server.Services
                 i++;
             }
 
-            return lastNonNullDepartment;
+            return bestScrapedDepartment;
         }
     }
 }
