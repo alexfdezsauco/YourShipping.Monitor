@@ -55,7 +55,7 @@ namespace YourShipping.Monitor.Server.Services
             var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
 
 
-            url = ScrapingUriHelper.EnsureProductUrl(url);
+            url = UriHelper.EnsureProductUrl(url);
 
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 $"{url}/{store != null}/{department != null}",

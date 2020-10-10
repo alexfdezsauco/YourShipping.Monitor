@@ -40,7 +40,7 @@ namespace YourShipping.Monitor.Server.Services
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
         {
-            url = ScrapingUriHelper.EnsureStoreUrl(url);
+            url = UriHelper.EnsureStoreUrl(url);
 
             return await cacheStorage.GetFromCacheOrFetchAsync(
                 url,

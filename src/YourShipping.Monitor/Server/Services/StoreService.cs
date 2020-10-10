@@ -40,7 +40,7 @@ namespace YourShipping.Monitor.Server.Services
                 {
                     Name = "Unknown Store",
                     IsEnabled = true,
-                    Url = ScrapingUriHelper.EnsureStoreUrl(absoluteUrl),
+                    Url = UriHelper.EnsureStoreUrl(absoluteUrl),
                     Added = dateTime,
                     Updated = dateTime,
                     Read = dateTime

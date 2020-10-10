@@ -13,6 +13,7 @@ using Catel;
 using Serilog;
 using YourShipping.Monitor.Server.Extensions.Models;
 using YourShipping.Monitor.Server.Extensions.Threading;
+using YourShipping.Monitor.Server.Helpers;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace YourShipping.Monitor.Server.Extensions
@@ -153,7 +154,7 @@ namespace YourShipping.Monitor.Server.Extensions
             Dictionary<string, string> parameters)
         {
             var encodedItems = parameters.Select(i =>
-                WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
+                UriHelper.EscapeLargeDataString(i.Key) + "=" + UriHelper.EscapeLargeDataString(i.Value));
             var encodedContent = new StringContent(string.Join("&", encodedItems), null,
                 "application/x-www-form-urlencoded");
 

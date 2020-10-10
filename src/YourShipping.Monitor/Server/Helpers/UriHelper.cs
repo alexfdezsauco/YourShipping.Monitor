@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace YourShipping.Monitor.Server.Helpers
 {
-    public static class ScrapingUriHelper
+    public static class UriHelper
     {
         private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
 
@@ -42,6 +43,27 @@ namespace YourShipping.Monitor.Server.Helpers
             var uri = new Uri(url);
             return
                 $"{uri.Scheme}://{uri.DnsSafeHost}{(uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : string.Empty)}/{uri.Segments[1].Trim(' ', '/')}/Products?depPid=0";
+        }
+
+        public static string EscapeLargeDataString(string value)
+        {
+            const int limit = 2000;
+            var loops = value.Length / limit;
+
+            var sb = new StringBuilder();
+            for (var i = 0; i <= loops; i++)
+            {
+                if (i < loops)
+                {
+                    sb.Append(Uri.EscapeDataString(value.Substring(limit * i, limit)));
+                }
+                else
+                {
+                    sb.Append(Uri.EscapeDataString(value.Substring(limit * i)));
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

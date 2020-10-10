@@ -32,7 +32,7 @@ namespace YourShipping.Monitor.Server.Controllers
                 var product = new Models.Product();
                 {
                     product.Name = "Unknown Product";
-                    product.Url = ScrapingUriHelper.EnsureProductUrl(absoluteUrl);
+                    product.Url = UriHelper.EnsureProductUrl(absoluteUrl);
                     product.Added = dateTime;
                     product.Updated = dateTime;
                     product.Read = dateTime;

@@ -52,7 +52,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             var store = parameters?.OfType<Store>().FirstOrDefault();
             var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
-            url = ScrapingUriHelper.EnsureDepartmentUrl(url);
+            url = UriHelper.EnsureDepartmentUrl(url);
 
             if (!Regex.IsMatch(url, @"depPid=\d+", RegexOptions.IgnoreCase))
             {
@@ -210,7 +210,7 @@ namespace YourShipping.Monitor.Server.Services
                                             var elementAttribute = element.Attributes["href"];
                                             var productName = element.Text();
                                             var productUrl =
-                                                ScrapingUriHelper.EnsureProductUrl(
+                                                UriHelper.EnsureProductUrl(
                                                     $"{baseUrl}/{elementAttribute.Value}");
                                             Log.Information(
                                                 "Found product {Product} with url '{Url}' in department '{DepartmentName}'",

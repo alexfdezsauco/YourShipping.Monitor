@@ -33,7 +33,7 @@ namespace YourShipping.Monitor.Server.Controllers
                 {
                     Name = "Unknown Department",
                     IsEnabled = true,
-                    Url = ScrapingUriHelper.EnsureDepartmentUrl(absoluteUrl),
+                    Url = UriHelper.EnsureDepartmentUrl(absoluteUrl),
                     Added = dateTime,
                     Updated = dateTime,
                     Read = dateTime
