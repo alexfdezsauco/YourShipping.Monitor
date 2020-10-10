@@ -48,15 +48,16 @@ namespace YourShipping.Monitor.Server.Helpers
         public static string EscapeLargeDataString(string value)
         {
             const int limit = 32766;
-            var loops = value.Length / limit;
+            var count = value.Length / limit;
 
             var sb = new StringBuilder();
-            for (var i = 0; i <= loops; i++)
+            
+            for (int i = 0; i < count; i++)
             {
-                sb.Append(i < loops
-                    ? Uri.EscapeDataString(value.Substring(limit * i, limit))
-                    : Uri.EscapeDataString(value.Substring(limit * i)));
+                sb.Append(Uri.EscapeDataString(value.Substring(limit * i, limit)));
             }
+
+            sb.Append(Uri.EscapeDataString(value.Substring(limit * count)));
 
             return sb.ToString();
         }
