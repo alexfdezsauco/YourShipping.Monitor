@@ -177,7 +177,7 @@ namespace YourShipping.Monitor.Server
             services.AddSingleton<ImportStoresHostedService>();
 
             services.AddHostedService<DepartmentMonitorHostedService>();
-            services.AddHostedService<ProductMonitorHostedService>();
+            // services.AddHostedService<ProductMonitorHostedService>();
             services.AddHostedService<StoreMonitorHostedService>();
             services.AddHostedService<CookieSerializationHostedService>();
 

@@ -1,26 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AngleSharp;
-using AngleSharp.Dom;
-using Catel.Caching;
-using Catel.Caching.Policies;
-using Dasync.Collections;
-using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using YourShipping.Monitor.Server.Extensions;
-using YourShipping.Monitor.Server.Helpers;
-using YourShipping.Monitor.Server.Models;
-using YourShipping.Monitor.Server.Services.Interfaces;
-
-namespace YourShipping.Monitor.Server.Services
+﻿namespace YourShipping.Monitor.Server.Services
 {
-    using Orc.EntityFrameworkCore;
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.Immutable;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text.Json;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
+
+    using AngleSharp;
+    using AngleSharp.Dom;
+
+    using Catel.Caching;
+    using Catel.Caching.Policies;
+
+    using Dasync.Collections;
+
+    using Serilog;
+
+    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
+    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Services.Interfaces;
 
     public class DepartmentScraper : IEntityScraper<Department>
     {
@@ -44,7 +46,7 @@ namespace YourShipping.Monitor.Server.Services
             IServiceProvider serviceProvider)
         {
             this.browsingContext = browsingContext;
-            _storeScraper = storeScraper;
+            this._storeScraper = storeScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
             this.serviceProvider = serviceProvider;
@@ -61,11 +63,11 @@ namespace YourShipping.Monitor.Server.Services
                 return null;
             }
 
-            return await cacheStorage.GetFromCacheOrFetchAsync(
-                $"{url}/{store != null}",
-                async () => await GetDirectAsync(url, store, disabledProducts),
-                ExpirationPolicy.Duration(ScraperConfigurations.DepartmentCacheExpiration),
-                force);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       $"{url}/{store != null}",
+                       async () => await this.GetDirectAsync(url, store, disabledProducts),
+                       ExpirationPolicy.Duration(ScraperConfigurations.DepartmentCacheExpiration),
+                       force);
         }
 
         private async Task<Department> GetDirectAsync(
@@ -75,7 +77,7 @@ namespace YourShipping.Monitor.Server.Services
         {
             Log.Information("Scrapping Department from {Url}", url);
 
-            var store = parentStore ?? await _storeScraper.GetAsync(url);
+            var store = parentStore ?? await this._storeScraper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
@@ -83,7 +85,7 @@ namespace YourShipping.Monitor.Server.Services
 
             var storeName = store?.Name;
             Department department = null;
-            var currencies = new[] {"CUP", "CUC"};
+            var currencies = new[] { "CUP", "CUC" };
             var i = 0;
             var isStoredClosed = false;
             Department bestScrapedDepartment = null;
@@ -91,30 +93,31 @@ namespace YourShipping.Monitor.Server.Services
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] {url + "&page=0", url};
+                var requestUris = new[] { url + "&page=0", url };
 
                 var j = 0;
-                while (!isStoredClosed && j < requestUris.Length &&
-                       (department == null || department.ProductsCount == 0))
+                while (!isStoredClosed && j < requestUris.Length
+                                       && (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
                     try
                     {
-                        var nameValueCollection = new Dictionary<string, string> {{"Currency", currency}};
+                        var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+                        var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
                         httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
-                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage =
+                            await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
                         if (httpResponseMessage?.Content != null)
                         {
                             var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
                             if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
                             {
                                 Log.Warning("There is no session available.");
-                                cookiesSynchronizationService.InvalidateCookies(store.Url);
-                                
+                                this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+
                                 return null;
                             }
 
@@ -122,7 +125,7 @@ namespace YourShipping.Monitor.Server.Services
                             if (!isStoredClosed)
                             {
                                 content = await httpResponseMessage.Content.ReadAsStringAsync();
-                                await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
                             }
                         }
                     }
@@ -137,10 +140,10 @@ namespace YourShipping.Monitor.Server.Services
                     }
                     else if (!string.IsNullOrEmpty(content))
                     {
-                        var document = await browsingContext.OpenAsync(req => req.Content(content));
+                        var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
                         var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
-                            ?.TextContent == "503";
+                                            ?.TextContent == "503";
                         if (isBlocked)
                         {
                             // TODO: Slow down approach?
@@ -193,59 +196,40 @@ namespace YourShipping.Monitor.Server.Services
                                         && !string.IsNullOrWhiteSpace(departmentCategory))
                                     {
                                         department = new Department
-                                        {
-                                            Url = url,
-                                            Name = departmentName,
-                                            Category = departmentCategory,
-                                            Store = storeName,
-                                            IsAvailable = true,
-                                            IsEnabled = true
-                                        };
+                                                         {
+                                                             Url = url,
+                                                             Name = departmentName,
+                                                             Category = departmentCategory,
+                                                             Store = storeName,
+                                                             IsAvailable = true,
+                                                             IsEnabled = true
+                                                         };
                                     }
                                 }
 
                                 if (department != null)
                                 {
-                                    var productElements = document
-                                        .QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
-                                    var urlParts = url.Split('/');
-                                    var baseUrl = urlParts[0] + "//" + urlParts[2] + "/" + urlParts[3];
+                                    var productElements = document.QuerySelectorAll<IElement>("li.span3.clearfix")
+                                        .ToList();
+
                                     await productElements.ParallelForEachAsync(
                                         async productElement =>
-                                        {
-                                            var productScrapper = serviceProvider
-                                                .GetService<IEntityScraper<Product>>();
-                                            var element = productElement.QuerySelector<IElement>("a.invarseColor");
-                                            var elementAttribute = element.Attributes["href"];
-                                            var productName = element.Text();
-                                            var productUrl =
-                                                UriHelper.EnsureProductUrl(
-                                                    $"{baseUrl}/{elementAttribute.Value}");
-
-                                            Log.Information(
-                                                "Found product {Product} with url '{Url}' in department '{DepartmentName}'",
-                                                productName, productUrl, department.Name);
-                                            
-                                            var productRepository = this.serviceProvider.GetService<IRepository<Product, int>>();
-                                            await productRepository.TryRegisterProductAsync(productUrl);
-
-                                            var product = await productScrapper.GetAsync(
-                                                              productUrl,
-                                                              disabledProducts == null
-                                                              || !disabledProducts.Contains(
-                                                                  productUrl), // Why was in false.
-                                                              store,
-                                                              department,
-                                                              disabledProducts);
-
-                                            if (product != null && product.IsAvailable)
                                             {
-                                                lock (department)
-                                                {
-                                                    department.Products.Add(product.Url, product);
-                                                }
-                                            }
-                                        });
+                                                var httpClient =
+                                                    await this.cookiesSynchronizationService.CreateHttpClientAsync(
+                                                        store.Url);
+
+                                                // TODO: Improve this if it worked
+                                                await this.TryAddProductToShoppingCart(
+                                                    httpClient,
+                                                    document,
+                                                    productElement,
+                                                    department);
+
+                                                await this.cookiesSynchronizationService.SyncCookiesAsync(
+                                                    httpClient,
+                                                    store.Url);
+                                            });
 
                                     // TODO: Improve this?
                                     department.ProductsCount = department.Products.Count;
@@ -260,7 +244,7 @@ namespace YourShipping.Monitor.Server.Services
                                     "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
                                     storeName,
                                     store.Url);
-                                cookiesSynchronizationService.InvalidateCookies(store.Url);
+                                this.cookiesSynchronizationService.InvalidateCookies(store.Url);
                             }
                         }
                     }
@@ -272,6 +256,69 @@ namespace YourShipping.Monitor.Server.Services
             }
 
             return bestScrapedDepartment;
+        }
+
+        private async Task TryAddProductToShoppingCart(
+            HttpClient httpClient,
+            IDocument document,
+            IElement productElement,
+            Department department)
+        {
+            var element = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
+            var productName = element.Text();
+            var input = element.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
+            var anchor = element.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
+            
+            Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
+
+            try
+            {
+                var anchorParameterName = anchor.Id.Replace("_", "$");
+                var inputParameterName = input.Attributes["name"].Value;
+                var parameters = new Dictionary<string, string>
+                                     {
+                                         {
+                                             "ctl00$ScriptManager1",
+                                             $"ctl00_cphPage_productsControl_UpdatePanel1|{anchorParameterName}"
+                                         },
+                                         { "__EVENTTARGET", $"{anchorParameterName}" },
+                                         { "__EVENTARGUMENT", string.Empty },
+                                         { "__LASTFOCUS", string.Empty },
+                                         {
+                                             "PageLoadedHiddenTxtBox",
+                                             document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
+                                                 ?.Attributes["value"]?.Value
+                                         },
+                                         {
+                                             "__VIEWSTATE",
+                                             document.QuerySelector<IElement>("#__VIEWSTATE")?.Attributes["value"]
+                                                 ?.Value
+                                         },
+                                         {
+                                             "__EVENTVALIDATION",
+                                             document.QuerySelector<IElement>("#__EVENTVALIDATION")?.Attributes["value"]
+                                                 ?.Value
+                                         },
+                                         { inputParameterName, "1" },
+                                         { "ctl00$taxes$listCountries", "54" },
+                                         { "Language", "es-MX" },
+                                         { "CurrentLanguage", "es-MX" },
+                                         { "Currency", string.Empty },
+                                         { "__ASYNCPOST", "true" }
+                                     };
+
+                httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
+                var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(department.Url, parameters);
+                if (httpResponseMessage?.Content != null)
+                {
+                    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    await this.browsingContext.OpenAsync(req => req.Content(content));
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Error adding product '{ProductName}' to the shopping cart", productName);
+            }
         }
     }
 }

@@ -19,7 +19,7 @@
         {
             Log.Information("Try to register product with Url '{Url}'", absoluteUrl);
 
-            var product = productRepository.Find(product => product.Url == absoluteUrl).FirstOrDefault();
+            var product = productRepository.Find(p => p.Url == absoluteUrl).FirstOrDefault();
             var registered = false;
             if (product == null)
             {

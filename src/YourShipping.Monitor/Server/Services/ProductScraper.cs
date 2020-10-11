@@ -1,23 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
-using AngleSharp;
-using AngleSharp.Dom;
-using Catel.Caching;
-using Catel.Caching.Policies;
-using Serilog;
-using YourShipping.Monitor.Server.Extensions;
-using YourShipping.Monitor.Server.Helpers;
-using YourShipping.Monitor.Server.Models;
-using YourShipping.Monitor.Server.Services.Interfaces;
-
-namespace YourShipping.Monitor.Server.Services
+﻿namespace YourShipping.Monitor.Server.Services
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.IO;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+
+    using AngleSharp;
+    using AngleSharp.Dom;
+
+    using Catel.Caching;
+    using Catel.Caching.Policies;
+
+    using Serilog;
+
+    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
+    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Services.Interfaces;
 
     /// <summary>
     ///     The product reader.
@@ -44,8 +47,8 @@ namespace YourShipping.Monitor.Server.Services
             ICookiesSynchronizationService cookiesSynchronizationService)
         {
             this.browsingContext = browsingContext;
-            _storeScraper = storeScraper;
-            _departmentScraper = departmentScraper;
+            this._storeScraper = storeScraper;
+            this._departmentScraper = departmentScraper;
             this.cacheStorage = cacheStorage;
             this.cookiesSynchronizationService = cookiesSynchronizationService;
         }
@@ -56,14 +59,13 @@ namespace YourShipping.Monitor.Server.Services
             var department = parameters?.OfType<Department>().FirstOrDefault();
             var disabledProducts = parameters?.OfType<ImmutableSortedSet<string>>().FirstOrDefault();
 
-
             url = UriHelper.EnsureProductUrl(url);
 
-            return await cacheStorage.GetFromCacheOrFetchAsync(
-                $"{url}/{store != null}/{department != null}",
-                async () => await GetDirectAsync(url, store, department, disabledProducts),
-                ExpirationPolicy.Duration(ScraperConfigurations.ProductCacheExpiration),
-                force);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       $"{url}/{store != null}/{department != null}",
+                       async () => await this.GetDirectAsync(url, store, department, disabledProducts),
+                       ExpirationPolicy.Duration(ScraperConfigurations.ProductCacheExpiration),
+                       force);
         }
 
         private static bool IsInCart(Product product, IDocument document)
@@ -82,15 +84,15 @@ namespace YourShipping.Monitor.Server.Services
         {
             Log.Information("Scrapping Product from {Url}", url);
 
-            var store = parentStore ?? await _storeScraper.GetAsync(url);
+            var store = parentStore ?? await this._storeScraper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
             }
 
-            var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+            var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-            var department = parentDepartment ?? await _departmentScraper.GetAsync(url, false, store);
+            var department = parentDepartment ?? await this._departmentScraper.GetAsync(url, false, store);
             if (department == null || !department.IsAvailable)
             {
                 return null;
@@ -112,16 +114,16 @@ namespace YourShipping.Monitor.Server.Services
                     if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
                     {
                         Log.Warning("There is no session available.");
-                        cookiesSynchronizationService.InvalidateCookies(store.Url);
-                        
+                        this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+
                         return null;
                     }
-                    
+
                     isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                     if (!isStoredClosed)
                     {
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        await cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                        await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
                     }
                 }
             }
@@ -136,7 +138,7 @@ namespace YourShipping.Monitor.Server.Services
             }
             else if (!string.IsNullOrWhiteSpace(content))
             {
-                var document = await browsingContext.OpenAsync(req => req.Content(content));
+                var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
                 var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
                                 == "503";
@@ -239,29 +241,37 @@ namespace YourShipping.Monitor.Server.Services
                         }
 
                         var product = new Product
+                                          {
+                                              Name = name,
+                                              Price = price,
+                                              Currency = currency,
+                                              Url = url,
+                                              Store = storeName,
+                                              Department = departmentName,
+                                              DepartmentCategory = departmentCategory,
+                                              IsAvailable = isAvailable,
+                                              IsEnabled = true
+                                          };
+
+                        if (product.Currency == "CUC")
                         {
-                            Name = name,
-                            Price = price,
-                            Currency = currency,
-                            Url = url,
-                            Store = storeName,
-                            Department = departmentName,
-                            DepartmentCategory = departmentCategory,
-                            IsAvailable = isAvailable,
-                            IsEnabled = true
-                        };
+                            product.Price = product.Price * 25;
+                            product.Currency = "CUP";
+                        }
 
                         // This can be done in other place?
-                        if (isUserLogged && isAvailable && (disabledProducts == null || !disabledProducts.Contains(url)))
+                        if (isUserLogged && isAvailable
+                                         && (disabledProducts == null || !disabledProducts.Contains(url)))
                         {
                             var storeSlug = UriHelper.GetStoreSlug(url);
                             if (!Directory.Exists($"products/{storeSlug}"))
                             {
                                 Directory.CreateDirectory($"products/{storeSlug}");
                             }
+
                             File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
 
-                            await TryAddProductToShoppingCart(httpClient, product, document);
+                            await this.TryAddProductToShoppingCart(httpClient, product, document);
                         }
 
                         if (!isUserLogged)
@@ -272,7 +282,7 @@ namespace YourShipping.Monitor.Server.Services
                                 storeName,
                                 store.Url);
 
-                            cookiesSynchronizationService.InvalidateCookies(store.Url);
+                            this.cookiesSynchronizationService.InvalidateCookies(store.Url);
                         }
 
                         product.Sha256 = JsonSerializer.Serialize(product).ComputeSha256();
@@ -305,56 +315,56 @@ namespace YourShipping.Monitor.Server.Services
                         product.Name,
                         product.Store);
                     var parameters = new Dictionary<string, string>
-                    {
-                        {
-                            "ctl00$ScriptManager1",
-                            "ctl00$cphPage$UpdatePanel1|ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
-                        },
-                        {
-                            "__EVENTTARGET",
-                            "ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
-                        },
-                        {"__EVENTARGUMENT", string.Empty},
-                        {"__LASTFOCUS", string.Empty},
-                        {
-                            "PageLoadedHiddenTxtBox",
-                            document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
-                                ?.Attributes["value"]?.Value
-                        },
-                        {
-                            "ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState",
-                            document.QuerySelector<IElement>(
-                                    "#ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState")
-                                ?.Attributes["value"]?.Value
-                        },
-                        {
-                            "__VIEWSTATE",
-                            document.QuerySelector<IElement>("#__VIEWSTATE")?.Attributes["value"]
-                                ?.Value
-                        },
-                        {
-                            "__EVENTVALIDATION",
-                            document.QuerySelector<IElement>("#__EVENTVALIDATION")
-                                ?.Attributes["value"]?.Value
-                        },
-                        {
-                            "ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState",
-                            document.QuerySelector<IElement>(
-                                    "#ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState")
-                                ?.Attributes["value"]?.Value
-                        },
-                        {
-                            "ctl00_cphPage_formProduct_ctl00_productDetail_txtCount",
-                            document.QuerySelector<IElement>(
-                                    "#ctl00_cphPage_formProduct_ctl00_productDetail_txtCount")
-                                ?.Attributes["value"]?.Value
-                        },
-                        {"ctl00$taxes$listCountries", "54"},
-                        {"Language", "es-MX"},
-                        {"CurrentLanguage", "es-MX"},
-                        {"Currency", product.Currency},
-                        {"__ASYNCPOST", "true"}
-                    };
+                                         {
+                                             {
+                                                 "ctl00$ScriptManager1",
+                                                 "ctl00$cphPage$UpdatePanel1|ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
+                                             },
+                                             {
+                                                 "__EVENTTARGET",
+                                                 "ctl00$cphPage$formProduct$ctl00$productDetail$btnAddCar"
+                                             },
+                                             { "__EVENTARGUMENT", string.Empty },
+                                             { "__LASTFOCUS", string.Empty },
+                                             {
+                                                 "PageLoadedHiddenTxtBox",
+                                                 document.QuerySelector<IElement>("#PageLoadedHiddenTxtBox")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_DetailTabs_ClientState")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "__VIEWSTATE",
+                                                 document.QuerySelector<IElement>("#__VIEWSTATE")?.Attributes["value"]
+                                                     ?.Value
+                                             },
+                                             {
+                                                 "__EVENTVALIDATION",
+                                                 document.QuerySelector<IElement>("#__EVENTVALIDATION")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_pdtRating_RatingExtender_ClientState")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             {
+                                                 "ctl00_cphPage_formProduct_ctl00_productDetail_txtCount",
+                                                 document.QuerySelector<IElement>(
+                                                         "#ctl00_cphPage_formProduct_ctl00_productDetail_txtCount")
+                                                     ?.Attributes["value"]?.Value
+                                             },
+                                             { "ctl00$taxes$listCountries", "54" },
+                                             { "Language", "es-MX" },
+                                             { "CurrentLanguage", "es-MX" },
+                                             { "Currency", product.Currency },
+                                             { "__ASYNCPOST", "true" }
+                                         };
 
                     httpClient.DefaultRequestHeaders.Referrer = new Uri(product.Url + "&page=0"); // TODO: Review this.
                     var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(product.Url, parameters);
@@ -362,7 +372,7 @@ namespace YourShipping.Monitor.Server.Services
                     if (httpResponseMessage?.Content != null)
                     {
                         var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        var responseDocument = await browsingContext.OpenAsync(req => req.Content(content));
+                        var responseDocument = await this.browsingContext.OpenAsync(req => req.Content(content));
                         if (IsInCart(product, responseDocument))
                         {
                             product.IsInCart = true;
