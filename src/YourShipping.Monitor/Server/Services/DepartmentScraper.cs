@@ -103,9 +103,8 @@ namespace YourShipping.Monitor.Server.Services
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
 
-                        var httpResponseMessage =
-                            await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
-
+                        httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
+                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
                         if (httpResponseMessage?.Content != null)
                         {
                             var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;

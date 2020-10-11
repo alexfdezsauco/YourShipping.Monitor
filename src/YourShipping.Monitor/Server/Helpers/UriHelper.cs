@@ -8,7 +8,7 @@ namespace YourShipping.Monitor.Server.Helpers
     {
         private static readonly Regex UrlSlugPattern = new Regex("([^/]+)", RegexOptions.Compiled);
 
-        private static string GetStoreSlug(string uri)
+        public static string GetStoreSlug(string uri)
         {
             var matchCollection = UrlSlugPattern.Matches(uri);
             if (matchCollection.Count > 3)

@@ -17,6 +17,8 @@ using YourShipping.Monitor.Server.Services.Interfaces;
 
 namespace YourShipping.Monitor.Server.Services
 {
+    using System.IO;
+
     /// <summary>
     ///     The product reader.
     /// </summary>
@@ -102,8 +104,8 @@ namespace YourShipping.Monitor.Server.Services
             string content = null;
             try
             {
+                httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
                 var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(url);
-
                 if (httpResponseMessage?.Content != null)
                 {
                     var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
@@ -242,8 +244,15 @@ namespace YourShipping.Monitor.Server.Services
                         };
 
                         // This can be done in other place?
-                        if (isUserLogged && (disabledProducts == null || !disabledProducts.Contains(url)))
+                        if (isUserLogged && isAvailable && (disabledProducts == null || !disabledProducts.Contains(url)))
                         {
+                            var storeSlug = UriHelper.GetStoreSlug(url);
+                            if (!Directory.Exists($"products/{storeSlug}"))
+                            {
+                                Directory.CreateDirectory($"products/{storeSlug}");
+                            }
+                            File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
+
                             await TryAddProductToShoppingCart(httpClient, product, document);
                         }
 
@@ -339,6 +348,7 @@ namespace YourShipping.Monitor.Server.Services
                         {"__ASYNCPOST", "true"}
                     };
 
+                    httpClient.DefaultRequestHeaders.Referrer = new Uri(product.Url + "&page=0"); // TODO: Review this.
                     var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(product.Url, parameters);
 
                     if (httpResponseMessage?.Content != null)
