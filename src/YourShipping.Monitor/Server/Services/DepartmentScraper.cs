@@ -20,6 +20,8 @@ using YourShipping.Monitor.Server.Services.Interfaces;
 
 namespace YourShipping.Monitor.Server.Services
 {
+    using Orc.EntityFrameworkCore;
+
     public class DepartmentScraper : IEntityScraper<Department>
     {
         private const string StorePrefix = "TuEnvio ";
@@ -219,17 +221,22 @@ namespace YourShipping.Monitor.Server.Services
                                             var productUrl =
                                                 UriHelper.EnsureProductUrl(
                                                     $"{baseUrl}/{elementAttribute.Value}");
+
                                             Log.Information(
                                                 "Found product {Product} with url '{Url}' in department '{DepartmentName}'",
                                                 productName, productUrl, department.Name);
+                                            
+                                            var productRepository = this.serviceProvider.GetService<IRepository<Product, int>>();
+                                            await productRepository.TryRegisterProductAsync(productUrl);
+
                                             var product = await productScrapper.GetAsync(
-                                                productUrl,
-                                                disabledProducts == null
-                                                || !disabledProducts.Contains(
-                                                    productUrl), // Why was in false.
-                                                store,
-                                                department,
-                                                disabledProducts);
+                                                              productUrl,
+                                                              disabledProducts == null
+                                                              || !disabledProducts.Contains(
+                                                                  productUrl), // Why was in false.
+                                                              store,
+                                                              department,
+                                                              disabledProducts);
 
                                             if (product != null && product.IsAvailable)
                                             {

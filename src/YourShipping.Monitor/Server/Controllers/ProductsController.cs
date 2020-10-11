@@ -1,58 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Orc.EntityFrameworkCore;
-using YourShipping.Monitor.Server.Helpers;
-using YourShipping.Monitor.Server.Models.Extensions;
-using YourShipping.Monitor.Server.Services;
-using YourShipping.Monitor.Server.Services.Interfaces;
-using YourShipping.Monitor.Shared;
-
-namespace YourShipping.Monitor.Server.Controllers
+﻿namespace YourShipping.Monitor.Server.Controllers
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Linq;
+    using System.Threading.Tasks;
+
+    using Microsoft.AspNetCore.Mvc;
+
+    using Orc.EntityFrameworkCore;
+
+    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
+    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Models.Extensions;
+
     [ApiController]
     [Route("[controller]")]
     public class ProductsController : ControllerBase
     {
         [HttpPost]
-        public async Task<ActionResult<Product>> Add(
-            [FromServices] IRepository<Models.Product, int> productRepository,
-            [FromServices] IEntityScraper<Models.Product> entityScraper,
+        public async Task<ActionResult<Shared.Product>> Add(
+            [FromServices] IRepository<Product, int> productRepository,
             [FromBody] Uri uri)
         {
             var absoluteUrl = uri.AbsoluteUri;
-
-            var storedProduct = productRepository.Find(product => product.Url == absoluteUrl).FirstOrDefault();
-            if (storedProduct == null)
-            {
-                var dateTime = DateTime.Now;
-                var product = new Models.Product();
-                {
-                    product.Name = "Unknown Product";
-                    product.Url = UriHelper.EnsureProductUrl(absoluteUrl);
-                    product.Added = dateTime;
-                    product.Updated = dateTime;
-                    product.Read = dateTime;
-                    product.IsEnabled = true;
-                    var transaction = PolicyHelper.WaitAndRetry().Execute(
-                        () => productRepository.BeginTransaction(IsolationLevel.Serializable));
-
-                    productRepository.Add(product);
-                    await productRepository.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return product.ToDataTransferObject(true);
-                }
-            }
-
-            return storedProduct?.ToDataTransferObject();
+            var (registered, product) = await productRepository.TryRegisterProductAsync(absoluteUrl);
+            return product?.ToDataTransferObject(registered);
         }
 
         [HttpDelete("{id}")]
-        public async Task Delete([FromServices] IRepository<Models.Product, int> productRepository, int id)
+        public async Task Delete([FromServices] IRepository<Product, int> productRepository, int id)
         {
             var transaction = PolicyHelper.WaitAndRetry()
                 .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
@@ -63,7 +41,7 @@ namespace YourShipping.Monitor.Server.Controllers
         }
 
         [HttpPut("[action]/{id}")]
-        public async Task Disable([FromServices] IRepository<Models.Product, int> productRepository, int id)
+        public async Task Disable([FromServices] IRepository<Product, int> productRepository, int id)
         {
             var transaction = PolicyHelper.WaitAndRetry()
                 .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
@@ -79,7 +57,7 @@ namespace YourShipping.Monitor.Server.Controllers
         }
 
         [HttpPut("[action]/{id}")]
-        public async Task Enable([FromServices] IRepository<Models.Product, int> productRepository, int id)
+        public async Task Enable([FromServices] IRepository<Product, int> productRepository, int id)
         {
             var transaction = PolicyHelper.WaitAndRetry()
                 .Execute(() => productRepository.BeginTransaction(IsolationLevel.Serializable));
@@ -95,9 +73,9 @@ namespace YourShipping.Monitor.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Product>> Get([FromServices] IRepository<Models.Product, int> productRepository)
+        public async Task<IEnumerable<Shared.Product>> Get([FromServices] IRepository<Product, int> productRepository)
         {
-            var products = new List<Product>();
+            var products = new List<Shared.Product>();
 
             foreach (var storedProduct in productRepository.All())
             {
