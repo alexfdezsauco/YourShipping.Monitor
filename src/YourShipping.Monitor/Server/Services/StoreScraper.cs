@@ -68,6 +68,14 @@ namespace YourShipping.Monitor.Server.Services
                 if (httpResponseMessage?.Content != null)
                 {
                     var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                    if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
+                    {
+                        Log.Warning("There is no session available.");
+                        cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                        
+                        return null;
+                    }
+
                     isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                     if (!isStoredClosed)
                     {

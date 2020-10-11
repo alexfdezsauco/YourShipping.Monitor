@@ -224,7 +224,8 @@ namespace YourShipping.Monitor.Server.Extensions
                     var captchaProblem = new CaptchaProblem(captchaProblemText, images);
                     if (captchaProblem.TrySolve(out var captchaSolution))
                     {
-                        Log.Information("Trying to solve captcha problem: {Name}", captchaProblemText);
+                        var storeSlug = UriHelper.GetStoreSlug(httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri);
+                        Log.Information("Trying to solve captcha problem: {Name} at {StoreSlug}", captchaProblemText, storeSlug);
 
                         var parameters = BuildReCaptchaParameters(captchaSolution, captchaDocument);
                         try
@@ -234,8 +235,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error solving captcha {Text} with {Id}", captchaProblem.Text,
-                                captchaProblem.Id);
+                            Log.Error(e, "Error solving captcha {Text} with {Id} at {StoreSlug}", captchaProblem.Text, captchaProblem.Id, storeSlug);
                         }
 
                         try
@@ -244,7 +244,7 @@ namespace YourShipping.Monitor.Server.Extensions
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, "Error executing HttpClient task");
+                            Log.Error(e, "Error executing HttpCall task after resolve captcha {Text} at {StoreSlug}.", captchaProblem.Text, storeSlug);
                         }
 
                         if (httpResponseMessage != null)

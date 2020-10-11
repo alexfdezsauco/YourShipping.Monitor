@@ -461,7 +461,7 @@ namespace YourShipping.Monitor.Server.Helpers
             {
                 lock (storedCookieCollection)
                 {
-                    Log.Information("Synchronizing cookies for url '{Url}'...", url);
+                    Log.Information("Synchronizing cookies for url '{Url}'.", url);
 
                     foreach (Cookie cookie in cookieCollection)
                     {
@@ -514,7 +514,7 @@ namespace YourShipping.Monitor.Server.Helpers
                     }
                     catch (Exception e)
                     {
-                        Log.Warning(e, "Error deserializing cookies");
+                        Log.Warning(e, "Error deserializing cookies.");
                     }
 
                     return await GetCookiesCollectionAsync(url);
@@ -571,7 +571,7 @@ namespace YourShipping.Monitor.Server.Helpers
         private async Task<Cookie> ReadAntiScrappingCookieAsync()
         {
             Cookie antiScrappingCookie = null;
-            Log.Information("Initializing Anti-Scrapping Cookie...");
+            Log.Information("Initializing Anti-Scrapping Cookie.");
             try
             {
                 var httpClient = new HttpClient {Timeout = TimeSpan.FromSeconds(60)};
@@ -617,14 +617,14 @@ namespace YourShipping.Monitor.Server.Helpers
                             }
                             catch (Exception e)
                             {
-                                Log.Warning(e, "Error retrieving the Anti-Scrapping cookie");
+                                Log.Warning(e, "Error retrieving the Anti-Scrapping cookie.");
 
                                 await Task.Delay(100);
                             }
                         }
 
                         Log.Information(
-                            "Read cookie '{CookieName}' with value '{CookieValue}'",
+                            "Read cookie '{CookieName}' with value '{CookieValue}'.",
                             cookieName,
                             cookieValue);
 

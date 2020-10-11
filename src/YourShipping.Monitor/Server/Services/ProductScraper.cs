@@ -109,6 +109,14 @@ namespace YourShipping.Monitor.Server.Services
                 if (httpResponseMessage?.Content != null)
                 {
                     var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
+                    if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
+                    {
+                        Log.Warning("There is no session available.");
+                        cookiesSynchronizationService.InvalidateCookies(store.Url);
+                        
+                        return null;
+                    }
+                    
                     isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
                     if (!isStoredClosed)
                     {
@@ -259,7 +267,7 @@ namespace YourShipping.Monitor.Server.Services
                         if (!isUserLogged)
                         {
                             Log.Warning(
-                                "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Cookies will be invalidated.",
+                                "There is no a session open for trying to add the product '{ProductName}' to the shopping chart on store '{StoreName}' with url '{Url}'. Cookies will be \ted.",
                                 product.Name,
                                 storeName,
                                 store.Url);
