@@ -264,10 +264,10 @@
             IElement productElement,
             Department department)
         {
-            var element = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
-            var productName = element.Text();
-            var input = element.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
-            var anchor = element.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
+            var elementTile = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
+            var productName = elementTile.Text();
+            var input = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
+            var anchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             
             Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
 
