@@ -91,6 +91,7 @@
             var isStoredClosed = false;
             Department bestScrapedDepartment = null;
 
+            // TODO: Review this because probably is no longer required.
             while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
@@ -132,7 +133,7 @@
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e, "Error requesting Department '{url}'", url);
+                        Log.Error(e, "Error requesting Department '{Url}'", url);
                     }
 
                     if (isStoredClosed)
@@ -263,21 +264,23 @@
             IElement productElement,
             ImmutableSortedSet<string> disabledProducts)
         {
-            Product product = null;
-
             var storeUrl = UriHelper.EnsureStoreUrl(department.Url);
             var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
 
-            var titleAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
-            var productUrl = titleAnchor.Attributes["href"]?.Value;
+            var productNameAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
+            var productUrl = productNameAnchor.Attributes["href"]?.Value;
 
-            var ensureProductUrl = UriHelper.EnsureProductUrl(productUrl);
-            if (disabledProducts.Contains(ensureProductUrl))
+            productUrl = UriHelper.EnsureProductUrl(productUrl);
+            var productName = productNameAnchor.Text();
+            if (disabledProducts.Contains(productUrl))
             {
+                Log.Information(
+                    "Found product {Product} in department '{DepartmentName}' but was ignored.",
+                    productName,
+                    department.Name);
                 return null;
             }
 
-            var productName = titleAnchor.Text();
             Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
 
             var countInput = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
@@ -285,17 +288,12 @@
                 productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             try
             {
+                var anchorValue = addToCartButtonAnchor.Attributes["href"].Value;
+                var match = this.anchorParameterNameRegex.Match(anchorValue);
                 Log.Information(
                     "Try to add  product {Product} in department '{DepartmentName}' to the shopping cart.",
                     productName,
                     department.Name);
-
-                var anchorValue = addToCartButtonAnchor.Attributes["href"].Value;
-                var match = this.anchorParameterNameRegex.Match(anchorValue);
-                if (!match.Success)
-                {
-                    return null;
-                }
 
                 var anchorParameterName = match.Groups[1].Value;
                 var inputParameterName = countInput.Attributes["name"].Value;
@@ -365,17 +363,17 @@
                 currency = priceParts[1];
             }
 
-            product = new Product
-                          {
-                              Name = productName,
-                              Url = productUrl,
-                              IsAvailable = true,
-                              DepartmentCategory = department.Category,
-                              Department = department.Name,
-                              IsEnabled = true,
-                              Price = price,
-                              Currency = currency
-                          };
+            var product = new Product
+                              {
+                                  Name = productName,
+                                  Url = productUrl,
+                                  IsAvailable = true,
+                                  DepartmentCategory = department.Category,
+                                  Department = department.Name,
+                                  IsEnabled = true,
+                                  Price = price,
+                                  Currency = currency
+                              };
 
             return product;
         }
