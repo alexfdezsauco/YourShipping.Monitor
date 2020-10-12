@@ -273,7 +273,10 @@
 
             try
             {
-                var anchorParameterName = anchor.Id.Replace("_", "$");
+                var value = anchor.Attributes["href"].Value;
+                var anchorParameterName = Regex.Match(value, @"WebForm_PostBackOptions\(""([^""]+)""", RegexOptions.IgnoreCase).Groups[1].Value; ;
+
+
                 var inputParameterName = input.Attributes["name"].Value;
                 var parameters = new Dictionary<string, string>
                                      {
