@@ -15,18 +15,18 @@ namespace YourShipping.Monitor.Server.Services
     public class StoreService : IStoreService
     {
         private readonly IEntityScraper<Store> _entityScraper;
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+        private readonly ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory;
 
         private readonly IRepository<Store, int> storesRepository;
 
         public StoreService(
             IRepository<Store, int> storesRepository,
             IEntityScraper<Store> entityScraper,
-            ICookiesSynchronizationService cookiesSynchronizationService)
+            ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
             this.storesRepository = storesRepository;
             _entityScraper = entityScraper;
-            this.cookiesSynchronizationService = cookiesSynchronizationService;
+            this.cookiesAwareHttpClientFactory = cookiesAwareHttpClientFactory;
         }
 
         public async Task<Shared.Store> AddAsync(Uri uri)
@@ -61,19 +61,19 @@ namespace YourShipping.Monitor.Server.Services
         public async Task ImportAsync()
         {
             var httpClient =
-                await cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
+                await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
             OfficialStoreInfo[] storesToImport = null;
             try
             {
                 storesToImport =
                     await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
-                await cookiesSynchronizationService.SyncCookiesAsync(httpClient, ScraperConfigurations.StoresJsonUrl);
+                await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(ScraperConfigurations.StoresJsonUrl, httpClient);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error requesting stores.json");
 
-                cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
+                this.cookiesAwareHttpClientFactory.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
             }
 
             // TODO: Report the status as error.

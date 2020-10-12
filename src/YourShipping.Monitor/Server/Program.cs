@@ -10,6 +10,8 @@
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Helpers;
+
     public class Program
     {
         public static IHostBuilder CreateHostBuilder(string[] args)
@@ -20,8 +22,6 @@
 
         public static void Main(string[] args)
         {
-            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-
             if (!Directory.Exists("data"))
             {
                 Directory.CreateDirectory("data");

@@ -22,7 +22,7 @@ namespace YourShipping.Monitor.Server.Services
 
         private readonly ICacheStorage<string, Store> cacheStorage;
 
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+        private readonly ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory;
 
         private readonly IOfficialStoreInfoService officialStoreInfoService;
 
@@ -30,12 +30,12 @@ namespace YourShipping.Monitor.Server.Services
             IBrowsingContext browsingContext,
             ICacheStorage<string, Store> cacheStorage,
             IOfficialStoreInfoService officialStoreInfoService,
-            ICookiesSynchronizationService cookiesSynchronizationService)
+            ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
             this.browsingContext = browsingContext;
             this.cacheStorage = cacheStorage;
             this.officialStoreInfoService = officialStoreInfoService;
-            this.cookiesSynchronizationService = cookiesSynchronizationService;
+            this.cookiesAwareHttpClientFactory = cookiesAwareHttpClientFactory;
         }
 
         public async Task<Store> GetAsync(string url, bool force = false, params object[] parameters)
@@ -61,7 +61,7 @@ namespace YourShipping.Monitor.Server.Services
             string content = null;
             try
             {
-                var httpClient = await cookiesSynchronizationService.CreateHttpClientAsync(storeUrl);
+                var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
 
                 var httpResponseMessage =
                     await httpClient.GetCaptchaSaveAsync(requestUri);
@@ -71,7 +71,7 @@ namespace YourShipping.Monitor.Server.Services
                     if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
                     {
                         Log.Warning("There is no session available.");
-                        cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                        this.cookiesAwareHttpClientFactory.InvalidateCookies(storeUrl);
                         
                         return null;
                     }
@@ -80,7 +80,7 @@ namespace YourShipping.Monitor.Server.Services
                     if (!isStoredClosed)
                     {
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        await cookiesSynchronizationService.SyncCookiesAsync(httpClient, storeUrl);
+                        await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
                     }
                 }
             }
@@ -175,7 +175,7 @@ namespace YourShipping.Monitor.Server.Services
                             storeName,
                             storeUrl);
 
-                        cookiesSynchronizationService.InvalidateCookies(storeUrl);
+                        this.cookiesAwareHttpClientFactory.InvalidateCookies(storeUrl);
                     }
                 }
             }

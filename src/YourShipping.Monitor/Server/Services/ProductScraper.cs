@@ -37,20 +37,20 @@
 
         private readonly ICacheStorage<string, Product> cacheStorage;
 
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+        private readonly ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory;
 
         public ProductScraper(
             IBrowsingContext browsingContext,
             IEntityScraper<Store> storeScraper,
             IEntityScraper<Department> departmentScraper,
             ICacheStorage<string, Product> cacheStorage,
-            ICookiesSynchronizationService cookiesSynchronizationService)
+            ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
             this.browsingContext = browsingContext;
             this._storeScraper = storeScraper;
             this._departmentScraper = departmentScraper;
             this.cacheStorage = cacheStorage;
-            this.cookiesSynchronizationService = cookiesSynchronizationService;
+            this.cookiesAwareHttpClientFactory = cookiesAwareHttpClientFactory;
         }
 
         public async Task<Product> GetAsync(string url, bool force = false, params object[] parameters)
@@ -90,7 +90,7 @@
                 return null;
             }
 
-            var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+            var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
 
             var department = parentDepartment ?? await this._departmentScraper.GetAsync(url, false, store);
             if (department == null || !department.IsAvailable)
@@ -114,7 +114,7 @@
                     if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
                     {
                         Log.Warning("There is no session available.");
-                        this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                        this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
 
                         return null;
                     }
@@ -123,7 +123,7 @@
                     if (!isStoredClosed)
                     {
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                        await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
                     }
                 }
             }
@@ -282,7 +282,7 @@
                                 storeName,
                                 store.Url);
 
-                            this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                            this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
                         }
 
                         product.Sha256 = JsonSerializer.Serialize(product).ComputeSha256();

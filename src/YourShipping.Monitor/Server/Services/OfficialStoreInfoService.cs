@@ -11,7 +11,7 @@
 
     public class OfficialStoreInfoService : IOfficialStoreInfoService
     {
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+        private readonly ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory;
 
         private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
@@ -19,9 +19,9 @@
 
         private OfficialStoreInfo[] storesToImport;
 
-        public OfficialStoreInfoService(ICookiesSynchronizationService cookiesSynchronizationService)
+        public OfficialStoreInfoService(ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
-            this.cookiesSynchronizationService = cookiesSynchronizationService;
+            this.cookiesAwareHttpClientFactory = cookiesAwareHttpClientFactory;
         }
 
         public async Task<OfficialStoreInfo[]> GetAsync()
@@ -37,12 +37,10 @@
             {
                 try
                 {
-                    var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
+                    var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
                     this.storesToImport =
                         await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
-                    await this.cookiesSynchronizationService.SyncCookiesAsync(
-                        httpClient,
-                        ScraperConfigurations.StoresJsonUrl);
+                    await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(ScraperConfigurations.StoresJsonUrl, httpClient);
                     this.setTime = DateTime.Now;
                 }
                 catch (Exception e)
@@ -51,7 +49,7 @@
                         e,
                         "Error requesting '{Url}'. Cookies will be invalidated.",
                         ScraperConfigurations.StoresJsonUrl);
-                    this.cookiesSynchronizationService.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
+                    this.cookiesAwareHttpClientFactory.InvalidateCookies(ScraperConfigurations.StoresJsonUrl);
                 }
             }
 

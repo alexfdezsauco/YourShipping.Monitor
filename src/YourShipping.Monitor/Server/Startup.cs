@@ -164,7 +164,7 @@ namespace YourShipping.Monitor.Server
             services.AddSingleton<ICacheStorage<string, Store>>(
                 provider => new CacheStorage<string, Store>(storeNullValues: true));
 
-            services.AddSingleton<ICookiesSynchronizationService, CookiesSynchronizationService>();
+            services.AddSingleton<ICookiesAwareHttpClientFactory, CookiesAwareHttpClientFactory>();
             services.AddSingleton<IOfficialStoreInfoService, OfficialStoreInfoService>();
 
             services.AddTransient<IEntityScraper<Product>, ProductScraper>();

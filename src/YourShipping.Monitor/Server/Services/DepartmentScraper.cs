@@ -29,28 +29,28 @@
     {
         private const string StorePrefix = "TuEnvio ";
 
-        private readonly IEntityScraper<Store> _storeScraper;
+        private readonly Regex anchorParameterNameRegex = new Regex(
+            @"WebForm_PostBackOptions\(""([^""]+)""",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private readonly IBrowsingContext browsingContext;
 
         private readonly ICacheStorage<string, Department> cacheStorage;
 
-        private readonly ICookiesSynchronizationService cookiesSynchronizationService;
+        private readonly ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory;
 
-        private readonly IServiceProvider serviceProvider;
+        private readonly IEntityScraper<Store> storeScraper;
 
         public DepartmentScraper(
             IBrowsingContext browsingContext,
             IEntityScraper<Store> storeScraper,
             ICacheStorage<string, Department> cacheStorage,
-            ICookiesSynchronizationService cookiesSynchronizationService,
-            IServiceProvider serviceProvider)
+            ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
             this.browsingContext = browsingContext;
-            this._storeScraper = storeScraper;
+            this.storeScraper = storeScraper;
             this.cacheStorage = cacheStorage;
-            this.cookiesSynchronizationService = cookiesSynchronizationService;
-            this.serviceProvider = serviceProvider;
+            this.cookiesAwareHttpClientFactory = cookiesAwareHttpClientFactory;
         }
 
         public async Task<Department> GetAsync(string url, bool force = false, params object[] parameters)
@@ -78,7 +78,7 @@
         {
             Log.Information("Scrapping Department from {Url}", url);
 
-            var store = parentStore ?? await this._storeScraper.GetAsync(url);
+            var store = parentStore ?? await this.storeScraper.GetAsync(url);
             if (store == null || !store.IsAvailable)
             {
                 return null;
@@ -106,7 +106,7 @@
                     {
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-                        var httpClient = await this.cookiesSynchronizationService.CreateHttpClientAsync(store.Url);
+                        var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
 
                         httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
                         var httpResponseMessage =
@@ -117,7 +117,7 @@
                             if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
                             {
                                 Log.Warning("There is no session available.");
-                                this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                                this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
 
                                 return null;
                             }
@@ -126,7 +126,7 @@
                             if (!isStoredClosed)
                             {
                                 content = await httpResponseMessage.Content.ReadAsStringAsync();
-                                await this.cookiesSynchronizationService.SyncCookiesAsync(httpClient, store.Url);
+                                await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
                             }
                         }
                     }
@@ -216,20 +216,18 @@
                                     await productElements.ParallelForEachAsync(
                                         async productElement =>
                                             {
-                                                var httpClient =
-                                                    await this.cookiesSynchronizationService.CreateHttpClientAsync(
-                                                        store.Url);
-
-                                                // TODO: Improve this if it worked
-                                                await this.TryAddProductToShoppingCart(
-                                                    httpClient,
-                                                    document,
-                                                    productElement,
-                                                    department);
-
-                                                await this.cookiesSynchronizationService.SyncCookiesAsync(
-                                                    httpClient,
-                                                    store.Url);
+                                                var product = await this.TryAddProductToShoppingCart(
+                                                                  department,
+                                                                  document,
+                                                                  productElement,
+                                                                  disabledProducts);
+                                                if (product != null)
+                                                {
+                                                    lock (department)
+                                                    {
+                                                        department.Products.Add(product.Url, product);
+                                                    }
+                                                }
                                             });
 
                                     // TODO: Improve this?
@@ -245,7 +243,7 @@
                                     "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
                                     storeName,
                                     store.Url);
-                                this.cookiesSynchronizationService.InvalidateCookies(store.Url);
+                                this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
                             }
                         }
                     }
@@ -259,28 +257,48 @@
             return bestScrapedDepartment;
         }
 
-        private async Task TryAddProductToShoppingCart(
-            HttpClient httpClient,
+        private async Task<Product> TryAddProductToShoppingCart(
+            Department department,
             IDocument document,
             IElement productElement,
-            Department department)
+            ImmutableSortedSet<string> disabledProducts)
         {
-            var elementTile = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
-            var productName = elementTile.Text();
+            Product product = null;
 
+            var storeUrl = UriHelper.EnsureStoreUrl(department.Url);
+            var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
 
-            var input = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
-            var anchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
-            
+            var titleAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
+            var productUrl = titleAnchor.Attributes["href"]?.Value;
+
+            var ensureProductUrl = UriHelper.EnsureProductUrl(productUrl);
+            if (disabledProducts.Contains(ensureProductUrl))
+            {
+                return null;
+            }
+
+            var productName = titleAnchor.Text();
             Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
 
+            var countInput = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
+            var addToCartButtonAnchor =
+                productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             try
             {
-                var anchorValue = anchor.Attributes["href"].Value;
-                var anchorParameterName = Regex.Match(anchorValue, @"WebForm_PostBackOptions\(""([^""]+)""", RegexOptions.IgnoreCase).Groups[1].Value; ;
+                Log.Information(
+                    "Try to add  product {Product} in department '{DepartmentName}' to the shopping cart.",
+                    productName,
+                    department.Name);
 
+                var anchorValue = addToCartButtonAnchor.Attributes["href"].Value;
+                var match = this.anchorParameterNameRegex.Match(anchorValue);
+                if (!match.Success)
+                {
+                    return null;
+                }
 
-                var inputParameterName = input.Attributes["name"].Value;
+                var anchorParameterName = match.Groups[1].Value;
+                var inputParameterName = countInput.Attributes["name"].Value;
                 var parameters = new Dictionary<string, string>
                                      {
                                          {
@@ -315,32 +333,51 @@
 
                 httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
                 var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(department.Url, parameters);
-                if (httpResponseMessage != null)
+                if (httpResponseMessage == null)
                 {
-                    httpResponseMessage.EnsureSuccessStatusCode();
-                    Log.Information(
-                        "Redirected to {Url} after the attempt to add {Product} in department '{DepartmentName}'",
-                        httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
-                        productName,
-                        department.Name);
-                    if (httpResponseMessage?.Content != null)
-                    {
-                        var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        //await this.browsingContext.OpenAsync(req => req.Content(content));
-                        var storeSlug = UriHelper.GetStoreSlug(department.Url);
-                        if (!Directory.Exists($"products/{storeSlug}"))
-                        {
-                            Directory.CreateDirectory($"products/{storeSlug}");
-                        }
-
-                        File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
-                    }
+                    return null;
                 }
+
+                httpResponseMessage.EnsureSuccessStatusCode();
+                await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
+
+                var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                var storeSlug = UriHelper.GetStoreSlug(storeUrl);
+                if (!Directory.Exists($"products/{storeSlug}"))
+                {
+                    Directory.CreateDirectory($"products/{storeSlug}");
+                }
+
+                File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
             }
             catch (Exception e)
             {
                 Log.Error(e, "Error adding product '{ProductName}' to the shopping cart", productName);
             }
+
+            var priceSpan = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbPrice > span");
+            var priceParts = priceSpan.Text().Trim().Split(' ');
+            float price = 0;
+            var currency = string.Empty;
+            if (priceParts.Length == 2)
+            {
+                float.TryParse(priceParts[0], out price);
+                currency = priceParts[1];
+            }
+
+            product = new Product
+                          {
+                              Name = productName,
+                              Url = productUrl,
+                              IsAvailable = true,
+                              DepartmentCategory = department.Category,
+                              Department = department.Name,
+                              IsEnabled = true,
+                              Price = price,
+                              Currency = currency
+                          };
+
+            return product;
         }
     }
 }

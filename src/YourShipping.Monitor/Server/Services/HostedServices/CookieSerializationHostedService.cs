@@ -13,9 +13,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
         }
 
         [Execute]
-        public async Task ExecuteAsync(ICookiesSynchronizationService cookiesSynchronizationService)
+        public async Task ExecuteAsync(ICookiesAwareHttpClientFactory cookiesAwareHttpClientFactory)
         {
-            await cookiesSynchronizationService.SerializeAsync();
+            await cookiesAwareHttpClientFactory.SerializeAsync();
         }
     }
 }

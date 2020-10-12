@@ -27,7 +27,7 @@ using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 namespace YourShipping.Monitor.Server.Helpers
 {
     // TODO: Improve this?
-    public class CookiesSynchronizationService : ICookiesSynchronizationService
+    public class CookiesAwareHttpClientFactory : ICookiesAwareHttpClientFactory
     {
         private readonly IConfiguration _configuration;
 
@@ -52,7 +52,7 @@ namespace YourShipping.Monitor.Server.Helpers
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
-        public CookiesSynchronizationService(IServiceProvider provider, IConfiguration configuration)
+        public CookiesAwareHttpClientFactory(IServiceProvider provider, IConfiguration configuration)
         {
             this.provider = provider;
             _configuration = configuration;
@@ -144,7 +144,7 @@ namespace YourShipping.Monitor.Server.Helpers
             }
         }
 
-        public async Task SyncCookiesAsync(HttpClient httpClient, string url)
+        public async Task SyncCookiesAsync(string url, HttpClient httpClient)
         {
             var httpClientHandler = httpClient.GetHttpClientHandler();
             var cookieContainer = httpClientHandler.CookieContainer;
