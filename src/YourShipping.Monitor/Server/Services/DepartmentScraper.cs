@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
@@ -322,11 +323,18 @@
                         httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
                         productName,
                         department.Name);
-                    //if (httpResponseMessage?.Content != null)
-                    //{
-                    //    var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                    //    await this.browsingContext.OpenAsync(req => req.Content(content));
-                    //}
+                    if (httpResponseMessage?.Content != null)
+                    {
+                        var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                        //await this.browsingContext.OpenAsync(req => req.Content(content));
+                        var storeSlug = UriHelper.GetStoreSlug(department.Url);
+                        if (!Directory.Exists($"products/{storeSlug}"))
+                        {
+                            Directory.CreateDirectory($"products/{storeSlug}");
+                        }
+
+                        File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
+                    }
                 }
             }
             catch (Exception e)
