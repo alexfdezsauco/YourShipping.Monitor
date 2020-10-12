@@ -266,6 +266,8 @@
         {
             var elementTile = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
             var productName = elementTile.Text();
+
+
             var input = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
             var anchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             
@@ -273,8 +275,8 @@
 
             try
             {
-                var value = anchor.Attributes["href"].Value;
-                var anchorParameterName = Regex.Match(value, @"WebForm_PostBackOptions\(""([^""]+)""", RegexOptions.IgnoreCase).Groups[1].Value; ;
+                var anchorValue = anchor.Attributes["href"].Value;
+                var anchorParameterName = Regex.Match(anchorValue, @"WebForm_PostBackOptions\(""([^""]+)""", RegexOptions.IgnoreCase).Groups[1].Value; ;
 
 
                 var inputParameterName = input.Attributes["name"].Value;
@@ -312,10 +314,19 @@
 
                 httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
                 var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(department.Url, parameters);
-                if (httpResponseMessage?.Content != null)
+                if (httpResponseMessage != null)
                 {
-                    var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                    await this.browsingContext.OpenAsync(req => req.Content(content));
+                    httpResponseMessage.EnsureSuccessStatusCode();
+                    Log.Information(
+                        "Redirected to {Url} after the attempt to add {Product} in department '{DepartmentName}'",
+                        httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri,
+                        productName,
+                        department.Name);
+                    //if (httpResponseMessage?.Content != null)
+                    //{
+                    //    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    //    await this.browsingContext.OpenAsync(req => req.Content(content));
+                    //}
                 }
             }
             catch (Exception e)
