@@ -98,8 +98,7 @@
                 var requestUris = new[] { url + "&page=0", url };
 
                 var j = 0;
-                while (!isStoredClosed && j < requestUris.Length
-                                       && (department == null || department.ProductsCount == 0))
+                while (!isStoredClosed && j < requestUris.Length && (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
@@ -110,8 +109,7 @@
                         var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
 
                         httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
-                        var httpResponseMessage =
-                            await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
                         if (httpResponseMessage?.Content != null)
                         {
                             var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
