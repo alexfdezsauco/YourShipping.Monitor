@@ -1,19 +1,23 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using AngleSharp;
-using AngleSharp.Dom;
-using Catel.Caching;
-using Catel.Caching.Policies;
-using Serilog;
-using YourShipping.Monitor.Server.Extensions;
-using YourShipping.Monitor.Server.Helpers;
-using YourShipping.Monitor.Server.Models;
-using YourShipping.Monitor.Server.Services.Interfaces;
-
-namespace YourShipping.Monitor.Server.Services
+﻿namespace YourShipping.Monitor.Server.Services
 {
+    using System;
+    using System.Linq;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+
+    using AngleSharp;
+    using AngleSharp.Dom;
+
+    using Catel.Caching;
+    using Catel.Caching.Policies;
+
+    using Serilog;
+
+    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
+    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Services.Interfaces;
+
     public class StoreScraper : IEntityScraper<Store>
     {
         private const string StorePrefix = "TuEnvio ";
@@ -42,19 +46,18 @@ namespace YourShipping.Monitor.Server.Services
         {
             url = UriHelper.EnsureStoreUrl(url);
 
-            return await cacheStorage.GetFromCacheOrFetchAsync(
-                url,
-                async () => await GetDirectAsync(url),
-                ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
-                force);
+            return await this.cacheStorage.GetFromCacheOrFetchAsync(
+                       url,
+                       async () => await this.GetDirectAsync(url),
+                       ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
+                       force);
         }
-
 
         private async Task<Store> GetDirectAsync(string storeUrl)
         {
             Log.Information("Scrapping Store from {Url}", storeUrl);
 
-            var storesToImport = await officialStoreInfoService.GetAsync();
+            var storesToImport = await this.officialStoreInfoService.GetAsync();
 
             var isStoredClosed = true;
             var requestUri = storeUrl;
@@ -62,21 +65,17 @@ namespace YourShipping.Monitor.Server.Services
             try
             {
                 var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
-
-                var httpResponseMessage =
-                    await httpClient.GetCaptchaSaveAsync(requestUri);
+                var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(requestUri);
                 if (httpResponseMessage?.Content != null)
                 {
-                    var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                    if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
+                    if (httpResponseMessage.IsSignInRedirectResponse())
                     {
                         Log.Warning("There is no session available.");
                         this.cookiesAwareHttpClientFactory.InvalidateCookies(storeUrl);
-                        
                         return null;
                     }
 
-                    isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
+                    isStoredClosed = httpResponseMessage.IsStoreClosedRedirectResponse();
                     if (!isStoredClosed)
                     {
                         content = await httpResponseMessage.Content.ReadAsStringAsync();
@@ -93,7 +92,6 @@ namespace YourShipping.Monitor.Server.Services
                 storesToImport?.FirstOrDefault(s => $"{s.Url.Trim(' ', '/')}/Products?depPid=0" == storeUrl.Trim());
             var storeName = storeToImport?.Name;
 
-
             var isAvailable = false;
             var categoriesCount = 0;
             var departmentsCount = 0;
@@ -105,8 +103,7 @@ namespace YourShipping.Monitor.Server.Services
             }
             else if (!string.IsNullOrWhiteSpace(content))
             {
-                var document = await browsingContext.OpenAsync(req => req.Content(content));
-
+                var document = await this.browsingContext.OpenAsync(req => req.Content(content));
                 var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
                                 == "503";
                 if (isBlocked)
@@ -117,9 +114,9 @@ namespace YourShipping.Monitor.Server.Services
                 else
                 {
                     var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
-                    hasProductInCart = document
-                        .QuerySelectorAll<IElement>("#ctl00_UpperCartPanel > div > table > tbody > tr > td > a").Any();
-
+                    hasProductInCart = document.QuerySelectorAll<IElement>(
+                            "#ctl00_UpperCartPanel > div > table > tbody > tr > td.cart-product-info > div.cart-product-desc > p > a")
+                        .Any();
                     if (string.IsNullOrWhiteSpace(storeName))
                     {
                         var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
@@ -183,16 +180,16 @@ namespace YourShipping.Monitor.Server.Services
             if (!string.IsNullOrEmpty(storeName))
             {
                 var store = new Store
-                {
-                    Name = storeName,
-                    DepartmentsCount = departmentsCount,
-                    CategoriesCount = categoriesCount,
-                    Province = storeToImport?.Province,
-                    Url = storeUrl,
-                    IsAvailable = isAvailable,
-                    HasProductsInCart = hasProductInCart,
-                    IsEnabled = true
-                };
+                                {
+                                    Name = storeName,
+                                    DepartmentsCount = departmentsCount,
+                                    CategoriesCount = categoriesCount,
+                                    Province = storeToImport?.Province,
+                                    Url = storeUrl,
+                                    IsAvailable = isAvailable,
+                                    HasProductsInCart = hasProductInCart,
+                                    IsEnabled = true
+                                };
 
                 store.Sha256 = JsonSerializer.Serialize(store).ComputeSha256();
                 return store;
