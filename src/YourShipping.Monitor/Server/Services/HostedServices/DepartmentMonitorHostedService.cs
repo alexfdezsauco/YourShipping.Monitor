@@ -4,6 +4,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System.Collections.Immutable;
     using System.Data;
     using System.Linq;
+    using System.Net.Http;
     using System.Text;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -19,12 +20,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using Serilog;
 
     using Telegram.Bot;
+    using Telegram.Bot.Types;
     using Telegram.Bot.Types.Enums;
+    using Telegram.Bot.Types.InputFiles;
 
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Helpers;
     using YourShipping.Monitor.Server.Hubs;
-    using YourShipping.Monitor.Server.Models;
     using YourShipping.Monitor.Server.Models.Extensions;
     using YourShipping.Monitor.Server.Services.Attributes;
     using YourShipping.Monitor.Server.Services.Interfaces;
@@ -32,6 +34,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Department = YourShipping.Monitor.Server.Models.Department;
     using Product = YourShipping.Monitor.Server.Models.Product;
+    using User = YourShipping.Monitor.Server.Models.User;
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
@@ -186,6 +189,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                             user.ChatId,
                                             markdownMessage,
                                             ParseMode.Markdown);
+
+                                        using HttpClient client = new HttpClient();
+                                        foreach (var departmentProduct in department.Products.Values)
+                                        {
+                                            var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
+                                            await telegramBotClient.SendPhotoAsync(user.ChatId, new InputMedia(imageStream, "photo.jpg"), department.Name);
+                                        }
                                     }
                                     catch (Exception e)
                                     {
@@ -205,6 +215,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Departments);
+
         }
     }
 }
