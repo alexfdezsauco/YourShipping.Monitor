@@ -342,20 +342,25 @@
                 Log.Error(e, "Error adding product '{ProductName}' to the shopping cart", productName);
             }
 
-            var priceSpan = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbPrice > span");
-            var priceParts = priceSpan.Text().Trim().Split(' ');
             float price = 0;
             var currency = string.Empty;
-            if (priceParts.Length == 2)
+
+            var priceSpan = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbPrice > span");
+            var priceParts = priceSpan?.Text()?.Trim()?.Split(' ');
+            if (priceParts != null && priceParts.Length == 2)
             {
                 float.TryParse(priceParts[0], out price);
                 currency = priceParts[1];
             }
 
+            var imageObject = productElement.QuerySelector<IElement>("div.thumbnail > a > object");
+            var imageUrl = imageObject?.Attributes["data"]?.Value;
+
             var product = new Product
                               {
                                   Name = productName,
                                   Url = productUrl,
+                                  ImageUrl = imageUrl,
                                   IsAvailable = true,
                                   DepartmentCategory = department.Category,
                                   Department = department.Name,

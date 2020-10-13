@@ -123,13 +123,12 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                             await departmentRepository.SaveChangesAsync();
                             await transaction.CommitAsync();
 
-                            //var repository = serviceProvider.GetService<IRepository<Product, int>>();
-                            //foreach (var departmentProduct in department.Products.Values)
-                            //{
-                            //    var departmentProductUrl = departmentProduct.Url;
-                            //    repository.TryAddOrUpdate(departmentProduct);
-                            //}
-
+                            // var repository = serviceProvider.GetService<IRepository<Product, int>>();
+                            // foreach (var departmentProduct in department.Products.Values)
+                            // {
+                            // var departmentProductUrl = departmentProduct.Url;
+                            // repository.TryAddOrUpdate(departmentProduct);
+                            // }
                             var departmentDataTransferObject = department.ToDataTransferObject(true);
                             var message = JsonSerializer.Serialize(departmentDataTransferObject);
                             await messageHubContext.Clients.All.SendAsync(
@@ -167,8 +166,9 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                     messageStringBuilder.AppendLine($"*Product Is In Cart:* {product.IsInCart}");
                                     if (product.IsAvailable)
                                     {
-                                        messageStringBuilder.AppendLine(
-                                            $"*Product Link:* [{product.Url}]({product.Url})");
+                                        // TODO: Improve this to send the image.
+                                        messageStringBuilder.AppendLine($"*Product Link:* [{product.Url}]({product.Url})");
+                                        messageStringBuilder.AppendLine($"*Product Image:* [{product.ImageUrl}]({product.ImageUrl})");
                                     }
 
                                     messageStringBuilder.AppendLine("------------------------------");

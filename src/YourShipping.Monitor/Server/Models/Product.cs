@@ -2,6 +2,7 @@
 {
     using System;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     using Blorc.PatternFly.Components.Table;
 
@@ -54,5 +55,9 @@
 
         [JsonProperty(Order = 8)]
         public bool IsInCart { get; set; }
+
+        [NotMapped]
+        [JsonProperty(Order = 9)]
+        public string ImageUrl { get; set; }
     }
 }
