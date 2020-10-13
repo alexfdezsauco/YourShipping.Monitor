@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
@@ -88,17 +87,16 @@
             Department department = null;
             var currencies = new[] { "CUP", "CUC" };
             var i = 0;
-            var isStoredClosed = false;
             Department bestScrapedDepartment = null;
 
             // TODO: Review this because probably is no longer required.
-            while (!isStoredClosed && i < currencies.Length && (department == null || department.ProductsCount == 0))
+            while (i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
                 var requestUris = new[] { url + "&page=0", url };
 
                 var j = 0;
-                while (!isStoredClosed && j < requestUris.Length && (department == null || department.ProductsCount == 0))
+                while (j < requestUris.Length && (department == null || department.ProductsCount == 0))
                 {
                     var requestUri = requestUris[j];
                     string content = null;
@@ -119,12 +117,14 @@
                                 return null;
                             }
 
-                            isStoredClosed = httpResponseMessage.IsStoreClosedRedirectResponse();
-                            if (!isStoredClosed)
+                            if (httpResponseMessage.IsStoreClosedRedirectResponse())
                             {
-                                content = await httpResponseMessage.Content.ReadAsStringAsync();
-                                await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
+                                Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
+                                return null;
                             }
+
+                            content = await httpResponseMessage.Content.ReadAsStringAsync();
+                            await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
                         }
                     }
                     catch (Exception e)
@@ -132,11 +132,7 @@
                         Log.Error(e, "Error requesting Department '{Url}'", url);
                     }
 
-                    if (isStoredClosed)
-                    {
-                        Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
-                    }
-                    else if (!string.IsNullOrEmpty(content))
+                    if (!string.IsNullOrEmpty(content))
                     {
                         var document = await this.browsingContext.OpenAsync(req => req.Content(content));
                         var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent == "503";
@@ -150,7 +146,8 @@
                             var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
                             if (string.IsNullOrWhiteSpace(storeName))
                             {
-                                var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                                var footerElement =
+                                    document.QuerySelector<IElement>("#footer > div.container > div > div > p");
                                 var uriParts = url.Split('/');
                                 if (uriParts.Length > 3)
                                 {
@@ -175,17 +172,20 @@
                             var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
                             if (mainPanelElement != null)
                             {
-                                var filterElement = mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
+                                var filterElement =
+                                    mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
                                 filterElement?.Remove();
 
-                                var departmentElements = mainPanelElement.QuerySelectorAll<IElement>("#mainPanel > span > a").ToList();
+                                var departmentElements = mainPanelElement
+                                    .QuerySelectorAll<IElement>("#mainPanel > span > a").ToList();
 
                                 if (departmentElements.Count > 2)
                                 {
                                     var departmentCategory = departmentElements[^2].TextContent.Trim();
                                     var departmentName = departmentElements[^1].TextContent.Trim();
 
-                                    if (!string.IsNullOrWhiteSpace(departmentName) && !string.IsNullOrWhiteSpace(departmentCategory))
+                                    if (!string.IsNullOrWhiteSpace(departmentName)
+                                        && !string.IsNullOrWhiteSpace(departmentCategory))
                                     {
                                         department = new Department
                                                          {
@@ -201,7 +201,8 @@
 
                                 if (department != null)
                                 {
-                                    var productElements = document.QuerySelectorAll<IElement>("li.span3.clearfix").ToList();
+                                    var productElements = document.QuerySelectorAll<IElement>("li.span3.clearfix")
+                                        .ToList();
                                     await productElements.ParallelForEachAsync(
                                         async productElement =>
                                             {
@@ -327,14 +328,14 @@
                 httpResponseMessage.EnsureSuccessStatusCode();
                 await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
 
-                //var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                //var storeSlug = UriHelper.GetStoreSlug(storeUrl);
-                //if (!Directory.Exists($"products/{storeSlug}"))
-                //{
-                //    Directory.CreateDirectory($"products/{storeSlug}");
-                //}
+                // var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                // var storeSlug = UriHelper.GetStoreSlug(storeUrl);
+                // if (!Directory.Exists($"products/{storeSlug}"))
+                // {
+                // Directory.CreateDirectory($"products/{storeSlug}");
+                // }
 
-                //File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
+                // File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
             }
             catch (Exception e)
             {

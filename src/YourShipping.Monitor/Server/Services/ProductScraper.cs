@@ -3,7 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
@@ -102,7 +101,6 @@
             var departmentName = department?.Name;
             var departmentCategory = department?.Category;
 
-            var isStoredClosed = true;
             string content = null;
             try
             {
@@ -110,21 +108,21 @@
                 var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(url);
                 if (httpResponseMessage?.Content != null)
                 {
-                    var requestUriAbsoluteUri = httpResponseMessage.RequestMessage.RequestUri.AbsoluteUri;
-                    if (requestUriAbsoluteUri.Contains("/SignIn.aspx?ReturnUrl="))
+                    if (httpResponseMessage.IsSignInRedirectResponse())
                     {
                         Log.Warning("There is no session available.");
                         this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
-
                         return null;
                     }
 
-                    isStoredClosed = requestUriAbsoluteUri.EndsWith("StoreClosed.aspx");
-                    if (!isStoredClosed)
+                    if (httpResponseMessage.IsStoreClosedRedirectResponse())
                     {
-                        content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
+                        Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
+                        return null;
                     }
+
+                    content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(store.Url, httpClient);
                 }
             }
             catch (Exception e)
@@ -132,11 +130,7 @@
                 Log.Error(e, "Error requesting Department '{Url}'", url);
             }
 
-            if (isStoredClosed)
-            {
-                Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, store.Url);
-            }
-            else if (!string.IsNullOrWhiteSpace(content))
+            if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
 
@@ -260,15 +254,15 @@
                         }
 
                         // This can be done in other place?
-                        if (isUserLogged && isAvailable && (disabledProducts == null || !disabledProducts.Contains(url)))
+                        if (isUserLogged && isAvailable
+                                         && (disabledProducts == null || !disabledProducts.Contains(url)))
                         {
-                            //var storeSlug = UriHelper.GetStoreSlug(url);
-                            //if (!Directory.Exists($"products/{storeSlug}"))
-                            //{
-                            //    Directory.CreateDirectory($"products/{storeSlug}");
-                            //}
-                            //File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
-
+                            // var storeSlug = UriHelper.GetStoreSlug(url);
+                            // if (!Directory.Exists($"products/{storeSlug}"))
+                            // {
+                            // Directory.CreateDirectory($"products/{storeSlug}");
+                            // }
+                            // File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
                             await this.TryAddProductToShoppingCart(httpClient, product, document);
                         }
 

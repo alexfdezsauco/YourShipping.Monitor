@@ -58,8 +58,10 @@
             Log.Information("Scrapping Store from {Url}", storeUrl);
 
             var storesToImport = await this.officialStoreInfoService.GetAsync();
+            var storeSlug = UriHelper.GetStoreSlug(storeUrl);
+            var storeToImport = storesToImport?.FirstOrDefault(s => s.Url.Trim('/') == storeSlug);
+            var storeName = storeToImport?.Name;
 
-            var isStoredClosed = true;
             var requestUri = storeUrl;
             string content = null;
             try
@@ -75,12 +77,14 @@
                         return null;
                     }
 
-                    isStoredClosed = httpResponseMessage.IsStoreClosedRedirectResponse();
-                    if (!isStoredClosed)
+                    if (httpResponseMessage.IsStoreClosedRedirectResponse())
                     {
-                        content = await httpResponseMessage.Content.ReadAsStringAsync();
-                        await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
+                        Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, storeUrl);
+                        return null;
                     }
+
+                    content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
                 }
             }
             catch (Exception e)
@@ -88,24 +92,15 @@
                 Log.Error(e, "Error requesting Store from '{url}'", storeUrl);
             }
 
-            var storeToImport =
-                storesToImport?.FirstOrDefault(s => $"{s.Url.Trim(' ', '/')}/Products?depPid=0" == storeUrl.Trim());
-            var storeName = storeToImport?.Name;
-
             var isAvailable = false;
             var categoriesCount = 0;
             var departmentsCount = 0;
             var hasProductInCart = false;
 
-            if (isStoredClosed)
-            {
-                Log.Warning("Store '{Name}' with Url '{Url}' is closed", storeName, storeUrl);
-            }
-            else if (!string.IsNullOrWhiteSpace(content))
+            if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-                var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent
-                                == "503";
+                var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent == "503";
                 if (isBlocked)
                 {
                     // TODO: Slow down approach?
