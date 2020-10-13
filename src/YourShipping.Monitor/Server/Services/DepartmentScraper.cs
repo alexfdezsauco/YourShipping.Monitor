@@ -273,8 +273,7 @@
             Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
 
             var countInput = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > input");
-            var addToCartButtonAnchor =
-                productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
+            var addToCartButtonAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             try
             {
                 var anchorValue = addToCartButtonAnchor.Attributes["href"].Value;
@@ -349,7 +348,7 @@
             var priceParts = priceSpan?.Text()?.Trim()?.Split(' ');
             if (priceParts != null && priceParts.Length == 2)
             {
-                float.TryParse(priceParts[0], out price);
+                float.TryParse(priceParts[0].Trim(' ', '$'), out price);
                 currency = priceParts[1];
             }
 
