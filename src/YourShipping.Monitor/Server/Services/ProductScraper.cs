@@ -260,16 +260,14 @@
                         }
 
                         // This can be done in other place?
-                        if (isUserLogged && isAvailable
-                                         && (disabledProducts == null || !disabledProducts.Contains(url)))
+                        if (isUserLogged && isAvailable && (disabledProducts == null || !disabledProducts.Contains(url)))
                         {
-                            var storeSlug = UriHelper.GetStoreSlug(url);
-                            if (!Directory.Exists($"products/{storeSlug}"))
-                            {
-                                Directory.CreateDirectory($"products/{storeSlug}");
-                            }
-
-                            File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
+                            //var storeSlug = UriHelper.GetStoreSlug(url);
+                            //if (!Directory.Exists($"products/{storeSlug}"))
+                            //{
+                            //    Directory.CreateDirectory($"products/{storeSlug}");
+                            //}
+                            //File.WriteAllText($"products/{storeSlug}/{Guid.NewGuid()}.html", content);
 
                             await this.TryAddProductToShoppingCart(httpClient, product, document);
                         }
