@@ -107,7 +107,8 @@
                         var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
 
                         httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
-                        var httpResponseMessage = await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
+                        var httpResponseMessage =
+                            await httpClient.PostCaptchaSaveAsync(requestUri, formUrlEncodedContent);
                         if (httpResponseMessage?.Content != null)
                         {
                             if (httpResponseMessage.IsSignInRedirectResponse())
@@ -135,7 +136,8 @@
                     if (!string.IsNullOrEmpty(content))
                     {
                         var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-                        var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent == "503";
+                        var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
+                                            ?.TextContent == "503";
                         if (isBlocked)
                         {
                             // TODO: Slow down approach?
@@ -257,17 +259,16 @@
             var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
 
             var productNameAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
-            var productUrl = productNameAnchor.Attributes["href"]?.Value;
-
-            productUrl = UriHelper.EnsureProductUrl(productUrl);
             var productName = productNameAnchor.Text();
-            if (disabledProducts != null && disabledProducts.Contains(productUrl))
+            var productUrl = productNameAnchor.Attributes["href"]?.Value;
+            if (!string.IsNullOrWhiteSpace(productUrl))
             {
-                Log.Information(
-                    "Found product {Product} in department '{DepartmentName}' but was ignored.",
-                    productName,
-                    department.Name);
-                return null;
+                productUrl = storeUrl.Replace("Products?depPid=0", productUrl);
+                if (disabledProducts != null && disabledProducts.Contains(productUrl))
+                {
+                    Log.Information("Found product {Product} in department '{DepartmentName}' but was ignored.", productName, department.Name);
+                    return null;
+                }
             }
 
             Log.Information("Found product {Product} in department '{DepartmentName}'", productName, department.Name);
