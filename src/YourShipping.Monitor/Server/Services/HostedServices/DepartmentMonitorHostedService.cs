@@ -194,7 +194,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                         foreach (var departmentProduct in department.Products.Values)
                                         {
                                             var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
-                                            await telegramBotClient.SendPhotoAsync(user.ChatId, new InputMedia(imageStream, "photo.jpg"), department.Name);
+                                            await telegramBotClient.SendPhotoAsync(user.ChatId, new InputMedia(imageStream, "photo.jpg"), departmentProduct.Name);
                                         }
                                     }
                                     catch (Exception e)
