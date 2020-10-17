@@ -4,6 +4,8 @@
 
     internal class ScraperConfigurations
     {
+        public const string RootAddress = "https://www.tuenvio.cu/";
+
         public static readonly Uri CookieCollectionUrl = new Uri("https://www.tuenvio.cu");
 
         public static readonly TimeSpan DepartmentCacheExpiration = TimeSpan.FromSeconds(10);
@@ -18,7 +20,8 @@
 
         public static readonly string[] SupportedAgents =
             {
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36 Edg/85.0.564.44",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36 Edg/86.0.622.38"
+
                 // "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0"
             };
 
