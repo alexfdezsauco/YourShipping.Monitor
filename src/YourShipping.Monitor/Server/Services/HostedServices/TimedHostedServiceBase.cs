@@ -46,7 +46,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             this.executeMethod = this.GetType()
                 .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 .FirstOrDefault(info => info.GetCustomAttribute<ExecuteAttribute>() != null);
-            this.executeMethodParameters = this.executeMethod.GetParameters();
+            if (this.executeMethod != null)
+            {
+                this.executeMethodParameters = this.executeMethod.GetParameters();
+            }
         }
 
         public void Dispose()
