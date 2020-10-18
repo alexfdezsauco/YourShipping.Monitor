@@ -211,13 +211,13 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                         var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
 
                                         var storeSlug = UriHelper.GetStoreSlug(department.Url);
-                                        if (!Directory.Exists($"products/{storeSlug}"))
+                                        if (!Directory.Exists($"logs/products/{storeSlug}"))
                                         {
-                                            Directory.CreateDirectory($"products/{storeSlug}");
+                                            Directory.CreateDirectory($"logs/products/{storeSlug}");
                                         }
 
                                         var baseFilePath =
-                                            $"products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
+                                            $"logs/products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
 
                                         var imageFilePath = $"{baseFilePath}.jpg";
                                         try

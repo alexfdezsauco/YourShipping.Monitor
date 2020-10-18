@@ -331,12 +331,12 @@
 
                 var content = await httpResponseMessage.Content.ReadAsStringAsync();
                 var storeSlug = UriHelper.GetStoreSlug(storeUrl);
-                if (!Directory.Exists($"products/{storeSlug}"))
+                if (!Directory.Exists($"logs/products/{storeSlug}"))
                 {
-                    Directory.CreateDirectory($"products/{storeSlug}");
+                    Directory.CreateDirectory($"logs/products/{storeSlug}");
                 }
 
-                File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
+                File.WriteAllText($"logs/products/{storeSlug}/{productName.ComputeSha256()}.html", content);
             }
             catch (Exception e)
             {
