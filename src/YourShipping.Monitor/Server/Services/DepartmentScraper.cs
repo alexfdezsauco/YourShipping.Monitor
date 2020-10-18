@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Text.Json;
@@ -328,14 +329,14 @@
                 httpResponseMessage.EnsureSuccessStatusCode();
                 await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
 
-                // var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                // var storeSlug = UriHelper.GetStoreSlug(storeUrl);
-                // if (!Directory.Exists($"products/{storeSlug}"))
-                // {
-                // Directory.CreateDirectory($"products/{storeSlug}");
-                // }
+                var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                var storeSlug = UriHelper.GetStoreSlug(storeUrl);
+                if (!Directory.Exists($"products/{storeSlug}"))
+                {
+                    Directory.CreateDirectory($"products/{storeSlug}");
+                }
 
-                // File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
+                File.WriteAllText($"products/{storeSlug}/{productName.ComputeSha256()}.html", content);
             }
             catch (Exception e)
             {
@@ -351,7 +352,14 @@
             {
                 float.TryParse(priceParts[0].Trim(' ', '$'), out price);
                 currency = priceParts[1];
+                if (currency == "CUC")
+                {
+                    currency = "CUP";
+                    price = price * 25;
+                }
             }
+
+
 
             var imageObject = productElement.QuerySelector<IElement>("div.thumbnail > a > object");
             var imageUrl = imageObject?.Attributes["data"]?.Value;

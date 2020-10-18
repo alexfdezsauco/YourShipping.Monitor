@@ -26,8 +26,8 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 {
     public sealed class StoreMonitorHostedService : TimedHostedServiceBase
     {
-        public StoreMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromMinutes(5))
+        public StoreMonitorHostedService(IServiceProvider serviceProvider, Microsoft.Extensions.Configuration.IConfiguration configuration)
+            : base(serviceProvider, TimeSpan.FromMinutes(5), bool.TryParse(configuration["MaximizeParallelism"], out var maximizeParallelism) && maximizeParallelism)
         {
         }
 

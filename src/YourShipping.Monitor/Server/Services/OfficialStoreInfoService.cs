@@ -7,6 +7,7 @@
 
     using Serilog;
 
+    using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Models;
 
     public class OfficialStoreInfoService : IOfficialStoreInfoService
@@ -38,8 +39,7 @@
                 try
                 {
                     var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
-                    this.storesToImport =
-                        await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
+                    this.storesToImport = await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
                     await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(ScraperConfigurations.StoresJsonUrl, httpClient);
                     this.setTime = DateTime.Now;
                 }

@@ -3,6 +3,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using System;
     using System.Collections.Immutable;
     using System.Data;
+    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Text;
@@ -13,6 +14,7 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
 
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.EntityFrameworkCore.Storage;
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
     using Orc.EntityFrameworkCore;
@@ -22,7 +24,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using Telegram.Bot;
     using Telegram.Bot.Types;
     using Telegram.Bot.Types.Enums;
-    using Telegram.Bot.Types.InputFiles;
 
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Helpers;
@@ -33,13 +34,17 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
     using YourShipping.Monitor.Shared;
 
     using Department = YourShipping.Monitor.Server.Models.Department;
+    using File = System.IO.File;
     using Product = YourShipping.Monitor.Server.Models.Product;
     using User = YourShipping.Monitor.Server.Models.User;
 
     public sealed class DepartmentMonitorHostedService : TimedHostedServiceBase
     {
-        public DepartmentMonitorHostedService(IServiceProvider serviceProvider)
-            : base(serviceProvider, TimeSpan.FromSeconds(1))
+        public DepartmentMonitorHostedService(IServiceProvider serviceProvider, IConfiguration configuration)
+            : base(
+                serviceProvider,
+                TimeSpan.FromSeconds(1),
+                bool.TryParse(configuration["MaximizeParallelism"], out var maximizeParallelism) && maximizeParallelism)
         {
         }
 
@@ -170,8 +175,10 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                     if (product.IsAvailable)
                                     {
                                         // TODO: Improve this to send the image.
-                                        messageStringBuilder.AppendLine($"*Product Link:* [{product.Url}]({product.Url})");
-                                        messageStringBuilder.AppendLine($"*Product Image:* [{product.ImageUrl}]({product.ImageUrl})");
+                                        messageStringBuilder.AppendLine(
+                                            $"*Product Link:* [{product.Url}]({product.Url})");
+                                        messageStringBuilder.AppendLine(
+                                            $"*Product Image:* [{product.ImageUrl}]({product.ImageUrl})");
                                     }
 
                                     messageStringBuilder.AppendLine("------------------------------");
@@ -189,17 +196,72 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                             user.ChatId,
                                             markdownMessage,
                                             ParseMode.Markdown);
-
-                                        using HttpClient client = new HttpClient();
-                                        foreach (var departmentProduct in department.Products.Values)
-                                        {
-                                            var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
-                                            await telegramBotClient.SendPhotoAsync(user.ChatId, new InputMedia(imageStream, "photo.jpg"), departmentProduct.Name);
-                                        }
                                     }
                                     catch (Exception e)
                                     {
-                                        Log.Error(e, "Error sending message via telegram to {UserName}", user.Name);
+                                        Log.Warning(
+                                            e,
+                                            "Error sending notification messages via telegram to {UserName}",
+                                            user.Name);
+                                    }
+
+                                    using var client = new HttpClient();
+                                    foreach (var departmentProduct in department.Products.Values)
+                                    {
+                                        var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
+
+                                        var storeSlug = UriHelper.GetStoreSlug(department.Url);
+                                        if (!Directory.Exists($"products/{storeSlug}"))
+                                        {
+                                            Directory.CreateDirectory($"products/{storeSlug}");
+                                        }
+
+                                        var baseFilePath =
+                                            $"products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
+
+                                        var imageFilePath = $"{baseFilePath}.jpg";
+                                        try
+                                        {
+                                            await using var fileStream = File.Create(imageFilePath);
+                                            await imageStream.CopyToAsync(fileStream);
+                                            await fileStream.FlushAsync();
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Log.Warning(e, "Error saving image.");
+                                        }
+
+                                        var textFilePath = $"{baseFilePath}.txt";
+
+                                        try
+                                        {
+                                            var builder = new StringBuilder();
+                                            builder.AppendLine(departmentProduct.Name);
+                                            builder.AppendLine(
+                                                $"{departmentProduct.Price} {departmentProduct.Currency}");
+                                            File.WriteAllText(textFilePath, builder.ToString());
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Log.Warning(e, "Error saving description");
+                                        }
+
+                                        try
+                                        {
+                                            await telegramBotClient.SendPhotoAsync(
+                                                user.ChatId,
+                                                new InputMedia(
+                                                    new FileStream(imageFilePath, FileMode.Open),
+                                                    "photo.jpg"),
+                                                departmentProduct.Name);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Log.Warning(
+                                                e,
+                                                "Error sending detailed messages via telegram to {UserName}",
+                                                user.Name);
+                                        }
                                     }
                                 }
                             }
@@ -215,7 +277,6 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
             Log.Information(
                 sourceChanged ? "{Source} changes detected" : "No {Source} changes detected",
                 AlertSource.Departments);
-
         }
     }
 }

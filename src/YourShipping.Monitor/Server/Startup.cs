@@ -1,34 +1,41 @@
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using AngleSharp;
-using Catel.Caching;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
-using Orc.EntityFrameworkCore;
-using Serilog;
-using Telegram.Bot;
-using YourShipping.Monitor.Server.Extensions;
-using YourShipping.Monitor.Server.Helpers;
-using YourShipping.Monitor.Server.Hubs;
-using YourShipping.Monitor.Server.Models;
-using YourShipping.Monitor.Server.Services;
-using YourShipping.Monitor.Server.Services.HostedServices;
-using YourShipping.Monitor.Server.Services.Interfaces;
-using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
-
 namespace YourShipping.Monitor.Server
 {
+    using System;
+    using System.Net;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+
+    using AngleSharp;
+
+    using Catel.Caching;
+
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+
+    using Orc.EntityFrameworkCore;
+
+    using Serilog;
+
+    using Telegram.Bot;
+
+    using YourShipping.Monitor.Server.Extensions;
+    using YourShipping.Monitor.Server.Helpers;
+    using YourShipping.Monitor.Server.Hubs;
+    using YourShipping.Monitor.Server.Models;
+    using YourShipping.Monitor.Server.Services;
+    using YourShipping.Monitor.Server.Services.HostedServices;
+    using YourShipping.Monitor.Server.Services.Interfaces;
+
+    using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            this.Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -59,14 +66,14 @@ namespace YourShipping.Monitor.Server
 
             app.UseEndpoints(
                 endpoints =>
-                {
-                    endpoints.MapRazorPages();
-                    endpoints.MapControllers();
-                    endpoints.MapHub<MessagesHub>("/hubs/messages");
-                    endpoints.MapFallbackToFile("index.html");
-                });
+                    {
+                        endpoints.MapRazorPages();
+                        endpoints.MapControllers();
+                        endpoints.MapHub<MessagesHub>("/hubs/messages");
+                        endpoints.MapFallbackToFile("index.html");
+                    });
 
-            var token = Configuration.GetSection("TelegramBot")?["Token"];
+            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
             if (!string.IsNullOrWhiteSpace(token) && token != "%TELEGRAM_BOT_TOKEN%")
             {
                 serviceProvider.GetService<ITelegramCommander>().Start();
@@ -87,7 +94,7 @@ namespace YourShipping.Monitor.Server
             services.AddOrcEntityFrameworkCore();
             services.AddDatabaseSeeder<ApplicationDbSeeder>();
 
-            var token = Configuration.GetSection("TelegramBot")?["Token"];
+            var token = this.Configuration.GetSection("TelegramBot")?["Token"];
 
             if (!string.IsNullOrWhiteSpace(token))
             {
@@ -100,7 +107,8 @@ namespace YourShipping.Monitor.Server
                 {
                     Log.Information("Telegram notification is enable.");
 
-                    services.AddTransient<ITelegramBotClient>(sp => new TelegramBotClient(token));
+                    services.AddTransient<ITelegramBotClient>(
+                        sp => new TelegramBotClient(token));
                     services.AddSingleton<ITelegramCommander, TelegramCommander>();
                 }
             }
@@ -110,7 +118,7 @@ namespace YourShipping.Monitor.Server
                     "Telegram notification is disable. To enable it, add a TelegramBot section with a key Token.");
             }
 
-            HttpClientExtensions.Configure(Configuration);
+            HttpClientExtensions.Configure(this.Configuration);
 
             services.AddTransient(sp => new CookieContainer());
 
@@ -118,42 +126,43 @@ namespace YourShipping.Monitor.Server
 
             services.AddTransient(
                 sp =>
-                {
-                    var cookieContainer = sp.GetService<CookieContainer>();
-
-                    var handler = new HttpClientHandler
                     {
-                        AutomaticDecompression =
-                            DecompressionMethods.GZip | DecompressionMethods.Deflate
-                                                      | DecompressionMethods.Brotli,
-                        AllowAutoRedirect = true
-                    };
+                        var cookieContainer = sp.GetService<CookieContainer>();
 
-                    if (cookieContainer != null)
-                    {
-                        handler.CookieContainer = cookieContainer;
-                    }
+                        var handler = new HttpClientHandler
+                                          {
+                                              AutomaticDecompression =
+                                                  DecompressionMethods.GZip | DecompressionMethods.Deflate
+                                                                            | DecompressionMethods.Brotli,
+                                              AllowAutoRedirect = true
+                                          };
 
-                    var httpTimeoutInSeconds = Configuration.GetSection("Http")?["TimeoutInSeconds"];
-                    var httpClient = new HttpClient(handler)
-                    {
-                        Timeout = float.TryParse(httpTimeoutInSeconds, out var timeoutInSeconds)
-                            ? TimeSpan.FromSeconds(timeoutInSeconds)
-                            : ScraperConfigurations.HttpClientTimeout
-                    };
+                        if (cookieContainer != null)
+                        {
+                            handler.CookieContainer = cookieContainer;
+                        }
 
-                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                        "user-agent",
-                        ScraperConfigurations.GetSupportedAgent());
+                        var httpTimeoutInSeconds = this.Configuration.GetSection("Http")?["TimeoutInSeconds"];
+                        var httpClient = new HttpClient(handler)
+                                             {
+                                                 Timeout = float.TryParse(
+                                                               httpTimeoutInSeconds,
+                                                               out var timeoutInSeconds)
+                                                               ? TimeSpan.FromSeconds(timeoutInSeconds)
+                                                               : ScraperConfigurations.HttpClientTimeout
+                                             };
 
-                    httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
-                        "accept-encoding",
-                        "gzip, deflate, br");
-                    httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue {NoCache = true};
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "user-agent",
+                            ScraperConfigurations.GetSupportedAgent());
 
-                    return httpClient;
-                });
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
+                            "accept-encoding",
+                            "gzip, deflate, br");
+                        httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
 
+                        return httpClient;
+                    });
 
             services.AddScoped<IStoreService, StoreService>();
 
@@ -177,6 +186,7 @@ namespace YourShipping.Monitor.Server
             services.AddSingleton<ImportStoresHostedService>();
 
             services.AddHostedService<DepartmentMonitorHostedService>();
+
             // services.AddHostedService<ProductMonitorHostedService>();
             services.AddHostedService<StoreMonitorHostedService>();
             services.AddHostedService<CookieSerializationHostedService>();
