@@ -465,25 +465,28 @@ namespace YourShipping.Monitor.Server.Helpers
 
                     foreach (Cookie cookie in cookieCollection)
                     {
-                        if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
+                        if (cookie.Name != "uid") // TODO: Review the implications later.
                         {
-                            Log.Information(
-                                "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                                cookie.Name,
-                                cookie.Value,
-                                url);
+                            if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
+                            {
+                                Log.Information(
+                                    "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                    cookie.Name,
+                                    cookie.Value,
+                                    url);
 
-                            storedCookieCollection.Add(cookie.Name, cookie);
-                        }
-                        else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
-                        {
-                            Log.Information(
-                                "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                                cookie.Name,
-                                cookie.Value,
-                                url);
+                                storedCookieCollection.Add(cookie.Name, cookie);
+                            }
+                            else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
+                            {
+                                Log.Information(
+                                    "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                    cookie.Name,
+                                    cookie.Value,
+                                    url);
 
-                            storedCookieCollection[cookie.Name] = cookie;
+                                storedCookieCollection[cookie.Name] = cookie;
+                            }
                         }
                     }
                 }
@@ -506,8 +509,8 @@ namespace YourShipping.Monitor.Server.Helpers
                             {
                                 Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
                                 var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
-                                var cookies =
-                                    JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                var cookies = JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                cookies.Remove("uid");
                                 return cookies;
                             }
                         }
@@ -544,7 +547,7 @@ namespace YourShipping.Monitor.Server.Helpers
                                 value = "username=&userPsw=";
                             }
 
-                            if (name != "SRVNAME")
+                            if (name != "SRVNAME" && name != "uid")
                             {
                                 cookieCollection.Add(
                                     name,
