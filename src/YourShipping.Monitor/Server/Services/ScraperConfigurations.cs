@@ -1,6 +1,9 @@
 ﻿namespace YourShipping.Monitor.Server.Services
 {
     using System;
+    using System.IO;
+
+    using Serilog;
 
     internal class ScraperConfigurations
     {
@@ -20,16 +23,30 @@
 
         public static readonly string[] SupportedAgents =
             {
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.80 Safari/537.36 Edg/86.0.622.48"
-                // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
-                // "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:80.0) Gecko/20100101 Firefox/80.0"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
             };
 
         private static readonly int UserAgentIndex = new Random().Next(0, SupportedAgents.Length);
 
         public static string GetSupportedAgent()
         {
-            return SupportedAgents[UserAgentIndex];
+            var agent = string.Empty;
+            try
+            {
+                var path = "data/user-agent.txt";
+                if (File.Exists(path))
+                {
+                    using var streamReader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read));
+                    agent = streamReader.ReadLine();
+                    streamReader.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Warning(e, "Error reading user-agent.txt file");
+            }
+
+            return string.IsNullOrWhiteSpace(agent) ? SupportedAgents[UserAgentIndex] : agent;
         }
     }
 }
