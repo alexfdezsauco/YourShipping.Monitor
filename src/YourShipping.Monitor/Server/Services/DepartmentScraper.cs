@@ -86,7 +86,7 @@
 
             var storeName = store?.Name;
             Department department = null;
-            var currencies = new[] { "CUP", "CUC" };
+            var currencies = new[] { "CUP"/*, "CUC"*/ };
             var i = 0;
             Department bestScrapedDepartment = null;
 
@@ -94,7 +94,7 @@
             while (i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] { url + "&page=0", url };
+                var requestUris = new[] { url + "&page=0"/*, url */};
 
                 var j = 0;
                 while (j < requestUris.Length && (department == null || department.ProductsCount == 0))

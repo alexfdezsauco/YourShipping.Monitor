@@ -611,6 +611,8 @@
             return antiScrappingCookie;
         }
 
+        private Dictionary<string, int> counts = new Dictionary<string, int>();
+
         private async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
             var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
@@ -618,33 +620,42 @@
             {
                 lock (storedCookieCollection)
                 {
+                    if(!counts.TryGetValue(url, out var _))
+                    {
+                        counts[url] = 0;
+                    }
+
+                    counts[url] = (counts[url] + 1) % 2;
+
                     Log.Information("Synchronizing cookies for url '{Url}'.", url);
 
                     foreach (Cookie cookie in cookieCollection)
                     {
+                        if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
                         {
-                            // if (cookie.Name != "uid") // TODO: Review the implications later.
-                            if (!storedCookieCollection.TryGetValue(cookie.Name, out var storedCookie))
-                            {
-                                Log.Information(
-                                    "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                                    cookie.Name,
-                                    cookie.Value,
-                                    url);
+                            Log.Information(
+                                "Adding cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                cookie.Name,
+                                cookie.Value,
+                                url);
 
-                                storedCookieCollection.Add(cookie.Name, cookie);
-                            }
-                            else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
-                            {
-                                Log.Information(
-                                    "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
-                                    cookie.Name,
-                                    cookie.Value,
-                                    url);
-
-                                storedCookieCollection[cookie.Name] = cookie;
-                            }
+                            storedCookieCollection.Add(cookie.Name, cookie);
                         }
+                        else if (storedCookie.Value != cookie.Value && cookie.TimeStamp > storedCookie.TimeStamp)
+                        {
+                            Log.Information(
+                                "Synchronizing cookie '{CookieName}' with value '{CookieValue}' for url '{Url}'.",
+                                cookie.Name,
+                                cookie.Value,
+                                url);
+
+                            storedCookieCollection[cookie.Name] = cookie;
+                        }
+                    }
+
+                    if (counts[url] == 0)
+                    {
+                        storedCookieCollection.Remove("uid");
                     }
                 }
             }

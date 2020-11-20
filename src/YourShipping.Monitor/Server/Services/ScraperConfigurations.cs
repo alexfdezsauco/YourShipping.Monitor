@@ -26,19 +26,20 @@
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
             };
 
-        private static readonly int UserAgentIndex = new Random().Next(0, SupportedAgents.Length);
+        private static int UserAgentIndex
+        {
+            get { return new Random().Next(0, SupportedAgents.Length); }
+        }
 
         public static string GetSupportedAgent()
         {
-            var agent = string.Empty;
+            string[] agents = null;
             try
             {
                 var path = "data/user-agent.txt";
                 if (File.Exists(path))
                 {
-                    using var streamReader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read));
-                    agent = streamReader.ReadLine();
-                    streamReader.Close();
+                    agents = File.ReadAllLines(path);
                 }
             }
             catch (Exception e)
@@ -46,7 +47,7 @@
                 Log.Warning(e, "Error reading user-agent.txt file");
             }
 
-            return string.IsNullOrWhiteSpace(agent) ? SupportedAgents[UserAgentIndex] : agent;
+            return agents == null ||  agents.Length == 0 ? SupportedAgents[UserAgentIndex] : agents[new Random().Next(0, agents.Length)];
         }
     }
 }

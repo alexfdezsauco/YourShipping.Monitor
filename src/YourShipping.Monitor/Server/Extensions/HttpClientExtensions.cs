@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
@@ -18,7 +19,7 @@
     using YourShipping.Monitor.Server.Extensions.Models;
     using YourShipping.Monitor.Server.Extensions.Threading;
     using YourShipping.Monitor.Server.Helpers;
-
+    using YourShipping.Monitor.Server.Services;
     using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
     public static class HttpClientExtensions
@@ -61,12 +62,12 @@
             string uri,
             Dictionary<string, string> parameters)
         {
-            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.FormPostAsync(uri, parameters));
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.FormPostAsync(uri, parameters));
         }
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
-            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.GetAsync(uri));
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
         }
 
         public static HttpClientHandler GetHttpClientHandler(this HttpClient httpClient)
@@ -85,7 +86,7 @@
             string uri,
             HttpContent httpContent)
         {
-            return await httpClient.FuncCaptchaSaveAsync(() => httpClient.PostAsync(uri, httpContent));
+            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
         }
 
         private static Dictionary<string, string> BuildReCaptchaParameters(
