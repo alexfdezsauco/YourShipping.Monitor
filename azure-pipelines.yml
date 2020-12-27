@@ -23,6 +23,6 @@ steps:
   displayName: 'Docker Push'
   inputs:
     containerRegistry: 'DockerHub'
-    repository: 'your-shipping-monitor'
+    repository: 'alexfdezsauco/your-shipping-monitor'
     command: 'push'
     tags: '$(GitVersion.NuGetVersion),latest'
