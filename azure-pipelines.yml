@@ -18,3 +18,11 @@ steps:
 
 - script: dotnet cake -target=DockerBuild
   displayName: 'Docker Build'
+
+- task: Docker@2
+  displayName: 'Docker Push'
+  inputs:
+    containerRegistry: 'DockerHub'
+    repository: 'your-shipping-monitor'
+    command: 'push'
+    tags: '$(GitVersion.NuGetVersion),latest'
