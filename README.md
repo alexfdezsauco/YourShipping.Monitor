@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/alexfdezsauco/YourShipping.Monitor/_apis/build/status/alexfdezsauco.YourShipping.Monitor?branchName=master)](https://dev.azure.com/alexfdezsauco/YourShipping.Monitor/_build/latest?definitionId=3&branchName=master)
+
 # YourShipping.Monitor
 
 YourShipping (a.k.a. TuEnvio) has no public monitoring and notifications options. This is a basic app to monitoring specific departments and products from its well-known uri.
