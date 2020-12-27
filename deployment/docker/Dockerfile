@@ -40,6 +40,8 @@ RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubun
 # RUN apt install -y libc6-dev  libgdiplus  libx11-dev
 # RUN apt install -y libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
 
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
+RUN apt clean
 RUN apt -y update && apt -y install libleptonica-dev libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
 ADD deployment/lib/x64 /app/x64
 
