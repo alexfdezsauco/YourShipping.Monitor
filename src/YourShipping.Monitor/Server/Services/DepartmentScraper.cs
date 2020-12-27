@@ -86,7 +86,7 @@
 
             var storeName = store?.Name;
             Department department = null;
-            var currencies = new[] { "CUP"/*, "CUC"*/ };
+            var currencies = new[] { "CUP", "CUC" };
             var i = 0;
             Department bestScrapedDepartment = null;
 
@@ -94,7 +94,7 @@
             while (i < currencies.Length && (department == null || department.ProductsCount == 0))
             {
                 var currency = currencies[i];
-                var requestUris = new[] { url + "&page=0"/*, url */};
+                var requestUris = new[] { url + "&page=0", url };
 
                 var j = 0;
                 while (j < requestUris.Length && (department == null || department.ProductsCount == 0))
@@ -265,7 +265,7 @@
             if (!string.IsNullOrWhiteSpace(productUrl))
             {
                 productUrl = storeUrl.Replace("Products?depPid=0", productUrl);
-                if (disabledProducts != null && disabledProducts.Contains(productUrl))
+                if (disabledProducts != null && disabledProducts.Any(s => productUrl.StartsWith(s)))
                 {
                     Log.Information("Found product {Product} in department '{DepartmentName}' but was ignored.", productName, department.Name);
                     return null;
@@ -278,16 +278,18 @@
             var addToCartButtonAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbButtons > a:nth-child(2)");
             try
             {
-                var anchorValue = addToCartButtonAnchor.Attributes["href"].Value;
-                var match = this.anchorParameterNameRegex.Match(anchorValue);
-                Log.Information(
-                    "Try to add  product {Product} in department '{DepartmentName}' to the shopping cart.",
-                    productName,
-                    department.Name);
+                var anchorValue = addToCartButtonAnchor?.Attributes["href"]?.Value;
+                if (!string.IsNullOrWhiteSpace(anchorValue))
+                {
+                    var match = this.anchorParameterNameRegex.Match(anchorValue);
+                    Log.Information(
+                        "Try to add  product {Product} in department '{DepartmentName}' to the shopping cart.",
+                        productName,
+                        department.Name);
 
-                var anchorParameterName = match.Groups[1].Value;
-                var inputParameterName = countInput.Attributes["name"].Value;
-                var parameters = new Dictionary<string, string>
+                    var anchorParameterName = match.Groups[1].Value;
+                    var inputParameterName = countInput.Attributes["name"].Value;
+                    var parameters = new Dictionary<string, string>
                                      {
                                          {
                                              "ctl00$ScriptManager1",
@@ -319,24 +321,29 @@
                                          { "__ASYNCPOST", "true" }
                                      };
 
-                httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
-                var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(department.Url, parameters);
-                if (httpResponseMessage == null)
-                {
-                    return null;
+                    httpClient.DefaultRequestHeaders.Referrer = new Uri(department.Url + "&page=0");
+                    var httpResponseMessage = await httpClient.FormPostCaptchaSaveAsync(department.Url, parameters);
+                    if (httpResponseMessage == null)
+                    {
+                        return null;
+                    }
+
+                    httpResponseMessage.EnsureSuccessStatusCode();
+                    await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
+
+                    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+                    var storeSlug = UriHelper.GetStoreSlug(storeUrl);
+                    if (!Directory.Exists($"logs/products/{storeSlug}"))
+                    {
+                        Directory.CreateDirectory($"logs/products/{storeSlug}");
+                    }
+
+                    File.WriteAllText($"logs/products/{storeSlug}/{productName.ComputeSha256()}.html", content);
                 }
-
-                httpResponseMessage.EnsureSuccessStatusCode();
-                await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(storeUrl, httpClient);
-
-                var content = await httpResponseMessage.Content.ReadAsStringAsync();
-                var storeSlug = UriHelper.GetStoreSlug(storeUrl);
-                if (!Directory.Exists($"logs/products/{storeSlug}"))
+                else
                 {
-                    Directory.CreateDirectory($"logs/products/{storeSlug}");
+                    Log.Information("Product {Product} in department '{DepartmentName}' is in exhibition.", productName, department.Name);
                 }
-
-                File.WriteAllText($"logs/products/{storeSlug}/{productName.ComputeSha256()}.html", content);
             }
             catch (Exception e)
             {
