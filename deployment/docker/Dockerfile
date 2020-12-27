@@ -32,6 +32,8 @@ FROM mcr.microsoft.com/dotnet/core/aspnet@sha256:07d9cfc7442360e2827b638e78d15e2
 ENV ASPNETCORE_URLS=http://0.0.0.0:80
 
 WORKDIR /app
+RUN apt -y update & apt -y upgrade
+RUN apt install -y gnupg2
 RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
 
 # RUN apt -y update && apt -y install libleptonica-dev
@@ -39,6 +41,7 @@ RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubun
 # RUN cp /usr/lib/x86_64-linux-gnu/liblept.so /app/x64/liblept1753.so
 # RUN apt install -y libc6-dev  libgdiplus  libx11-dev
 # RUN apt install -y libgif7 libjpeg62 libopenjp2-7 libpng16-16 libtiff5 libwebp6 libc6-dev libgdiplus
+
 
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
 RUN apt clean
