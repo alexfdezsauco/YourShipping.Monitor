@@ -144,6 +144,45 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                 AlertSource.Departments,
                                 message);
 
+                            using var httpClient = new HttpClient();
+                            foreach (var departmentProduct in department.Products.Values)
+                            {
+                                var imageStream = await httpClient.GetStreamAsync(departmentProduct.ImageUrl);
+
+                                var storeSlug = UriHelper.GetStoreSlug(department.Url);
+                                if (!Directory.Exists($"logs/products/{storeSlug}"))
+                                {
+                                    Directory.CreateDirectory($"logs/products/{storeSlug}");
+                                }
+
+                                var baseFilePath = $"logs/products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
+
+                                var imageFilePath = $"{baseFilePath}.jpg";
+                                try
+                                {
+                                    await using var fileStream = File.Create(imageFilePath);
+                                    await imageStream.CopyToAsync(fileStream);
+                                    await fileStream.FlushAsync();
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Warning(e, "Error saving image.");
+                                }
+
+                                var textFilePath = $"{baseFilePath}.txt";
+                                try
+                                {
+                                    var builder = new StringBuilder();
+                                    builder.AppendLine(departmentProduct.Name);
+                                    builder.AppendLine($"{departmentProduct.Price} {departmentProduct.Currency}");
+                                    await File.WriteAllTextAsync(textFilePath, builder.ToString());
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.Warning(e, "Error saving description");
+                                }
+                            }
+
                             if (telegramBotClient != null && department.IsAvailable)
                             {
                                 var messageStringBuilder = new StringBuilder();
@@ -208,59 +247,27 @@ namespace YourShipping.Monitor.Server.Services.HostedServices
                                     using var client = new HttpClient();
                                     foreach (var departmentProduct in department.Products.Values)
                                     {
-                                        var imageStream = await client.GetStreamAsync(departmentProduct.ImageUrl);
-
                                         var storeSlug = UriHelper.GetStoreSlug(department.Url);
-                                        if (!Directory.Exists($"logs/products/{storeSlug}"))
-                                        {
-                                            Directory.CreateDirectory($"logs/products/{storeSlug}");
-                                        }
-
-                                        var baseFilePath =
-                                            $"logs/products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
-
+                                        var baseFilePath = $"logs/products/{storeSlug}/{departmentProduct.Name.ComputeSha256()}";
                                         var imageFilePath = $"{baseFilePath}.jpg";
-                                        try
+                                        if (File.Exists(imageFilePath))
                                         {
-                                            await using var fileStream = File.Create(imageFilePath);
-                                            await imageStream.CopyToAsync(fileStream);
-                                            await fileStream.FlushAsync();
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Log.Warning(e, "Error saving image.");
-                                        }
-
-                                        var textFilePath = $"{baseFilePath}.txt";
-
-                                        try
-                                        {
-                                            var builder = new StringBuilder();
-                                            builder.AppendLine(departmentProduct.Name);
-                                            builder.AppendLine(
-                                                $"{departmentProduct.Price} {departmentProduct.Currency}");
-                                            File.WriteAllText(textFilePath, builder.ToString());
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Log.Warning(e, "Error saving description");
-                                        }
-
-                                        try
-                                        {
-                                            await telegramBotClient.SendPhotoAsync(
-                                                user.ChatId,
-                                                new InputMedia(
-                                                    new FileStream(imageFilePath, FileMode.Open),
-                                                    "photo.jpg"),
-                                                departmentProduct.Name);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Log.Warning(
-                                                e,
-                                                "Error sending detailed messages via telegram to {UserName}",
-                                                user.Name);
+                                            try
+                                            {
+                                                await telegramBotClient.SendPhotoAsync(
+                                                    user.ChatId,
+                                                    new InputMedia(
+                                                        new FileStream(imageFilePath, FileMode.Open),
+                                                        "photo.jpg"),
+                                                    departmentProduct.Name);
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                Log.Warning(
+                                                    e,
+                                                    "Error sending detailed messages via telegram to {UserName}",
+                                                    user.Name);
+                                            }
                                         }
                                     }
                                 }
