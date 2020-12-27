@@ -34,7 +34,7 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:80
 WORKDIR /app
 RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
 RUN apt -y update & apt -y upgrade
-RUN apt install -y gnupg
+RUN apt install -y gnupg2
 
 # RUN apt -y update && apt -y install libleptonica-dev
 # RUN mkdir -p /app/x64
