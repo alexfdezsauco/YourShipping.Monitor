@@ -37,10 +37,10 @@ Setup(context => {
 Task("UpdateVersion")
   .Does(() => 
   {
-      FilePath gitVersionPath = Context.Tools.Resolve("GitVersion.exe");
-      StartProcess(gitVersionPath, new ProcessSettings
+      StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
+          .Append("gitversion")
           .Append("/output")
           .Append("buildserver")
           .Append("/nofetch")
@@ -48,11 +48,13 @@ Task("UpdateVersion")
       });
 
       IEnumerable<string> redirectedStandardOutput;
-      StartProcess(gitVersionPath, new ProcessSettings
+      StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
+          .Append("gitversion")
           .Append("/output")
-          .Append("json"),
+          .Append("json")
+	  .Append("/nofetch"),
           RedirectStandardOutput = true
       }, out redirectedStandardOutput);
 
