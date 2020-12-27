@@ -354,7 +354,6 @@ tools
 data
 logs
 /output
-/.config
 /.dotnet
 /.vscode
 /.vs

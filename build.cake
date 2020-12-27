@@ -163,7 +163,8 @@ Task("DockerBuild")
               BuildArg = new[] {$"DOCKER_REPOSITORY_PROXY={dockerRepositoryProxy}",
                                                   $"NUGET_REPOSITORY_PROXY={nugetRepositoryProxy}",
                                                   $"PACKAGE_VERSION={NuGetVersionV2}"},
-              Tag = new[] { $"{DockerRepositoryPrefix}{outputImage}:{NuGetVersionV2}", $"{DockerRepositoryPrefix}{outputImage}:latest" }
+              Tag = new[] { $"{DockerRepositoryPrefix}{outputImage}:{NuGetVersionV2}", $"{DockerRepositoryPrefix}{outputImage}:latest" },
+              Network = "bridge"
           };
           DockerBuild(settings, "./");
       }
