@@ -32,7 +32,7 @@ FROM mcr.microsoft.com/dotnet/core/aspnet@sha256:07d9cfc7442360e2827b638e78d15e2
 ENV ASPNETCORE_URLS=http://0.0.0.0:80
 
 WORKDIR /app
-RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
+# RUN echo "deb [trusted=yes] http://packages.ubuntu.com/xenial/libtesseract3 ubuntu-xenial main" | tee /etc/apt/sources.list.d/libtesseract.list
 # RUN apt -y update & apt -y upgrade
 # RUN apt install -y gnupg2
 # RUN apt -y update && apt -y install libleptonica-dev
