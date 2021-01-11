@@ -1,4 +1,4 @@
-[![Build Status](https://dev.azure.com/alexfdezsauco/YourShipping.Monitor/_apis/build/status/alexfdezsauco.YourShipping.Monitor?branchName=master)](https://dev.azure.com/alexfdezsauco/YourShipping.Monitor/_build/latest?definitionId=3&branchName=master)
+[![Build Status](https://dev.azure.com/alexfdezsauco/External%20Repositories%20Builds/_apis/build/status/alexfdezsauco.YourShipping.Monitor?branchName=master)](https://dev.azure.com/alexfdezsauco/External%20Repositories%20Builds/_build/latest?definitionId=3&branchName=master)
 
 # YourShipping.Monitor
 
