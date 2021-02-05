@@ -184,7 +184,8 @@
             foreach (var url in urls)
             {
                 var storeSlug = UriHelper.GetStoreSlug(url);
-                if (storeSlug != "/")
+                var invalidated = this.invalidatedStores.GetOrAdd(storeSlug, false);
+                if (storeSlug != "/" && invalidated)
                 {
                     var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
                     lock (storedCookieCollection)
