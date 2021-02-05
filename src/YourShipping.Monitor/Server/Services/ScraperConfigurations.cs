@@ -17,7 +17,7 @@
 
         public static readonly TimeSpan ProductCacheExpiration = TimeSpan.FromSeconds(10);
 
-        public static readonly TimeSpan StoreCacheExpiration = TimeSpan.FromMinutes(30);
+        public static readonly TimeSpan StoreCacheExpiration = TimeSpan.FromSeconds(10);
 
         public static readonly string StoresJsonUrl = "https://www.tuenvio.cu/stores.json";
 
