@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
@@ -19,7 +18,7 @@
     using YourShipping.Monitor.Server.Extensions.Models;
     using YourShipping.Monitor.Server.Extensions.Threading;
     using YourShipping.Monitor.Server.Helpers;
-    using YourShipping.Monitor.Server.Services;
+
     using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
     public static class HttpClientExtensions
@@ -34,6 +33,11 @@
         private static FieldInfo _fieldInfo;
 
         private static TimeSpan _timeBetweenCallsInSeconds = TimeSpan.FromSeconds(0.5);
+
+        private static readonly Dictionary<string, DateTime> dateTimes = new Dictionary<string, DateTime>();
+        private static readonly Dictionary<string, object> syncObjects = new Dictionary<string, object>();
+
+        private static readonly TimeSpan TimeToWait = TimeSpan.FromSeconds(2);
 
         static HttpClientExtensions()
         {
@@ -62,12 +66,24 @@
             string uri,
             Dictionary<string, string> parameters)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.FormPostAsync(uri, parameters));
+            return await httpClient.FuncCaptchaSaveAsync(
+                       async () =>
+                           {
+                               return await WaitAndCall(
+                                          UriHelper.GetStoreSlug(uri),
+                                          async () => await httpClient.FormPostAsync(uri, parameters));
+                           });
         }
 
         public static async Task<HttpResponseMessage> GetCaptchaSaveAsync(this HttpClient httpClient, string uri)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.GetAsync(uri));
+            return await httpClient.FuncCaptchaSaveAsync(
+                       async () =>
+                           {
+                               return await WaitAndCall(
+                                          UriHelper.GetStoreSlug(uri),
+                                          async () => await httpClient.GetAsync(uri));
+                           });
         }
 
         public static HttpClientHandler GetHttpClientHandler(this HttpClient httpClient)
@@ -86,7 +102,13 @@
             string uri,
             HttpContent httpContent)
         {
-            return await httpClient.FuncCaptchaSaveAsync(async () => await httpClient.PostAsync(uri, httpContent));
+            return await httpClient.FuncCaptchaSaveAsync(
+                       async () =>
+                           {
+                               return await WaitAndCall(
+                                          UriHelper.GetStoreSlug(uri),
+                                          async () => await httpClient.PostAsync(uri, httpContent));
+                           });
         }
 
         private static Dictionary<string, string> BuildReCaptchaParameters(
@@ -292,6 +314,59 @@
             finally
             {
                 storeSemaphore.Release();
+            }
+        }
+
+        private static readonly object globalSyncObj = new object();
+
+        private static async Task<HttpResponseMessage> WaitAndCall(
+            string storeSlug,
+            Func<Task<HttpResponseMessage>> func)
+        {
+            object syncObj = null;
+            try
+            {
+                lock (globalSyncObj)
+                {
+                    if (!syncObjects.TryGetValue(storeSlug, out syncObj))
+                    {
+                        syncObjects[storeSlug] = syncObj = new object();
+                    }
+                }
+
+                TimeSpan interval = TimeSpan.FromSeconds(2);
+                var intervalInSecondsValue = Environment.GetEnvironmentVariable("Http:RequestIntervalInSeconds");
+                if (int.TryParse(intervalInSecondsValue, out int intervalInSeconds))
+                {
+                    interval = TimeSpan.FromSeconds(intervalInSeconds);
+                }
+
+                TimeSpan timeToSleep = TimeSpan.Zero;
+                lock (syncObj)
+                {
+                    if (dateTimes.TryGetValue(storeSlug, out var time))
+                    {
+                        timeToSleep = interval.Subtract(DateTime.Now.Subtract(time));
+                    }
+                }
+
+                if (timeToSleep > TimeSpan.Zero)
+                {
+                    Log.Information("Sleeping {storeSlug} {timeSpan}", storeSlug, timeToSleep);
+                    Thread.Sleep(interval.Subtract(timeToSleep));
+                }
+
+                return await func();
+            }
+            finally
+            {
+                if (syncObj != null)
+                {
+                    lock (syncObj)
+                    {
+                        dateTimes[storeSlug] = DateTime.Now;
+                    }
+                }
             }
         }
     }

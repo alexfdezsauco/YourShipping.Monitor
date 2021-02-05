@@ -1,6 +1,7 @@
 ﻿namespace YourShipping.Monitor.Server.Helpers
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -44,6 +45,8 @@
 
         private readonly FileSystemWatcher fileSystemWatcher;
 
+        private readonly ConcurrentDictionary<string, bool> invalidatedStores = new ConcurrentDictionary<string, bool>();
+
         private readonly IServiceProvider provider;
 
         private readonly Regex RegexA = new Regex(@"a\s*=\s*(toNumbers[^)]+\))", RegexOptions.Compiled);
@@ -59,6 +62,8 @@
         private readonly Regex RegexCookiesTxt = new Regex(
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+
+        private Dictionary<string, int> counts = new Dictionary<string, int>();
 
         public CookiesAwareHttpClientFactory(IServiceProvider provider, IConfiguration configuration)
         {
@@ -95,7 +100,19 @@
             var clientHandler = httpClient.GetHttpClientHandler();
             var cookieCollection = await this.GetCookieCollectionAsync(url);
 
-            clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+            var invalidated = this.invalidatedStores.GetOrAdd(UriHelper.GetStoreSlug(url), false);
+            if (!invalidated)
+            {
+                var cookie = cookieCollection["uid"];
+                if (cookie != null)
+                {
+                    clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookie);
+                }
+            }
+            else
+            {
+                clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+            }
 
             return httpClient;
         }
@@ -141,20 +158,20 @@
         public void InvalidateCookies(string url)
         {
             Log.Information("Invalidating Cookies for url '{Url}'...", url);
-
-            var parts = new Url(url).Path.Split('/');
-            try
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            if (storeSlug != "/")
             {
-                if (parts.Length > 1)
+                this.invalidatedStores[storeSlug] = true;
+                try
                 {
-                    var cookieFilePath = $"data/{parts[0]}.json";
+                    var cookieFilePath = $"data/{storeSlug}.json";
                     Log.Information("Deleting cookies file for {Path}.", cookieFilePath);
                     File.Delete(cookieFilePath);
                 }
-            }
-            catch (Exception e)
-            {
-                Log.Warning(e, "Error deleting cookies file for {Url}", url);
+                catch (Exception e)
+                {
+                    Log.Warning(e, "Error deleting cookies file for {Url}", url);
+                }
             }
 
             this.cookieCollectionCacheStorage.Remove(url);
@@ -166,25 +183,25 @@
             var urls = this.cookieCollectionCacheStorage.Keys.ToList();
             foreach (var url in urls)
             {
-                var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
-                lock (storedCookieCollection)
+                var storeSlug = UriHelper.GetStoreSlug(url);
+                if (storeSlug != "/")
                 {
-                    try
+                    var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
+                    lock (storedCookieCollection)
                     {
-                        var parts = new Url(url).Path.Split('/');
-                        if (parts.Length > 1)
+                        try
                         {
-                            var cookiesFilePath = $"data/{parts[0]}.json";
+                            var cookiesFilePath = $"data/{storeSlug}.json";
                             Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
                             var serializeObject = JsonConvert.SerializeObject(
                                 storedCookieCollection,
                                 Formatting.Indented);
                             File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Warning(e, "Error serializing cookies.");
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error serializing cookies.");
+                        }
                     }
                 }
             }
@@ -611,8 +628,6 @@
             return antiScrappingCookie;
         }
 
-        private Dictionary<string, int> counts = new Dictionary<string, int>();
-
         private async Task SyncCookiesAsync(string url, CookieCollection cookieCollection)
         {
             var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
@@ -620,13 +635,12 @@
             {
                 lock (storedCookieCollection)
                 {
-                    if(!counts.TryGetValue(url, out var _))
-                    {
-                        counts[url] = 0;
-                    }
+                    // if(!counts.TryGetValue(url, out var _))
+                    // {
+                    // counts[url] = 0;
+                    // }
 
-                    counts[url] = (counts[url] + 1) % 2;
-
+                    // counts[url] = (counts[url] + 1) % 2;
                     Log.Information("Synchronizing cookies for url '{Url}'.", url);
 
                     foreach (Cookie cookie in cookieCollection)
@@ -653,10 +667,10 @@
                         }
                     }
 
-                    if (counts[url] == 0)
-                    {
-                        storedCookieCollection.Remove("uid");
-                    }
+                    // if (counts[url] == 0)
+                    // {
+                    // storedCookieCollection.Remove("uid");
+                    // }
                 }
             }
         }

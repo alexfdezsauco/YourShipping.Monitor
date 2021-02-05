@@ -14,14 +14,14 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
     },
     "YourShipping.Monitor.Server": {
       "commandName": "Project",
-      "launchBrowser": true,
       "environmentVariables": {
         "Http:TimeoutInSeconds": "60",
-        "ASPNETCORE_URLS": "https://localhost:5001;http://localhost:5000"
+        "ASPNETCORE_URLS": "https://localhost:5001;http://localhost:5000",
+        "MaximizeParallelism": "false"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
