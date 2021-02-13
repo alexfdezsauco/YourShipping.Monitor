@@ -137,107 +137,108 @@
                     if (!string.IsNullOrEmpty(content))
                     {
                         var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-                        var isBlocked = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
-                                            ?.TextContent == "503";
-                        if (isBlocked)
+                        
+                        var textContent = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
+                            ?.TextContent;
+                        var isSomethingWrong = textContent == "503" || textContent == "502";
+                        if (isSomethingWrong)
                         {
-                            // TODO: Slow down approach?
-                            Log.Error("The request to department '{Url}' was blocked", url);
+                            Log.Error("The request to department '{Url}' failed", url);
+
+                            return null;
                         }
-                        else
+
+                        var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+                        if (string.IsNullOrWhiteSpace(storeName))
                         {
-                            var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
-                            if (string.IsNullOrWhiteSpace(storeName))
+                            var footerElement =
+                                document.QuerySelector<IElement>("#footer > div.container > div > div > p");
+                            var uriParts = url.Split('/');
+                            if (uriParts.Length > 3)
                             {
-                                var footerElement =
-                                    document.QuerySelector<IElement>("#footer > div.container > div > div > p");
-                                var uriParts = url.Split('/');
-                                if (uriParts.Length > 3)
-                                {
-                                    storeName = url.Split('/')[3];
-                                }
+                                storeName = url.Split('/')[3];
+                            }
 
-                                if (footerElement != null)
+                            if (footerElement != null)
+                            {
+                                var footerElementTextParts = footerElement.TextContent.Split('•');
+                                if (footerElementTextParts.Length > 0)
                                 {
-                                    var footerElementTextParts = footerElement.TextContent.Split('•');
-                                    if (footerElementTextParts.Length > 0)
+                                    storeName = footerElementTextParts[^1].Trim();
+                                    if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
+                                        && storeName.Length > StorePrefix.Length)
                                     {
-                                        storeName = footerElementTextParts[^1].Trim();
-                                        if (storeName.StartsWith(StorePrefix, StringComparison.CurrentCultureIgnoreCase)
-                                            && storeName.Length > StorePrefix.Length)
+                                        storeName = storeName.Substring(StorePrefix.Length - 1);
+                                    }
+                                }
+                            }
+                        }
+
+                        var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
+                        if (mainPanelElement != null)
+                        {
+                            var filterElement =
+                                mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
+                            filterElement?.Remove();
+
+                            var departmentElements = mainPanelElement
+                                .QuerySelectorAll<IElement>("#mainPanel > span > a").ToList();
+
+                            if (departmentElements.Count > 2)
+                            {
+                                var departmentCategory = departmentElements[^2].TextContent.Trim();
+                                var departmentName = departmentElements[^1].TextContent.Trim();
+
+                                if (!string.IsNullOrWhiteSpace(departmentName)
+                                    && !string.IsNullOrWhiteSpace(departmentCategory))
+                                {
+                                    department = new Department
+                                                     {
+                                                         Url = url,
+                                                         Name = departmentName,
+                                                         Category = departmentCategory,
+                                                         Store = storeName,
+                                                         IsAvailable = true,
+                                                         IsEnabled = true
+                                                     };
+                                }
+                            }
+
+                            if (department != null)
+                            {
+                                var productElements = document.QuerySelectorAll<IElement>("li.span3.clearfix")
+                                    .ToList();
+                                await productElements.ParallelForEachAsync(
+                                    async productElement =>
                                         {
-                                            storeName = storeName.Substring(StorePrefix.Length - 1);
-                                        }
-                                    }
-                                }
-                            }
-
-                            var mainPanelElement = document.QuerySelector<IElement>("div#mainPanel");
-                            if (mainPanelElement != null)
-                            {
-                                var filterElement =
-                                    mainPanelElement?.QuerySelector<IElement>("div.productFilter.clearfix");
-                                filterElement?.Remove();
-
-                                var departmentElements = mainPanelElement
-                                    .QuerySelectorAll<IElement>("#mainPanel > span > a").ToList();
-
-                                if (departmentElements.Count > 2)
-                                {
-                                    var departmentCategory = departmentElements[^2].TextContent.Trim();
-                                    var departmentName = departmentElements[^1].TextContent.Trim();
-
-                                    if (!string.IsNullOrWhiteSpace(departmentName)
-                                        && !string.IsNullOrWhiteSpace(departmentCategory))
-                                    {
-                                        department = new Department
-                                                         {
-                                                             Url = url,
-                                                             Name = departmentName,
-                                                             Category = departmentCategory,
-                                                             Store = storeName,
-                                                             IsAvailable = true,
-                                                             IsEnabled = true
-                                                         };
-                                    }
-                                }
-
-                                if (department != null)
-                                {
-                                    var productElements = document.QuerySelectorAll<IElement>("li.span3.clearfix")
-                                        .ToList();
-                                    await productElements.ParallelForEachAsync(
-                                        async productElement =>
+                                            var product = await this.TryAddProductToShoppingCart(
+                                                              department,
+                                                              document,
+                                                              productElement,
+                                                              disabledProducts);
+                                            if (product != null)
                                             {
-                                                var product = await this.TryAddProductToShoppingCart(
-                                                                  department,
-                                                                  document,
-                                                                  productElement,
-                                                                  disabledProducts);
-                                                if (product != null)
+                                                lock (department)
                                                 {
-                                                    lock (department)
-                                                    {
-                                                        department.Products.Add(product.Url, product);
-                                                    }
+                                                    department.Products.Add(product.Url, product);
                                                 }
-                                            });
+                                            }
+                                        });
 
-                                    // TODO: Improve this?
-                                    department.ProductsCount = department.Products.Count;
-                                    department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
-                                    bestScrapedDepartment = department;
-                                }
+                                // TODO: Improve this?
+                                department.ProductsCount = department.Products.Count;
+                                department.Sha256 = JsonSerializer.Serialize(department).ComputeSha256();
+                                bestScrapedDepartment = department;
                             }
+                        }
 
-                            if (!isUserLogged)
-                            {
-                                Log.Warning(
-                                    "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
-                                    storeName,
-                                    store.Url);
-                                this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
-                            }
+                        if (!isUserLogged)
+                        {
+                            Log.Warning(
+                                "There is no a session open for store '{Store}' with url '{Url}'. Cookies will be invalidated.",
+                                storeName,
+                                store.Url);
+                            this.cookiesAwareHttpClientFactory.InvalidateCookies(store.Url);
                         }
                     }
 
