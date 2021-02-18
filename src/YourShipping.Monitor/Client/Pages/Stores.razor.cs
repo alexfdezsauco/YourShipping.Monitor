@@ -21,18 +21,19 @@
         private readonly Dictionary<object, List<ActionDefinition>> ActionDefinitions =
             new Dictionary<object, List<ActionDefinition>>();
 
-        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
-
         public UIModal _modal { get; set; }
 
         public string CaptchaText { get; set; }
 
+        public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
 
         public bool IsLoading
         {
             get => this.GetPropertyValue<bool>(nameof(this.IsLoading));
             set => this.SetPropertyValue(nameof(this.IsLoading), value);
         }
+
+        public Store SelectedStore { get; set; }
 
         public string Url
         {
@@ -76,8 +77,8 @@
                                 Label = "Captcha",
                                 IsDisabled = !store.Captcha,
                                 Action = async o => await this.BeginResolveCaptchaAsync(o as Store)
-                            }); 
-                    
+                            });
+
                     actionDefinitions.Add(
                         new CallActionDefinition
                             {
@@ -143,28 +144,6 @@
             }
         }
 
-        private async Task BeginResolveCaptchaAsync(Store store)
-        {
-            this.SelectedStore = store;
-            this.StateHasChanged();
-
-            await this._modal.ShowAsync();
-        }
-
-        protected string GetCaptcha()
-        {
-            return HttpClient.BaseAddress + $"Stores/Captcha/{SelectedStore.Id}";
-        }
-
-        protected async Task EndResolveCaptchaAsync()
-        {
-            await this.ApplicationState.ResolveCaptchaAsync(SelectedStore, CaptchaText);
-            await this._modal.CloseAsync();
-        }
-
-
-        public Store SelectedStore { get; set; }
-
         protected async Task AddAsync()
         {
             var store = await this.ApplicationState.AddStoreAsync(this.Url);
@@ -173,6 +152,19 @@
                 this.Url = string.Empty;
                 this.StateHasChanged();
             }
+        }
+
+        protected async Task EndResolveCaptchaAsync()
+        {
+            await this.ApplicationState.ResolveCaptchaAsync(this.SelectedStore, this.CaptchaText);
+            this.SelectedStore = null;
+            this.CaptchaText = string.Empty;
+            await this._modal.CloseAsync();
+        }
+
+        protected string GetCaptcha()
+        {
+            return this.HttpClient.BaseAddress + $"Stores/Captcha/{this.SelectedStore.Id}";
         }
 
         protected string GetHighlightStyle(Store store)
@@ -257,6 +249,14 @@
             }
 
             this.IsLoading = true;
+        }
+
+        private async Task BeginResolveCaptchaAsync(Store store)
+        {
+            this.SelectedStore = store;
+            this.StateHasChanged();
+
+            await this._modal.ShowAsync();
         }
 
         private async Task BuyOrBrowseAsync(Store store)
