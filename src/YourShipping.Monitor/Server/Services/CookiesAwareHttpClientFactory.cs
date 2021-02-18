@@ -436,6 +436,8 @@
             string password,
             bool unattended)
         {
+            var cookiesCollection = new Dictionary<string, Cookie>();
+
             Log.Information("Authenticating in TuEnvio as {username}", username);
 
             var signInUrl = url.Replace("/Products?depPid=0", "/signin.aspx");
@@ -499,29 +501,46 @@
                     // TODO: Improve this.
                     var storeSlug = UriHelper.GetStoreSlug(url);
                     var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
-                    var storeCaptchaSolutionFilePath = $"captchas/{storeSlug}.txt";
+                    var captchaSolutionFilePath = $"captchas/{storeSlug}.txt";
                     if (!File.Exists(storeCaptchaFilePath))
                     {
                         captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
-                        File.Delete(storeCaptchaSolutionFilePath);
+                        File.Delete(captchaSolutionFilePath);
                         File.Copy(captchaFilePath, storeCaptchaFilePath, true);
                     }
+
+                    captchaFilePath = storeCaptchaFilePath;
 
                     if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath) && unattended)
                     {
                         captchaText = GetCaptchaText(captchaFilePath);
                     }
 
-                    if (string.IsNullOrWhiteSpace(captchaText) && File.Exists(storeCaptchaSolutionFilePath))
+                    if (string.IsNullOrWhiteSpace(captchaText) && File.Exists(captchaSolutionFilePath))
                     {
-                        captchaText = await File.ReadAllTextAsync(storeCaptchaSolutionFilePath);
-
-                        File.Delete(storeCaptchaFilePath);
-                        File.Delete(storeCaptchaSolutionFilePath);
+                        captchaText = await File.ReadAllTextAsync(captchaSolutionFilePath);
                     }
 
                     if (!string.IsNullOrWhiteSpace(captchaText))
                     {
+                        try
+                        {
+                            File.Delete(captchaFilePath);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error deleting captcha file");
+                        }
+
+                        try
+                        {
+                            File.Delete(captchaSolutionFilePath);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error deleting captcha solution file");
+                        }
+
                         signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
                         try
                         {
@@ -539,7 +558,12 @@
                 
                     try
                     {
-                        if (!isAuthenticated)
+                        if (!unattended && File.Exists(captchaFilePath))
+                        {
+                            return cookiesCollection;
+                        }
+
+                        if (!isAuthenticated && File.Exists(captchaFilePath))
                         {
                             File.Delete(captchaFilePath);
                         }
@@ -563,8 +587,6 @@
                     Log.Warning(e, "Error moving captcha file {FilePath}", captchaFilePath);
                 }
             }
-
-            var cookiesCollection = new Dictionary<string, Cookie>();
 
             if (httpHandlerCookieCollection != null)
             {
