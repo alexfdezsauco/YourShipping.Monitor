@@ -12,5 +12,7 @@
         Task SerializeAsync();
 
         Task SyncCookiesAsync(string url, HttpClient httpClient);
+
+        Task BeginLoginAsync(string url);
     }
 }

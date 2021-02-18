@@ -10,7 +10,6 @@
     using System.Net.Http.Headers;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -39,7 +38,11 @@
     // TODO: Improve this?
     public class CookiesAwareHttpClientFactory : ICookiesAwareHttpClientFactory
     {
+        private readonly Dictionary<string, bool> _authenticating = new Dictionary<string, bool>();
+
         private readonly IConfiguration _configuration;
+
+        private readonly ConcurrentDictionary<string, object> _syncObjects = new ConcurrentDictionary<string, object>();
 
         private readonly CacheStorage<string, Dictionary<string, Cookie>> cookieCollectionCacheStorage =
             new CacheStorage<string, Dictionary<string, Cookie>>();
@@ -63,6 +66,11 @@
         private readonly Regex RegexCookiesTxt = new Regex(
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+
+        private readonly Dictionary<string, Dictionary<string, Cookie>> _loginCookies =
+            new Dictionary<string, Dictionary<string, Cookie>>();
+
+        private Dictionary<string, bool> _waiting = new Dictionary<string, bool>();
 
         private Dictionary<string, int> counts = new Dictionary<string, int>();
 
@@ -100,7 +108,6 @@
 
             var clientHandler = httpClient.GetHttpClientHandler();
             var cookieCollection = await this.GetCookieCollectionAsync(url);
-
             var invalidated = this.invalidatedStores.GetOrAdd(UriHelper.GetStoreSlug(url), false);
             if (!invalidated)
             {
@@ -139,7 +146,7 @@
                 if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%"
                                                          && !string.IsNullOrWhiteSpace(password))
                 {
-                    cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password, unattended);
+                    cookieCollection = await this.GetLoginCookiesAsync(url);
                 }
                 else
                 {
@@ -159,6 +166,8 @@
 
         public void InvalidateCookies(string url)
         {
+            // TODO: do also something with authentication cookies?
+
             Log.Information("Invalidating Cookies for url '{Url}'...", url);
             var storeSlug = UriHelper.GetStoreSlug(url);
             if (storeSlug != "/")
@@ -224,6 +233,36 @@
             else
             {
                 await this.SyncCookiesAsync(url, cookieCollection);
+            }
+        }
+
+        public async Task BeginLoginAsync(string url)
+        {
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
+            lock (syncObj)
+            {
+                if (this._authenticating.TryGetValue(storeSlug, out var value) && value)
+                {
+                    return;
+                }
+
+                this._authenticating[storeSlug] = true;
+            }
+
+            var antiScrappingCookie = await this.ReadAntiScrappingCookieAsync();
+            var credentialsConfigurationSection = this._configuration.GetSection("Credentials");
+            var username = credentialsConfigurationSection?["Username"];
+            var password = credentialsConfigurationSection?["Password"];
+            bool.TryParse(credentialsConfigurationSection?["Unattended"], out var unattended);
+            if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%"
+                                                     && !string.IsNullOrWhiteSpace(password))
+            {
+                var cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password, unattended);
+                lock (syncObj)
+                {
+                    this._loginCookies[storeSlug] = cookieCollection;
+                }
             }
         }
 
@@ -364,7 +403,7 @@
                                        if (File.Exists(cookieFilePath))
                                        {
                                            Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
-                                           var readAllText = File.ReadAllText(cookieFilePath, Encoding.UTF8);
+                                           var readAllText = await File.ReadAllTextAsync(cookieFilePath, Encoding.UTF8);
                                            var cookies =
                                                JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
 
@@ -380,6 +419,21 @@
 
                                return await this.GetCookiesCollectionAsync(url);
                            });
+        }
+
+        private async Task<Dictionary<string, Cookie>> GetLoginCookiesAsync(string url)
+        {
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
+            lock (syncObj)
+            {
+                if (_loginCookies.TryGetValue(storeSlug, out var cookieCollection))
+                {
+                    return cookieCollection;
+                }
+            }
+
+            return null;
         }
 
         private async Task<Dictionary<string, Cookie>> LoadFromCookiesTxtAsync(Cookie antiScrappingCookie, bool keepId)
@@ -436,7 +490,10 @@
             string password,
             bool unattended)
         {
-            var cookiesCollection = new Dictionary<string, Cookie>();
+            // TODO: Improve this.
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
+            var storeCaptchaSolutionFilePath = $"captchas/{storeSlug}.txt";
 
             Log.Information("Authenticating in TuEnvio as {username}", username);
 
@@ -478,8 +535,6 @@
                     {
                         signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
                     }
-
-                    // signinPageContent = await httpClient.GetStringAsync(signInUrl);
                 }
                 catch (Exception e)
                 {
@@ -498,72 +553,49 @@
 
                 if (signInParameters != null)
                 {
-                    // TODO: Improve this.
-                    var storeSlug = UriHelper.GetStoreSlug(url);
-                    var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
-                    var captchaSolutionFilePath = $"captchas/{storeSlug}.txt";
-                    if (!File.Exists(storeCaptchaFilePath))
+                    captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
+                    if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath))
                     {
-                        captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
-                        File.Delete(captchaSolutionFilePath);
-                        File.Copy(captchaFilePath, storeCaptchaFilePath, true);
+                        if (unattended)
+                        {
+                            captchaText = GetCaptchaText(captchaFilePath);
+                        }
+                        else
+                        {
+                            File.Delete(storeCaptchaSolutionFilePath);
+                            File.Copy(captchaFilePath, storeCaptchaFilePath, true);
+                            while (!File.Exists(storeCaptchaSolutionFilePath))
+                            {
+                                await Task.Delay(1000);
+                            }
+
+                            captchaText = await File.ReadAllTextAsync(storeCaptchaSolutionFilePath);
+
+                            File.Delete(storeCaptchaFilePath);
+                            File.Delete(storeCaptchaSolutionFilePath);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(captchaText))
+                        {
+                            signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
+                            try
+                            {
+                                await httpClient.PostAsync(signInUrl, new FormUrlEncodedContent(signInParameters));
+                                httpHandlerCookieCollection =
+                                    cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
+                                isAuthenticated =
+                                    !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Warning(e, "Error authenticating in '{Url}'", signInUrl);
+                            }
+                        }
                     }
 
-                    captchaFilePath = storeCaptchaFilePath;
-
-                    if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath) && unattended)
-                    {
-                        captchaText = GetCaptchaText(captchaFilePath);
-                    }
-
-                    if (string.IsNullOrWhiteSpace(captchaText) && File.Exists(captchaSolutionFilePath))
-                    {
-                        captchaText = await File.ReadAllTextAsync(captchaSolutionFilePath);
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(captchaText))
-                    {
-                        try
-                        {
-                            File.Delete(captchaFilePath);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Warning(e, "Error deleting captcha file");
-                        }
-
-                        try
-                        {
-                            File.Delete(captchaSolutionFilePath);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Warning(e, "Error deleting captcha solution file");
-                        }
-
-                        signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
-                        try
-                        {
-                            await httpClient.PostAsync(signInUrl, new FormUrlEncodedContent(signInParameters));
-                            httpHandlerCookieCollection =
-                                cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
-                            isAuthenticated =
-                                !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Warning(e, "Error authenticating in '{Url}'", signInUrl);
-                        }
-                    }
-                
                     try
                     {
-                        if (!unattended && File.Exists(captchaFilePath))
-                        {
-                            return cookiesCollection;
-                        }
-
-                        if (!isAuthenticated && File.Exists(captchaFilePath))
+                        if (!isAuthenticated)
                         {
                             File.Delete(captchaFilePath);
                         }
@@ -587,6 +619,8 @@
                     Log.Warning(e, "Error moving captcha file {FilePath}", captchaFilePath);
                 }
             }
+
+            var cookiesCollection = new Dictionary<string, Cookie>();
 
             if (httpHandlerCookieCollection != null)
             {

@@ -67,6 +67,11 @@
             try
             {
                 var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
+                if (httpClient == null)
+                {
+                    return null;
+                }
+
                 var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(requestUri);
                 if (httpResponseMessage?.Content != null)
                 {
@@ -100,8 +105,7 @@
             if (!string.IsNullOrWhiteSpace(content))
             {
                 var document = await this.browsingContext.OpenAsync(req => req.Content(content));
-                var textContent = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")
-                    ?.TextContent;
+                var textContent = document.QuerySelector<IElement>("#notfound > div.notfound > div > h1")?.TextContent;
                 var isSomethingWrong = textContent == "503" || textContent == "502";
                 if (isSomethingWrong)
                 {
@@ -112,8 +116,7 @@
 
                 var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
                 hasProductInCart = document.QuerySelectorAll<IElement>(
-                        "#ctl00_UpperCartPanel > div > table > tbody > tr > td.cart-product-info > div > p > a")
-                    .Any();
+                    "#ctl00_UpperCartPanel > div > table > tbody > tr > td.cart-product-info > div > p > a").Any();
                 if (string.IsNullOrWhiteSpace(storeName))
                 {
                     var footerElement = document.QuerySelector<IElement>("#footer > div.container > div > div > p");

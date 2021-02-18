@@ -106,6 +106,10 @@
                         var nameValueCollection = new Dictionary<string, string> { { "Currency", currency } };
                         var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
                         var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
+                        if (httpClient == null)
+                        {
+                            return null;
+                        }
 
                         httpClient.DefaultRequestHeaders.Referrer = new Uri(store.Url);
                         var httpResponseMessage =
@@ -259,6 +263,10 @@
         {
             var storeUrl = UriHelper.EnsureStoreUrl(department.Url);
             var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(storeUrl);
+            if (httpClient == null)
+            {
+                return null;
+            }
 
             var productNameAnchor = productElement.QuerySelector<IElement>("div.thumbSetting > div.thumbTitle > a");
             var productName = productNameAnchor.Text();

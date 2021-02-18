@@ -90,6 +90,10 @@
             }
 
             var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(store.Url);
+            if (httpClient == null)
+            {
+                return null;
+            }
 
             var department = parentDepartment ?? await this._departmentScraper.GetAsync(url, false, store);
             if (department == null || !department.IsAvailable)

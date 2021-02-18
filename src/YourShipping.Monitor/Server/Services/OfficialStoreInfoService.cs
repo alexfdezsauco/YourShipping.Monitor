@@ -39,6 +39,11 @@
                 try
                 {
                     var httpClient = await this.cookiesAwareHttpClientFactory.CreateHttpClientAsync(ScraperConfigurations.StoresJsonUrl);
+                    if (httpClient == null)
+                    {
+                        return null;
+                    }
+
                     this.storesToImport = await httpClient.GetFromJsonAsync<OfficialStoreInfo[]>(ScraperConfigurations.StoresJsonUrl);
                     await this.cookiesAwareHttpClientFactory.SyncCookiesAsync(ScraperConfigurations.StoresJsonUrl, httpClient);
                     this.setTime = DateTime.Now;
