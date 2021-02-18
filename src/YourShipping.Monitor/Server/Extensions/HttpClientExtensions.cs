@@ -35,6 +35,7 @@
         private static TimeSpan _timeBetweenCallsInSeconds = TimeSpan.FromSeconds(0.5);
 
         private static readonly Dictionary<string, DateTime> dateTimes = new Dictionary<string, DateTime>();
+
         private static readonly Dictionary<string, object> syncObjects = new Dictionary<string, object>();
 
         private static readonly TimeSpan TimeToWait = TimeSpan.FromSeconds(2);

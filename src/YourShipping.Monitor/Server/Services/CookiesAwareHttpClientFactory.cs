@@ -42,6 +42,9 @@
 
         private readonly IConfiguration _configuration;
 
+        private readonly Dictionary<string, Dictionary<string, Cookie>> _loginCookies =
+            new Dictionary<string, Dictionary<string, Cookie>>();
+
         private readonly ConcurrentDictionary<string, object> _syncObjects = new ConcurrentDictionary<string, object>();
 
         private readonly CacheStorage<string, Dictionary<string, Cookie>> cookieCollectionCacheStorage =
@@ -66,9 +69,6 @@
         private readonly Regex RegexCookiesTxt = new Regex(
             @"([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)\s+([^]\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
-
-        private readonly Dictionary<string, Dictionary<string, Cookie>> _loginCookies =
-            new Dictionary<string, Dictionary<string, Cookie>>();
 
         private Dictionary<string, bool> _waiting = new Dictionary<string, bool>();
 
@@ -100,6 +100,37 @@
                 };
 
             this.fileSystemWatcher.EnableRaisingEvents = true;
+        }
+
+        public async Task BeginLoginAsync(string url)
+        {
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
+            lock (syncObj)
+            {
+                if (!this.invalidatedStores[storeSlug] && this._authenticating.TryGetValue(storeSlug, out var value)
+                                                       && value)
+                {
+                    return;
+                }
+
+                this._authenticating[storeSlug] = true;
+            }
+
+            var antiScrappingCookie = await this.ReadAntiScrappingCookieAsync();
+            var credentialsConfigurationSection = this._configuration.GetSection("Credentials");
+            var username = credentialsConfigurationSection?["Username"];
+            var password = credentialsConfigurationSection?["Password"];
+            bool.TryParse(credentialsConfigurationSection?["Unattended"], out var unattended);
+            if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%"
+                                                     && !string.IsNullOrWhiteSpace(password))
+            {
+                var cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password, unattended);
+                lock (syncObj)
+                {
+                    this._loginCookies[storeSlug] = cookieCollection;
+                }
+            }
         }
 
         public async Task<HttpClient> CreateHttpClientAsync(string url)
@@ -167,12 +198,21 @@
         public void InvalidateCookies(string url)
         {
             // TODO: do also something with authentication cookies?
-
             Log.Information("Invalidating Cookies for url '{Url}'...", url);
             var storeSlug = UriHelper.GetStoreSlug(url);
             if (storeSlug != "/")
             {
+                if (this._syncObjects.TryGetValue(storeSlug, out var syncObj))
+                {
+                    lock (syncObj)
+                    {
+                        this._loginCookies.Remove(storeSlug);
+                        this._authenticating.Remove(storeSlug);
+                    }
+                }
+
                 this.invalidatedStores[storeSlug] = true;
+
                 try
                 {
                     var cookieFilePath = $"data/{storeSlug}.json";
@@ -233,36 +273,6 @@
             else
             {
                 await this.SyncCookiesAsync(url, cookieCollection);
-            }
-        }
-
-        public async Task BeginLoginAsync(string url)
-        {
-            var storeSlug = UriHelper.GetStoreSlug(url);
-            var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
-            lock (syncObj)
-            {
-                if (this._authenticating.TryGetValue(storeSlug, out var value) && value)
-                {
-                    return;
-                }
-
-                this._authenticating[storeSlug] = true;
-            }
-
-            var antiScrappingCookie = await this.ReadAntiScrappingCookieAsync();
-            var credentialsConfigurationSection = this._configuration.GetSection("Credentials");
-            var username = credentialsConfigurationSection?["Username"];
-            var password = credentialsConfigurationSection?["Password"];
-            bool.TryParse(credentialsConfigurationSection?["Unattended"], out var unattended);
-            if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%"
-                                                     && !string.IsNullOrWhiteSpace(password))
-            {
-                var cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password, unattended);
-                lock (syncObj)
-                {
-                    this._loginCookies[storeSlug] = cookieCollection;
-                }
             }
         }
 
@@ -427,7 +437,7 @@
             var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
             lock (syncObj)
             {
-                if (_loginCookies.TryGetValue(storeSlug, out var cookieCollection))
+                if (this._loginCookies.TryGetValue(storeSlug, out var cookieCollection))
                 {
                     return cookieCollection;
                 }
