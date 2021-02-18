@@ -10,6 +10,7 @@
     using System.Net.Http.Headers;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using AngleSharp;
@@ -134,10 +135,11 @@
                 var credentialsConfigurationSection = this._configuration.GetSection("Credentials");
                 var username = credentialsConfigurationSection?["Username"];
                 var password = credentialsConfigurationSection?["Password"];
+                bool.TryParse(credentialsConfigurationSection?["Unattended"], out var unattended);
                 if (!string.IsNullOrWhiteSpace(username) && username != "%USERNAME%"
                                                          && !string.IsNullOrWhiteSpace(password))
                 {
-                    cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password);
+                    cookieCollection = await this.LoginAsync(antiScrappingCookie, url, username, password, unattended);
                 }
                 else
                 {
@@ -431,7 +433,8 @@
             Cookie antiScrappingCookie,
             string url,
             string username,
-            string password)
+            string password,
+            bool unattended)
         {
             Log.Information("Authenticating in TuEnvio as {username}", username);
 
@@ -451,7 +454,10 @@
                 attempts++;
 
                 var httpMessageHandler = new HttpClientHandler { CookieContainer = cookieContainer };
-                cookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, antiScrappingCookie);
+                if (antiScrappingCookie != null)
+                {
+                    cookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, antiScrappingCookie);
+                }
 
                 var httpClient = new HttpClient(httpMessageHandler)
                                      {
@@ -460,7 +466,7 @@
                 httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation(
                     "user-agent",
-                    ScraperConfigurations.SupportedAgents);
+                    ScraperConfigurations.GetSupportedAgent());
 
                 var signinPageContent = string.Empty;
                 try
@@ -493,7 +499,30 @@
                     captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
                     if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath))
                     {
-                        captchaText = GetCaptchaText(captchaFilePath);
+                        if (unattended)
+                        {
+                            captchaText = GetCaptchaText(captchaFilePath);
+                        }
+                        else
+                        {
+                            // TODO: Improve this.
+                            var storeSlug = UriHelper.GetStoreSlug(url);
+                            var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
+                            var storeCaptchaSolutionFilePath = $"captchas/{storeSlug}.txt";
+                            
+                            File.Delete(storeCaptchaSolutionFilePath);
+                            File.Copy(captchaFilePath, storeCaptchaFilePath, true);
+                            while (!File.Exists(storeCaptchaSolutionFilePath))
+                            {
+                                Thread.Sleep(1000);
+                            }
+
+                            captchaText = await File.ReadAllTextAsync(storeCaptchaSolutionFilePath);
+                            
+                            File.Delete(storeCaptchaFilePath);
+                            File.Delete(storeCaptchaSolutionFilePath);
+                        }
+
                         if (!string.IsNullOrWhiteSpace(captchaText))
                         {
                             signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
@@ -552,7 +581,10 @@
                 }
             }
 
-            cookiesCollection[antiScrappingCookie.Name] = antiScrappingCookie;
+            if (antiScrappingCookie != null)
+            {
+                cookiesCollection[antiScrappingCookie.Name] = antiScrappingCookie;
+            }
 
             return cookiesCollection;
         }

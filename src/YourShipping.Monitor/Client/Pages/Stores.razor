@@ -7,6 +7,7 @@
 @using Blorc.PatternFly.Components.EmptyState
 @using Blorc.PatternFly.Components.Label
 @using Blorc.PatternFly.Components.Table
+@using Blorc.PatternFly.Components.Modal
 @using Blorc.PatternFly.Components.Text
 @using Blorc.PatternFly.Components.TextInput
 @using Blorc.PatternFly.Components.Title
@@ -25,19 +26,19 @@
 <br />
 
 <div class="pf-c-form__group">
-    
-    <label class="pf-c-form__label" for="vertical-align-labels-vertical-form-name">    
-        <span class="pf-c-form__label-text">Store Link</span>    
-        <span class="pf-c-form__label-required" aria-hidden="true">*</span>  
+
+    <label class="pf-c-form__label" for="vertical-align-labels-vertical-form-name">
+        <span class="pf-c-form__label-text">Store Link</span>
+        <span class="pf-c-form__label-required" aria-hidden="true">*</span>
     </label>
 
     <Split IsGutter="true">
         <SplitItem IsFilled="true">
-            <TextInput Label="Department Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous"/>
+            <TextInput Label="Department Link" @bind-Value="Url" UpdateMode="@UpdateMode.Continuous" />
         </SplitItem>
         <SplitItem>
             <Button Variant=@ButtonVariant.Primary IsDisabled=@HasError OnClick=@(async (s, a) => await AddAsync())>Add</Button>
-        </SplitItem> 
+        </SplitItem>
         <SplitItem>
             <Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await ImportStoresAsync())>Import stores</Button>
         </SplitItem>
@@ -48,7 +49,7 @@
 
 <Stack IsGutter="true">
     <StackItem>
-        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Stores  HighlightStyleFunc=@(o=>GetHighlightStyle(o as Store))>
+        <Table Caption="Departments" IsStickyHeader="true" DataSource=@Stores HighlightStyleFunc=@(o=>GetHighlightStyle(o as Store))>
             <Header>
                 <Row>
                     <Column Label="Name" Key="Name" IsSortable="true" Idx="0" />
@@ -56,6 +57,7 @@
                     <Column Label="Departments Count" Key="DepartmentsCount" IsSortable="true" Idx="2" />
                     <Column Label="Categories Count" Key="CategoriesCount" IsSortable="true" Idx="3" />
                     <Column Label="Has Products In Cart" Key="HasProductsInCart" IsSortable="true" Idx="4" />
+                    <Column Label="Captcha" Key="Captcha" IsSortable="true" Idx="5" />
                     <ActionColumn ActionColumnType=@ActionColumnType.ButtonAndToggle Label="Actions" Key="Actions" Align="@Align.Center" Idx="6" ActionSource=@(record => GetActions(record)) />
                 </Row>
             </Header>
@@ -83,6 +85,33 @@
     </StackItem>
     <StackItem><Button Variant=@ButtonVariant.Secondary OnClick=@(async (s, a) => await RefreshAsync(true)) isBlock>Refresh</Button></StackItem>
 </Stack>
+
+<UIModal ShowCloseButton="true" Size="@ModalSize.Large" @ref="_modal" CloseButtonPressed=@(async (e,s) => await _modal.CloseAsync())>
+    <Header>
+        <TextContent>
+            <Text Component="h1">Resolving Captcha</Text>
+        </TextContent>
+    </Header>
+    <Body>
+    <Stack IsGutter="true">
+        <StackItem>
+            <img src="@GetCaptcha()"/>
+            <TextInput @bind-Value="CaptchaText" UpdateMode="@UpdateMode.Continuous"/>
+        </StackItem>
+    </Stack>
+    </Body>
+    <Footer>
+        <Button Variant="ButtonVariant.Secondary" OnClick=@(async (s,e) => await _modal.CloseAsync())>Cancel</Button>
+        <Button Variant="ButtonVariant.Primary" OnClick=@(async (s,e) => await EndResolveCaptchaAsync())>Resolve</Button>
+    </Footer>
+</UIModal>
+
+
+@code
+{
+
+}
+
 
 
 

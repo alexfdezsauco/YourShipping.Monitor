@@ -1,12 +1,16 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using YourShipping.Monitor.Shared.Annotations;
-
-namespace YourShipping.Monitor.Shared
+﻿namespace YourShipping.Monitor.Shared
 {
+    using System.ComponentModel;
+    using System.Runtime.CompilerServices;
+
+    using YourShipping.Monitor.Shared.Annotations;
+
     public class Store : INotifyPropertyChanged
     {
         private bool _hasProductsInCart;
+
+        private bool captcha;
+
         private int categoriesCount;
 
         private int departmentsCount;
@@ -27,177 +31,192 @@ namespace YourShipping.Monitor.Shared
 
         private string url;
 
-        public int CategoriesCount
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public bool Captcha
         {
-            get => categoriesCount;
+            get => this.captcha;
             set
             {
-                if (value.Equals(categoriesCount))
+                if (value == this.captcha)
                 {
                     return;
                 }
 
-                categoriesCount = value;
-                OnPropertyChanged();
+                this.captcha = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public int CategoriesCount
+        {
+            get => this.categoriesCount;
+            set
+            {
+                if (value.Equals(this.categoriesCount))
+                {
+                    return;
+                }
+
+                this.categoriesCount = value;
+                this.OnPropertyChanged();
             }
         }
 
         public int DepartmentsCount
         {
-            get => departmentsCount;
+            get => this.departmentsCount;
             set
             {
-                if (value.Equals(departmentsCount))
+                if (value.Equals(this.departmentsCount))
                 {
                     return;
                 }
 
-                departmentsCount = value;
-                OnPropertyChanged();
+                this.departmentsCount = value;
+                this.OnPropertyChanged();
             }
         }
 
         public bool HasChanged
         {
-            get => hasChanged;
+            get => this.hasChanged;
             set
             {
-                if (value == hasChanged)
+                if (value == this.hasChanged)
                 {
                     return;
                 }
 
-                hasChanged = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public int Id
-        {
-            get => id;
-            set
-            {
-                if (value == id)
-                {
-                    return;
-                }
-
-                id = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsAvailable
-        {
-            get => isAvailable;
-            set
-            {
-                if (value == isAvailable)
-                {
-                    return;
-                }
-
-                isAvailable = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsEnabled
-        {
-            get => isEnabled;
-            set
-            {
-                if (value == isEnabled)
-                {
-                    return;
-                }
-
-                isEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsStored
-        {
-            get => isStored;
-            set
-            {
-                if (value == isStored)
-                {
-                    return;
-                }
-
-                isStored = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string Name
-        {
-            get => name;
-            set
-            {
-                if (value == name)
-                {
-                    return;
-                }
-
-                name = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string Province
-        {
-            get => province;
-            set
-            {
-                if (value == province)
-                {
-                    return;
-                }
-
-                province = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string Url
-        {
-            get => url;
-            set
-            {
-                if (value == url)
-                {
-                    return;
-                }
-
-                url = value;
-                OnPropertyChanged();
+                this.hasChanged = value;
+                this.OnPropertyChanged();
             }
         }
 
         public bool HasProductsInCart
         {
-            get => _hasProductsInCart;
+            get => this._hasProductsInCart;
             set
             {
-                if (value == _hasProductsInCart)
+                if (value == this._hasProductsInCart)
                 {
                     return;
                 }
 
-                _hasProductsInCart = value;
-                OnPropertyChanged();
+                this._hasProductsInCart = value;
+                this.OnPropertyChanged();
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public int Id
+        {
+            get => this.id;
+            set
+            {
+                if (value == this.id)
+                {
+                    return;
+                }
+
+                this.id = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsAvailable
+        {
+            get => this.isAvailable;
+            set
+            {
+                if (value == this.isAvailable)
+                {
+                    return;
+                }
+
+                this.isAvailable = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsEnabled
+        {
+            get => this.isEnabled;
+            set
+            {
+                if (value == this.isEnabled)
+                {
+                    return;
+                }
+
+                this.isEnabled = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public bool IsStored
+        {
+            get => this.isStored;
+            set
+            {
+                if (value == this.isStored)
+                {
+                    return;
+                }
+
+                this.isStored = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Name
+        {
+            get => this.name;
+            set
+            {
+                if (value == this.name)
+                {
+                    return;
+                }
+
+                this.name = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Province
+        {
+            get => this.province;
+            set
+            {
+                if (value == this.province)
+                {
+                    return;
+                }
+
+                this.province = value;
+                this.OnPropertyChanged();
+            }
+        }
+
+        public string Url
+        {
+            get => this.url;
+            set
+            {
+                if (value == this.url)
+                {
+                    return;
+                }
+
+                this.url = value;
+                this.OnPropertyChanged();
+            }
+        }
 
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

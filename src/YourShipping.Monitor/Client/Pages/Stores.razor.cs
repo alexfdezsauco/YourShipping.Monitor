@@ -7,6 +7,7 @@
     using System.Threading.Tasks;
 
     using Blorc.Components;
+    using Blorc.PatternFly.Components.Modal;
     using Blorc.PatternFly.Components.Table;
 
     using Microsoft.AspNetCore.Components;
@@ -21,6 +22,11 @@
             new Dictionary<object, List<ActionDefinition>>();
 
         public bool HasError => !Uri.TryCreate(this.Url, UriKind.Absolute, out _);
+
+        public UIModal _modal { get; set; }
+
+        public string CaptchaText { get; set; }
+
 
         public bool IsLoading
         {
@@ -64,6 +70,14 @@
             {
                 if (row is Store store)
                 {
+                    actionDefinitions.Add(
+                        new CallActionDefinition
+                            {
+                                Label = "Captcha",
+                                IsDisabled = !store.Captcha,
+                                Action = async o => await this.BeginResolveCaptchaAsync(o as Store)
+                            }); 
+                    
                     actionDefinitions.Add(
                         new CallActionDefinition
                             {
@@ -128,6 +142,28 @@
                 yield return actionDefinition;
             }
         }
+
+        private async Task BeginResolveCaptchaAsync(Store store)
+        {
+            this.SelectedStore = store;
+            this.StateHasChanged();
+
+            await this._modal.ShowAsync();
+        }
+
+        protected string GetCaptcha()
+        {
+            return HttpClient.BaseAddress + $"Stores/Captcha/{SelectedStore.Id}";
+        }
+
+        protected async Task EndResolveCaptchaAsync()
+        {
+            await this.ApplicationState.ResolveCaptchaAsync(SelectedStore, CaptchaText);
+            await this._modal.CloseAsync();
+        }
+
+
+        public Store SelectedStore { get; set; }
 
         protected async Task AddAsync()
         {

@@ -308,6 +308,12 @@ namespace YourShipping.Monitor.Client.Services
             await httpClient.DeleteAsync($"Stores/{store.Id}");
         }
 
+
+        public async Task ResolveCaptchaAsync(Store store, string captchaText)
+        {
+            await httpClient.GetAsync($"Stores/ResolveCaptcha/{store.Id}/{captchaText}");
+        }
+
         protected virtual void OnEntityStateChanged(AlertSource alertSource, string serializedEntity)
         {
             switch (alertSource)

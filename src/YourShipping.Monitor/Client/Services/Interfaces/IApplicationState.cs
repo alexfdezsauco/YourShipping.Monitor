@@ -59,5 +59,7 @@ namespace YourShipping.Monitor.Client.Services.Interfaces
         Task UnFollowProductAsync(Product product);
 
         Task UnFollowStoreAsync(Store store);
+
+        Task ResolveCaptchaAsync(Store store, string captchaText);
     }
 }

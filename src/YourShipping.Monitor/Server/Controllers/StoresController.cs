@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Data;
+    using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -50,6 +51,47 @@
             }
 
             return store?.ToDataTransferObject();
+        }
+
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> Captcha([FromServices] IRepository<Models.Store, int> storeRepository, int id)
+        {
+            var store = storeRepository.Find(d => d.Id == id).FirstOrDefault();
+            if (store == null)
+            {
+                return this.NotFound();
+            }
+
+            var storeSlug = UriHelper.GetStoreSlug(store.Url);
+            var path = $"captchas/{storeSlug}.jpg";
+            if (!System.IO.File.Exists(path))
+            {
+                return this.NotFound();
+            }
+
+            return this.File(System.IO.File.OpenRead(path), "image/jpeg");
+        }
+
+        [HttpGet("[action]/{id}/{captchaText}")]
+        public async Task<IActionResult> ResolveCaptcha([FromServices] IRepository<Models.Store, int> storeRepository, int id, string captchaText)
+        {
+            var store = storeRepository.Find(d => d.Id == id).FirstOrDefault();
+            if (store == null)
+            {
+                return this.NotFound();
+            }
+
+            var storeSlug = UriHelper.GetStoreSlug(store.Url);
+            var path = $"captchas/{storeSlug}.jpg";
+            if (!System.IO.File.Exists(path))
+            {
+                return this.NotFound();
+            }
+
+            var captchaSolutionFilePath = $"captchas/{storeSlug}.txt";
+            await System.IO.File.WriteAllTextAsync(captchaSolutionFilePath, captchaText);
+
+            return this.Accepted();
         }
 
         [HttpGet]
