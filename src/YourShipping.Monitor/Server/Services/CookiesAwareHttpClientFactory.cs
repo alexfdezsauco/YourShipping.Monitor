@@ -496,51 +496,47 @@
 
                 if (signInParameters != null)
                 {
-                    captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
-                    if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath))
+                    // TODO: Improve this.
+                    var storeSlug = UriHelper.GetStoreSlug(url);
+                    var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
+                    var storeCaptchaSolutionFilePath = $"captchas/{storeSlug}.txt";
+                    if (!File.Exists(storeCaptchaFilePath))
                     {
-                        if (unattended)
-                        {
-                            captchaText = GetCaptchaText(captchaFilePath);
-                        }
-                        else
-                        {
-                            // TODO: Improve this.
-                            var storeSlug = UriHelper.GetStoreSlug(url);
-                            var storeCaptchaFilePath = $"captchas/{storeSlug}.jpg";
-                            var storeCaptchaSolutionFilePath = $"captchas/{storeSlug}.txt";
-                            
-                            File.Delete(storeCaptchaSolutionFilePath);
-                            File.Copy(captchaFilePath, storeCaptchaFilePath, true);
-                            while (!File.Exists(storeCaptchaSolutionFilePath))
-                            {
-                                Thread.Sleep(1000);
-                            }
-
-                            captchaText = await File.ReadAllTextAsync(storeCaptchaSolutionFilePath);
-                            
-                            File.Delete(storeCaptchaFilePath);
-                            File.Delete(storeCaptchaSolutionFilePath);
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(captchaText))
-                        {
-                            signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
-                            try
-                            {
-                                await httpClient.PostAsync(signInUrl, new FormUrlEncodedContent(signInParameters));
-                                httpHandlerCookieCollection =
-                                    cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
-                                isAuthenticated =
-                                    !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Warning(e, "Error authenticating in '{Url}'", signInUrl);
-                            }
-                        }
+                        captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
+                        File.Delete(storeCaptchaSolutionFilePath);
+                        File.Copy(captchaFilePath, storeCaptchaFilePath, true);
                     }
 
+                    if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath) && unattended)
+                    {
+                        captchaText = GetCaptchaText(captchaFilePath);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(captchaText) && File.Exists(storeCaptchaSolutionFilePath))
+                    {
+                        captchaText = await File.ReadAllTextAsync(storeCaptchaSolutionFilePath);
+
+                        File.Delete(storeCaptchaFilePath);
+                        File.Delete(storeCaptchaSolutionFilePath);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(captchaText))
+                    {
+                        signInParameters.Add("ctl00$cphPage$Login$capcha", captchaText);
+                        try
+                        {
+                            await httpClient.PostAsync(signInUrl, new FormUrlEncodedContent(signInParameters));
+                            httpHandlerCookieCollection =
+                                cookieContainer.GetCookies(ScraperConfigurations.CookieCollectionUrl);
+                            isAuthenticated =
+                                !string.IsNullOrWhiteSpace(httpHandlerCookieCollection["ShopMSAuth"]?.Value);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error authenticating in '{Url}'", signInUrl);
+                        }
+                    }
+                
                     try
                     {
                         if (!isAuthenticated)
