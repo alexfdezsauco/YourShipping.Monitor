@@ -1,5 +1,5 @@
-#addin "Cake.Docker"
-#addin "Cake.FileHelpers"
+#addin nuget:?package=Cake.Docker&version=0.11.1
+#addin nuget:?package=Cake.FileHelpers&version=3.3.0
 #tool "nuget:?package=GitVersion.CommandLine&version=5.3.7"
 
 #load "config.cake"
@@ -14,7 +14,6 @@ using System.Net.Sockets;
 
 // var adapter = NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i => i.Name == "Wi-Fi");
 // var properties = adapter.GetIPProperties();
-
 
 
 string localIpAddress;
