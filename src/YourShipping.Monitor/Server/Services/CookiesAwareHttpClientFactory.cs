@@ -108,8 +108,7 @@
             var syncObj = this._syncObjects.GetOrAdd(storeSlug, new object());
             lock (syncObj)
             {
-                if (!this.invalidatedStores[storeSlug] && this._authenticating.TryGetValue(storeSlug, out var value)
-                                                       && value)
+                if (_authenticating.TryGetValue(storeSlug, out var authenticating) && authenticating)
                 {
                     return;
                 }
