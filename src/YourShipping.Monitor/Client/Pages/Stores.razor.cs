@@ -75,7 +75,7 @@
                         new CallActionDefinition
                             {
                                 Label = "Captcha",
-                                IsDisabled = !store.Captcha,
+                                IsDisabled = !store.Captcha || !store.IsAvailable,
                                 Action = async o => await this.BeginResolveCaptchaAsync(o as Store)
                             });
 
