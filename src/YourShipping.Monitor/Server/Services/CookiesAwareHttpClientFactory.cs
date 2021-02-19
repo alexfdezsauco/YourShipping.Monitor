@@ -413,11 +413,13 @@
                                        {
                                            Log.Information("Deserializing cookies from {Path}.", cookieFilePath);
                                            var readAllText = await File.ReadAllTextAsync(cookieFilePath, Encoding.UTF8);
-                                           var cookies =
-                                               JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                           var cookies = JsonConvert.DeserializeObject<Dictionary<string, Cookie>>(readAllText);
+                                           if (cookies.ContainsKey("ShopMSAuth"))
+                                           {
+                                               return cookies;
+                                           }
 
                                            // cookies.Remove("uid");
-                                           return cookies;
                                        }
                                    }
                                }
