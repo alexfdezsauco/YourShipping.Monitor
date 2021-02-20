@@ -14,7 +14,7 @@ namespace YourShipping.Monitor.Server.Helpers
         public static RetryPolicy<IDbContextTransaction> WaitAndRetry()
         {
             return Policy<IDbContextTransaction>.Handle<Exception>().WaitAndRetryForever(
-                retryAttempt => TimeSpan.FromSeconds(5),
+                retryAttempt => TimeSpan.FromMilliseconds(100),
                 (delegateResult, timespan) => Log.Warning(
                     delegateResult.Exception,
                     "Error opening transaction. Will retry in {timespan}.",
