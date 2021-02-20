@@ -183,12 +183,12 @@
                     Log.Warning("Credentials were not specified in the configuration file.");
                 }
 
-                if (cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
-                {
-                    cookieCollection = await this.LoadFromCookiesTxtAsync(
-                                           antiScrappingCookie,
-                                           url.EndsWith("stores.json"));
-                }
+                //if (cookieCollection == null || !cookieCollection.ContainsKey("ShopMSAuth"))
+                //{
+                //    cookieCollection = await this.LoadFromCookiesTxtAsync(
+                //                           antiScrappingCookie,
+                //                           url.EndsWith("stores.json"));
+                //}
             }
 
             return cookieCollection;
