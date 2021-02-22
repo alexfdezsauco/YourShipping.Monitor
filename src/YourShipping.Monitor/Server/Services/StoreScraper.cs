@@ -46,11 +46,13 @@
         {
             url = UriHelper.EnsureStoreUrl(url);
 
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       url,
-                       async () => await this.GetDirectAsync(url),
-                       ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
-                       force);
+            //return await this.cacheStorage.GetFromCacheOrFetchAsync(
+            //           url,
+            //           async () => await this.GetDirectAsync(url),
+            //           ExpirationPolicy.Duration(ScraperConfigurations.StoreCacheExpiration),
+            //           force);
+
+            return await this.GetDirectAsync(url);
         }
 
         private async Task<Store> GetDirectAsync(string storeUrl)

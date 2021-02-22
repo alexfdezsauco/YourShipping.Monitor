@@ -64,11 +64,15 @@
                 return null;
             }
 
-            return await this.cacheStorage.GetFromCacheOrFetchAsync(
-                       $"{url}/{store != null}",
-                       async () => await this.GetDirectAsync(url, store, disabledProducts),
-                       ExpirationPolicy.Duration(ScraperConfigurations.DepartmentCacheExpiration),
-                       force);
+            //return await this.cacheStorage.GetFromCacheOrFetchAsync(
+            //           $"{url}/{store != null}",
+            //           async () => await this.GetDirectAsync(url, store, disabledProducts),
+            //           ExpirationPolicy.Duration(ScraperConfigurations.DepartmentCacheExpiration),
+            //           force);
+            //
+            //
+
+            return await this.GetDirectAsync(url, store, disabledProducts);
         }
 
         private async Task<Department> GetDirectAsync(

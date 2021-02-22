@@ -106,12 +106,20 @@
         public async Task<HttpClient> CreateHttpClientAsync(string url)
         {
             HttpClient httpClient = null;
-            var cookieCollection = await this.GetCookieCollectionAsync(url);
-            if (cookieCollection.Count > 0)
+            
+            if (url == ScraperConfigurations.StoresJsonUrl)
             {
                 httpClient = this.provider.GetService<HttpClient>();
-                var clientHandler = httpClient.GetHttpClientHandler();
-                clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+            }
+            else
+            {
+                var cookieCollection = await this.GetCookieCollectionAsync(url);
+                if (cookieCollection.Count > 0)
+                {
+                    httpClient = this.provider.GetService<HttpClient>();
+                    var clientHandler = httpClient.GetHttpClientHandler();
+                    clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+                }
             }
 
             return httpClient;
