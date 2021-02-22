@@ -41,7 +41,6 @@
 
         private readonly IConfiguration _configuration;
 
-        // private readonly ConcurrentDictionary<string, object> _syncObjects = new ConcurrentDictionary<string, object>();
         private readonly ConcurrentDictionary<string, bool> _invalidatedStores =
             new ConcurrentDictionary<string, bool>();
 
@@ -106,11 +105,14 @@
 
         public async Task<HttpClient> CreateHttpClientAsync(string url)
         {
-            var httpClient = this.provider.GetService<HttpClient>();
-
-            var clientHandler = httpClient.GetHttpClientHandler();
+            HttpClient httpClient = null;
             var cookieCollection = await this.GetCookieCollectionAsync(url);
-            clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+            if (cookieCollection.Count > 0)
+            {
+                httpClient = this.provider.GetService<HttpClient>();
+                var clientHandler = httpClient.GetHttpClientHandler();
+                clientHandler.CookieContainer.Add(ScraperConfigurations.CookieCollectionUrl, cookieCollection);
+            }
 
             return httpClient;
         }
@@ -355,7 +357,7 @@
             var storeSlug = UriHelper.GetStoreSlug(url);
             try
             {
-                if (storeSlug != "/")
+                if (storeSlug != "/" && !this._loginCookies.ContainsKey(storeSlug))
                 {
                     var cookieFilePath = $"data/{storeSlug}.json";
                     if (File.Exists(cookieFilePath))
