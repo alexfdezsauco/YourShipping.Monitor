@@ -41,9 +41,6 @@
 
         private readonly IConfiguration _configuration;
 
-        private readonly ConcurrentDictionary<string, bool> _invalidatedStores =
-            new ConcurrentDictionary<string, bool>();
-
         private readonly Dictionary<string, Dictionary<string, Cookie>> _loginCookies =
             new Dictionary<string, Dictionary<string, Cookie>>();
 
@@ -136,7 +133,6 @@
                 {
                     this._loginCookies.Remove(storeSlug);
                     this._authenticating.Remove(storeSlug);
-                    this._invalidatedStores[storeSlug] = true;
                 }
 
                 try
@@ -160,8 +156,7 @@
                 var slugs = this._loginCookies.Keys.ToList();
                 foreach (var storeSlug in slugs)
                 {
-                    var invalidated = this._invalidatedStores.GetOrAdd(storeSlug, false);
-                    if (storeSlug != "/" && invalidated)
+                    if (storeSlug != "/")
                     {
                         var storedCookieCollection = this._loginCookies[storeSlug];
                         lock (storedCookieCollection)
