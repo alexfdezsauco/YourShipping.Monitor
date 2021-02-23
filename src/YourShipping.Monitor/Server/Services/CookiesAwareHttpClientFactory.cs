@@ -304,8 +304,14 @@
         private async Task<CookieCollection> GetCookieCollectionAsync(string url)
         {
             var cookieCollection = new CookieCollection();
+            
+            var storeSlug = UriHelper.GetStoreSlug(url);
+            this._loginCookies.TryGetValue(storeSlug, out var storedCookieCollection);
+            if (storedCookieCollection == null || !storedCookieCollection.ContainsKey("ShopMSAuth"))
+            {
+                storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
+            }
 
-            var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
             if (storedCookieCollection != null && storedCookieCollection.ContainsKey("ShopMSAuth"))
             {
                 cookieCollection.AddRange(storedCookieCollection.Values);
