@@ -1,10 +1,8 @@
 ﻿namespace YourShipping.Monitor.Server.Helpers
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -32,6 +30,7 @@
     using YourShipping.Monitor.Server.Extensions;
     using YourShipping.Monitor.Server.Services;
 
+    using Enumerable = System.Linq.Enumerable;
     using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
     // TODO: Improve this?
@@ -103,7 +102,7 @@
         public async Task<HttpClient> CreateHttpClientAsync(string url)
         {
             HttpClient httpClient = null;
-            
+
             if (url == ScraperConfigurations.StoresJsonUrl)
             {
                 httpClient = this.provider.GetService<HttpClient>();
@@ -153,27 +152,24 @@
             Log.Information("Serializing cookies...");
             lock (this._syncObj)
             {
-                var slugs = this._loginCookies.Keys.ToList();
-                foreach (var storeSlug in slugs)
+                foreach (var pair in this._loginCookies)
                 {
+                    var storeSlug = pair.Key;
+                    var storedCookieCollection = pair.Value;
                     if (storeSlug != "/")
                     {
-                        var storedCookieCollection = this._loginCookies[storeSlug];
-                        lock (storedCookieCollection)
+                        try
                         {
-                            try
-                            {
-                                var cookiesFilePath = $"data/{storeSlug}.json";
-                                Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
-                                var serializeObject = JsonConvert.SerializeObject(
-                                    storedCookieCollection,
-                                    Formatting.Indented);
-                                File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Warning(e, "Error serializing cookies.");
-                            }
+                            var cookiesFilePath = $"data/{storeSlug}.json";
+                            Log.Information("Serializing cookies for {Path}.", cookiesFilePath);
+                            var serializeObject = JsonConvert.SerializeObject(
+                                storedCookieCollection,
+                                Formatting.Indented);
+                            File.WriteAllText(cookiesFilePath, serializeObject, Encoding.UTF8);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Warning(e, "Error serializing cookies.");
                         }
                     }
                 }
@@ -310,12 +306,13 @@
             var cookieCollection = new CookieCollection();
 
             var storedCookieCollection = await this.GetCookiesCollectionFromCacheAsync(url);
-            if (storedCookieCollection != null)
+            if (storedCookieCollection != null && storedCookieCollection.ContainsKey("ShopMSAuth"))
             {
-                lock (storedCookieCollection)
-                {
-                    cookieCollection.AddRange(storedCookieCollection.Values);
-                }
+                cookieCollection.AddRange(storedCookieCollection.Values);
+            }
+            else
+            {
+                InvalidateCookies(url);
             }
 
             return cookieCollection;
@@ -403,8 +400,9 @@
             var cookiesFile = "data/cookies.txt";
             if (File.Exists(cookiesFile))
             {
-                var readAllText =
-                    (await File.ReadAllLinesAsync(cookiesFile)).Where(s => !s.TrimStart().StartsWith("#"));
+                var readAllText = Enumerable.Where(
+                    await File.ReadAllLinesAsync(cookiesFile),
+                    s => !s.TrimStart().StartsWith("#"));
                 foreach (var line in readAllText)
                 {
                     var match = this.RegexCookiesTxt.Match(line);
