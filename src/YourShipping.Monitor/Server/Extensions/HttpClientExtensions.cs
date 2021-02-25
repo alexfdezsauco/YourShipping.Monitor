@@ -38,8 +38,6 @@
 
         private static readonly Dictionary<string, object> syncObjects = new Dictionary<string, object>();
 
-        private static readonly TimeSpan TimeToWait = TimeSpan.FromSeconds(2);
-
         static HttpClientExtensions()
         {
             lock (SyncObj)
@@ -337,7 +335,7 @@
 
                 TimeSpan interval = TimeSpan.FromSeconds(2);
                 var intervalInSecondsValue = Environment.GetEnvironmentVariable("Http:RequestIntervalInSeconds");
-                if (int.TryParse(intervalInSecondsValue, out int intervalInSeconds))
+                if (double.TryParse(intervalInSecondsValue, out double intervalInSeconds))
                 {
                     interval = TimeSpan.FromSeconds(intervalInSeconds);
                 }
