@@ -529,7 +529,7 @@
                         {
                             File.Delete(storeCaptchaSolutionFilePath);
                             File.Copy(captchaFilePath, storeCaptchaFilePath, true);
-                            while (!File.Exists(storeCaptchaSolutionFilePath))
+                            while (File.Exists(storeCaptchaFilePath) && !File.Exists(storeCaptchaSolutionFilePath))
                             {
                                 await Task.Delay(1000);
                             }
