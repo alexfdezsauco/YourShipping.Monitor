@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YourShipping.Monitor.Shared
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{83F79939-C6BB-4BA2-81AE-0FF4DF4543CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YourShipping.Monitor.Tests", "YourShipping.Monitor.Tests\YourShipping.Monitor.Tests.csproj", "{2B641841-1903-4D79-957E-36BC041255C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{5B15DA7C-8DF4-4ADD-A35E-760469380261}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B15DA7C-8DF4-4ADD-A35E-760469380261}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B15DA7C-8DF4-4ADD-A35E-760469380261}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B641841-1903-4D79-957E-36BC041255C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B641841-1903-4D79-957E-36BC041255C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B641841-1903-4D79-957E-36BC041255C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B641841-1903-4D79-957E-36BC041255C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

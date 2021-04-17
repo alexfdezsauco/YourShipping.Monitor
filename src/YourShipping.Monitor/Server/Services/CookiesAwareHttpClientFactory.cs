@@ -198,17 +198,15 @@
         private static async Task<Dictionary<string, string>> BuildSignInParametersAsync(
             string username,
             string password,
-            string signinPageContent)
+            IDocument signinPageDocument)
         {
             Argument.IsNotNullOrWhitespace(() => username);
             Argument.IsNotNullOrWhitespace(() => password);
-            Argument.IsNotNullOrWhitespace(() => signinPageContent);
+            Argument.IsNotNull(() => signinPageDocument);
 
             Dictionary<string, string> parameters = null;
             try
             {
-                var browsingContext = BrowsingContext.New(Configuration.Default);
-                var signinPageDocument = await browsingContext.OpenAsync(req => req.Content(signinPageContent));
                 parameters = new Dictionary<string, string>
                                  {
                                      { "__EVENTTARGET", string.Empty },
@@ -260,9 +258,12 @@
                     Directory.CreateDirectory("captchas");
                 }
 
-                var newGuid = Guid.NewGuid();
-                captchaFilePath = $"captchas/{newGuid}.jpg";
-                File.WriteAllBytes(captchaFilePath, bytes);
+                if (bytes.Length > 0)
+                {
+                    var newGuid = Guid.NewGuid();
+                    captchaFilePath = $"captchas/{newGuid}.jpg";
+                    await File.WriteAllBytesAsync(captchaFilePath, bytes);
+                }
             }
             catch (Exception e)
             {
@@ -492,13 +493,15 @@
                     "user-agent",
                     ScraperConfigurations.GetSupportedAgent());
 
-                var signinPageContent = string.Empty;
+                var browsingContext = BrowsingContext.New(Configuration.Default.WithJs());
+                IDocument signinPageDocument = null;
                 try
                 {
                     var httpResponseMessage = await httpClient.GetCaptchaSaveAsync(signInUrl);
                     if (httpResponseMessage?.Content != null)
                     {
-                        signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                        var signinPageContent = await httpResponseMessage.Content.ReadAsStringAsync();
+                        signinPageDocument = await browsingContext.OpenAsync(req => req.Content(signinPageContent));
                     }
                 }
                 catch (Exception e)
@@ -509,7 +512,7 @@
                 Dictionary<string, string> signInParameters = null;
                 try
                 {
-                    signInParameters = await BuildSignInParametersAsync(username, password, signinPageContent);
+                    signInParameters = await BuildSignInParametersAsync(username, password, signinPageDocument);
                 }
                 catch (Exception e)
                 {
@@ -518,6 +521,13 @@
 
                 if (signInParameters != null)
                 {
+                    var captchaImg = signinPageDocument.QuerySelector<IElement>("#cphPage_Login_captch");
+                    var captchaImgSrc = captchaImg?.Attributes["src"]?.Value;
+                    if (!string.IsNullOrWhiteSpace(captchaImgSrc))
+                    {
+                        captchaUrl = captchaUrl.Replace("captcha.ashx", captchaImgSrc);
+                    }
+
                     captchaFilePath = await DownloadCaptchaAsync(httpClient, captchaUrl);
                     if (!string.IsNullOrWhiteSpace(captchaFilePath) && File.Exists(captchaFilePath))
                     {

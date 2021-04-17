@@ -4,7 +4,7 @@ namespace YourShipping.Monitor.Client
     using System.Net.Http;
     using System.Threading.Tasks;
 
-    using Blorc.PatternFly.Services.Extensions;
+    using Blorc.PatternFly;
     using Blorc.Services;
 
     using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -25,7 +25,10 @@ namespace YourShipping.Monitor.Client
             builder.RootComponents.Add<App>("app");
 
             builder.Services.AddTransient(
-                sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }.EnableIntercept(sp));
+                sp => new HttpClient
+                          {
+                              BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+                          }.EnableIntercept(sp));
 
             builder.Services.AddLoadingBar();
             builder.Services.AddTransient<HubConnectionBuilder>();
@@ -34,9 +37,15 @@ namespace YourShipping.Monitor.Client
             builder.Services.AddBlorcPatternFly();
             builder.Services.AddSingleton<IApplicationState, ApplicationState>();
 
-            await builder.Build()
-                .MapComponentServices(options => options.MapBlorcPatternFly())
-                .UseLoadingBar()
+            var webAssemblyHost = builder.Build();
+            await webAssemblyHost.ConfigureDocumentAsync(
+                async documentService =>
+                    {
+                        await documentService.InjectBlorcCoreJsAsync();
+                        await documentService.InjectBlorcPatternFlyAsync();
+                    });
+
+            await webAssemblyHost.MapComponentServices(options => options.MapBlorcPatternFly()).UseLoadingBar()
                 .RunAsync();
         }
     }
