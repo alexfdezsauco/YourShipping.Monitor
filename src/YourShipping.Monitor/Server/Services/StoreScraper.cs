@@ -116,7 +116,7 @@
                     return null;
                 }
 
-                var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+                var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null || document.QuerySelector<IElement>("#LoginName1") != null ;
                 hasProductInCart = document.QuerySelectorAll<IElement>(
                     "#ctl00_UpperCartPanel > div > table > tbody > tr > td.cart-product-info > div > p > a").Any();
                 if (string.IsNullOrWhiteSpace(storeName))

@@ -156,7 +156,7 @@
                             return null;
                         }
 
-                        var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null;
+                        var isUserLogged = document.QuerySelector<IElement>("#ctl00_LoginName1") != null || document.QuerySelector<IElement>("#LoginName1") != null;
                         if (string.IsNullOrWhiteSpace(storeName))
                         {
                             var footerElement =
